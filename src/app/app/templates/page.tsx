@@ -35,7 +35,7 @@ export default async function TemplatesPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {templates.map((template) => (
             <Card key={template.id} className="overflow-hidden">
-              <div className="aspect-video bg-muted flex items-center justify-center">
+              <div className="relative aspect-video bg-muted flex items-center justify-center">
                 {template.thumbnailUrl ? (
                   <Image
                     src={template.thumbnailUrl}
