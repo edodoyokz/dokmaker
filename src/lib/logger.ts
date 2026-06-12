@@ -31,15 +31,24 @@ export function log(
   data?: Record<string, unknown>,
   userId?: string
 ): void {
+  const entry: LogEntry = {
+    timestamp: new Date().toISOString(),
+    level,
+    category,
+    message,
+    data,
+    userId,
+  };
+
   // In development, log to console
   if (process.env.NODE_ENV === "development") {
     const logFn =
       level === "error"
         ? console.error
         : level === "warn"
-        ? console.warn
-        : console.log;
-    logFn(`[${category}] ${message}`, data || "");
+          ? console.warn
+          : console.log;
+    logFn(`[${entry.category}] ${entry.message}`, entry.data || "");
   }
 
   // In production, send to logging service

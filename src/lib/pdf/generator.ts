@@ -26,6 +26,19 @@ interface GenerateInvoicePdfOptions {
   loadPuppeteer?: () => Promise<PuppeteerModuleLike>;
 }
 
+let cachedPuppeteerModule: PuppeteerModuleLike | null = null;
+
+async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
+  if (cachedPuppeteerModule) {
+    return cachedPuppeteerModule;
+  }
+
+  const runtimeEval = globalThis.eval as typeof eval;
+  const imported = (await runtimeEval('import("puppeteer")')) as PuppeteerModuleLike;
+  cachedPuppeteerModule = imported;
+  return imported;
+}
+
 /**
  * Generate HTML for final invoice PDF.
  * This produces a clean invoice without watermark.
@@ -154,9 +167,7 @@ export async function generateInvoicePdf(
   options: GenerateInvoicePdfOptions = {}
 ): Promise<Buffer> {
   const html = generateInvoiceHtml(content);
-  const loadPuppeteer =
-    options.loadPuppeteer ??
-    (async () => (await import("puppeteer" as string)) as PuppeteerModuleLike);
+  const loadPuppeteer = options.loadPuppeteer ?? loadRuntimePuppeteer;
 
   let browser: BrowserLike | null = null;
 
@@ -177,7 +188,11 @@ export async function generateInvoicePdf(
     );
   } finally {
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+      } catch {
+        // Ignore browser close errors so the original PDF failure is preserved.
+      }
     }
   }
 }

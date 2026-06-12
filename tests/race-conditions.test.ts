@@ -78,13 +78,6 @@ describe("Race Condition Prevention Rules", () => {
 
   describe("Payment State Machine", () => {
     it("payment should transition: created -> pending -> success/failed", () => {
-      const validTransitions = [
-        ["created", "pending"],
-        ["pending", "success"],
-        ["pending", "failed"],
-        ["created", "failed"],
-      ];
-
       const transition = ["created", "success"];
       // Direct created->success should work for simple flows
       expect(transition[0]).toBe("created");

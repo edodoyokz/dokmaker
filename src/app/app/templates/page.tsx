@@ -2,6 +2,7 @@ import { requireUser } from "@/modules/auth";
 import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +37,12 @@ export default async function TemplatesPage() {
             <Card key={template.id} className="overflow-hidden">
               <div className="aspect-video bg-muted flex items-center justify-center">
                 {template.thumbnailUrl ? (
-                  <img
+                  <Image
                     src={template.thumbnailUrl}
                     alt={template.name}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 33vw"
+                    className="object-cover"
                   />
                 ) : (
                   <svg
