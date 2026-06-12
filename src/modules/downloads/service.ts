@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { logger } from "@/lib/logger";
 import { FINAL_DOWNLOAD_PRICE } from "@/modules/pricing/constants";
 import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
@@ -24,6 +25,7 @@ export async function processDownload(
   });
 
   if (!invoice || !invoice.activeVersionId) {
+    logger.warn("download", "Invoice not found for download", { invoiceId }, userId);
     throw new Error("Invoice tidak ditemukan");
   }
 
@@ -39,6 +41,7 @@ export async function processDownload(
 
   // If already paid, return free re-download
   if (activeVersion.status === "paid") {
+    logger.download("Free re-download", { invoiceId, versionId: activeVersion.id }, userId);
     const pdf = await generateInvoicePdf(content);
 
     // Log re-download
@@ -68,10 +71,13 @@ export async function processDownload(
     }
 
     if (wallet.currentBalance < FINAL_DOWNLOAD_PRICE) {
+      logger.warn("download", "Insufficient balance", { required: FINAL_DOWNLOAD_PRICE, available: wallet.currentBalance }, userId);
       throw new Error(
         `Saldo tidak mencukupi. Diperlukan Rp${FINAL_DOWNLOAD_PRICE.toLocaleString("id-ID")}`
       );
     }
+
+    logger.download("Paid download initiated", { invoiceId, versionId: activeVersion.id, amount: FINAL_DOWNLOAD_PRICE }, userId);
 
     // Generate PDF first (before charging)
     const pdf = await generateInvoicePdf(content);

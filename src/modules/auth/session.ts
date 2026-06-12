@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/db/prisma";
+import { logger } from "@/lib/logger";
 import { type User, type UserRole } from "@prisma/client";
 
 export interface AuthUser {
@@ -20,8 +21,11 @@ export async function requireUser(): Promise<AuthUser> {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
+    logger.auth("Authentication failed", { error: error?.message });
     throw new Error("Unauthorized");
   }
+
+  logger.auth("User authenticated", { userId: user.id, email: user.email });
 
   // Sync or create local user record
   const localUser = await syncLocalUser(user.id, user.email!, user.user_metadata);

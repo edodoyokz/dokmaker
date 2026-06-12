@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { Prisma } from "@prisma/client";
+import { logger } from "@/lib/logger";
 import { ALLOWED_TOPUP_AMOUNTS } from "@/modules/pricing/constants";
 import { randomUUID } from "crypto";
 
@@ -13,12 +14,14 @@ export async function createTopUpPayment(
 ): Promise<{ paymentId: string; redirectUrl: string }> {
   // Validate amount
   if (!ALLOWED_TOPUP_AMOUNTS.includes(amount as 50000 | 100000)) {
+    logger.warn("payment", "Invalid top up amount attempted", { amount }, userId);
     throw new Error(
       `Nominal top up tidak valid. Pilih Rp50.000 atau Rp100.000`
     );
   }
 
   const providerOrderId = `TOPUP-${Date.now()}-${randomUUID().slice(0, 8)}`;
+  logger.payment("Top up payment created", { amount, providerOrderId }, userId);
   const projectSlug = process.env.PAKASIR_PROJECT_SLUG;
   const baseUrl = process.env.PAKASIR_BASE_URL || "https://app.pakasir.com";
 
@@ -65,6 +68,8 @@ export async function handlePakasirWebhook(body: {
 }) {
   const { project, order_id, amount } = body;
 
+  logger.webhook("Pakasir webhook received", { project, order_id, amount });
+
   // Verify project slug
   if (project !== process.env.PAKASIR_PROJECT_SLUG) {
     throw new Error("Project slug tidak sesuai");
@@ -84,6 +89,7 @@ export async function handlePakasirWebhook(body: {
 
   // Check if already processed
   if (payment.status === "success") {
+    logger.webhook("Webhook already processed", { order_id, paymentId: payment.id });
     return { status: "already_processed" };
   }
 

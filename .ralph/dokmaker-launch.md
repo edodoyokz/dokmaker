@@ -97,9 +97,9 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Authorization: regular user blocked from admin operations
 
 ### Phase 9: Hardening & Polish
-- [ ] User dashboard (balance, recent invoices, recent transactions, quick actions)
-- [ ] Loading, empty, and error states across all pages
-- [ ] Rate limiting on top up, download, webhook endpoints
+- [x] User dashboard (balance, recent invoices, recent transactions, quick actions)
+- [x] Loading, empty, and error states across all pages
+- [x] Rate limiting on top up, download, webhook endpoints
 - [ ] Structured logging (auth, payment, wallet, invoice, PDF, admin events)
 - [ ] Mobile-first responsive check (360px viewport, no horizontal overflow)
 
