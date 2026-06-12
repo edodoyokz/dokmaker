@@ -1,0 +1,224 @@
+# DokMaker Production Environment Checklist
+
+**Version:** v1.0
+**Last Updated:** 2026-06-12
+
+---
+
+## 1. Required Environment Variables
+
+### 1.1 Database (PostgreSQL)
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | ✅ | `postgresql://user:pass@host:5432/dokmaker` |
+
+**Notes:**
+- Use connection pooling for production (e.g., PgBouncer, Supabase pooler)
+- Enable SSL for production connections
+- Run `npx prisma migrate deploy` before deploying
+
+---
+
+### 1.2 Supabase Auth
+
+| Variable | Description | Required | Client-safe |
+|----------|-------------|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | ✅ | ✅ |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key | ✅ | ✅ |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | ✅ | ❌ |
+
+**Setup Steps:**
+1. Create Supabase project at https://supabase.com
+2. Enable Email provider (Authentication > Providers)
+3. Configure redirect URLs:
+   - `https://your-domain.com/auth/callback`
+   - `https://your-domain.com/login`
+4. Copy URL and keys from Settings > API
+
+**Security:**
+- `SUPABASE_SERVICE_ROLE_KEY` must NEVER be exposed to client
+- Use only in server-side code (API routes, server components)
+
+---
+
+### 1.3 Application
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `APP_BASE_URL` | Application base URL | ✅ | `https://dokmaker.com` |
+
+---
+
+### 1.4 Pakasir Payment Gateway
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `PAKASIR_PROJECT_SLUG` | Pakasir project slug | ✅ | `dokmaker` |
+| `PAKASIR_API_KEY` | Pakasir API key | ✅ | `pk_xxx...` |
+| `PAKASIR_BASE_URL` | Pakasir API base URL | ✅ | `https://app.pakasir.com` |
+| `PAKASIR_WEBHOOK_URL` | Webhook callback URL | ✅ | `https://dokmaker.com/api/webhooks/pakasir` |
+
+**Setup Steps:**
+1. Create Pakasir account at https://app.pakasir.com
+2. Create project with slug `dokmaker` (or custom)
+3. Get API key from project settings
+4. Configure webhook URL in project settings
+5. For sandbox testing, use test mode if available
+
+**Webhook Configuration:**
+```
+URL: https://your-domain.com/api/webhooks/pakasir
+Method: POST
+Content-Type: application/json
+```
+
+---
+
+### 1.5 Storage (Cloudflare R2 / S3-compatible)
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `STORAGE_ENDPOINT` | S3 endpoint URL | Optional* | `https://xxx.r2.cloudflarestorage.com` |
+| `STORAGE_ACCESS_KEY` | S3 access key | Optional* | `xxx` |
+| `STORAGE_SECRET_KEY` | S3 secret key | Optional* | `xxx` |
+| `STORAGE_BUCKET` | S3 bucket name | Optional* | `dokmaker-pdfs` |
+| `STORAGE_PUBLIC_URL` | Public URL prefix | Optional* | `https://files.dokmaker.com` |
+
+**Notes:**
+- *Optional for MVP if serving PDFs directly from API
+- Required for production with signed URLs
+
+---
+
+## 2. External Service Setup
+
+### 2.1 Supabase Project
+
+- [ ] Create project
+- [ ] Enable Email auth provider
+- [ ] Configure redirect URLs
+- [ ] Copy URL, anon key, service role key
+- [ ] Set up RLS policies (optional, app handles auth)
+
+### 2.2 Pakasir Project
+
+- [ ] Create account
+- [ ] Create project
+- [ ] Note project slug
+- [ ] Get API key
+- [ ] Configure webhook URL
+- [ ] Test sandbox payment (if available)
+
+### 2.3 Database
+
+- [ ] Create production database
+- [ ] Run `npx prisma migrate deploy`
+- [ ] Verify all tables created
+- [ ] Run seed if needed (admin user)
+- [ ] Enable backups
+
+### 2.4 Storage (Optional for MVP)
+
+- [ ] Create R2/S3 bucket
+- [ ] Configure CORS if needed
+- [ ] Create access keys
+- [ ] Test upload/download
+
+---
+
+## 3. Deployment Checklist
+
+### 3.1 Pre-deployment
+
+```bash
+# Run all verification
+npm run lint
+npm run typecheck
+npm test
+npm run build
+npx prisma validate
+```
+
+### 3.2 Vercel Deployment
+
+1. Connect GitHub repository
+2. Configure environment variables
+3. Set build command: `npm run build`
+4. Set output: `.next`
+5. Deploy
+
+### 3.3 Post-deployment
+
+- [ ] Verify app loads
+- [ ] Test login/register
+- [ ] Test template list
+- [ ] Test invoice creation
+- [ ] Test preview
+- [ ] Test top up flow (sandbox)
+- [ ] Test webhook (sandbox)
+- [ ] Test download flow
+
+---
+
+## 4. Security Checklist
+
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` not in client bundle
+- [ ] `PAKASIR_API_KEY` not in client bundle
+- [ ] `STORAGE_SECRET_KEY` not in client bundle
+- [ ] All API routes validate auth
+- [ ] All user queries include ownership filter
+- [ ] Admin routes check admin role
+- [ ] Rate limiting enabled on financial endpoints
+- [ ] HTTPS enforced
+
+---
+
+## 5. Monitoring Checklist
+
+- [ ] Error tracking (Sentry, etc.)
+- [ ] Uptime monitoring
+- [ ] Payment webhook monitoring
+- [ ] Database connection monitoring
+- [ ] Log aggregation
+
+---
+
+## 6. Rollback Plan
+
+If critical issues found:
+
+1. **Immediate:** Revert to previous Vercel deployment
+2. **Database:** Forward-fix preferred (migrations are additive)
+3. **Pakasir:** Disable webhook URL in Pakasir dashboard
+4. **Communication:** Notify users via status page/email
+
+---
+
+## 7. Environment Variable Template
+
+```env
+# Database
+DATABASE_URL="postgresql://user:password@host:5432/dokmaker?sslmode=require"
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJ..."
+SUPABASE_SERVICE_ROLE_KEY="eyJ..."
+
+# App
+APP_BASE_URL="https://dokmaker.com"
+
+# Pakasir
+PAKASIR_PROJECT_SLUG="dokmaker"
+PAKASIR_API_KEY="pk_xxx"
+PAKASIR_BASE_URL="https://app.pakasir.com"
+PAKASIR_WEBHOOK_URL="https://dokmaker.com/api/webhooks/pakasir"
+
+# Storage (Optional)
+STORAGE_ENDPOINT=""
+STORAGE_ACCESS_KEY=""
+STORAGE_SECRET_KEY=""
+STORAGE_BUCKET=""
+STORAGE_PUBLIC_URL=""
+```

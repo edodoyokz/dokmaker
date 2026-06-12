@@ -104,11 +104,11 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Mobile-first responsive check (360px viewport, no horizontal overflow)
 
 ### Phase 10: Test Coverage
-- [ ] Financial integrity tests (top up, webhook, download, idempotency)
-- [ ] Authorization/data isolation tests (guest blocked, user isolation, admin guard)
-- [ ] Invoice versioning tests (create, edit unpaid, edit paid)
+- [x] Financial integrity tests (top up, webhook, download, idempotency)
+- [x] Authorization/data isolation tests (guest blocked, user isolation, admin guard)
+- [x] Invoice versioning tests (create, edit unpaid, edit paid)
 - [ ] Race condition tests (concurrent webhook, concurrent download)
-- [ ] All tests pass: `npm test`
+- [x] All tests pass: `npm test`
 
 ### Phase 11: Deployment & Smoke Verification
 - [ ] Production environment checklist documented

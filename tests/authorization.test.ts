@@ -33,7 +33,8 @@ describe("Authorization Rules", () => {
     it("regular users should not access /admin routes", () => {
       // Business rule: role must be 'admin' for /admin routes
       const userRole = "user";
-      expect(userRole === "admin").toBe(false);
+      const isAdmin = userRole === ("admin" as string);
+      expect(isAdmin).toBe(false);
     });
   });
 
