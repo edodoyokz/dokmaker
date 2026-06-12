@@ -41,3 +41,14 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# local worktrees
+/.worktrees/
+/worktrees/
+
+# local investigation artifacts
+/*.pdf
+/*.png
+/*.py
+/stream_*.txt
+/query_db.ts
