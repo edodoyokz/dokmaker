@@ -2,6 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { 
+  User, 
+  Users, 
+  Calendar, 
+  Plus, 
+  Trash2, 
+  Save, 
+  FileSpreadsheet, 
+  AlertCircle, 
+  FileText,
+  DollarSign
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface Props {
   invoiceId: string;
@@ -81,6 +94,7 @@ export default function InvoiceEditForm({
       }
 
       router.refresh();
+      router.push(`/app/invoices/${invoiceId}/preview`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
     } finally {
@@ -89,128 +103,223 @@ export default function InvoiceEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-      <div className="rounded-lg border bg-white p-4">
-        <h2 className="mb-3 font-semibold">Pengirim</h2>
-        <input
-          type="text"
-          value={senderName}
-          onChange={(e) => setSenderName(e.target.value)}
-          required
-          className="w-full rounded-md border px-3 py-2"
-        />
-      </div>
-
-      <div className="rounded-lg border bg-white p-4">
-        <h2 className="mb-3 font-semibold">Klien</h2>
-        <input
-          type="text"
-          value={clientName}
-          onChange={(e) => setClientName(e.target.value)}
-          required
-          className="w-full rounded-md border px-3 py-2"
-        />
-      </div>
-
-      <div className="rounded-lg border bg-white p-4">
-        <h2 className="mb-3 font-semibold">Detail</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input
-            type="text"
-            value={invoiceNumber}
-            onChange={(e) => setInvoiceNumber(e.target.value)}
-            required
-            className="rounded-md border px-3 py-2"
-          />
-          <input
-            type="date"
-            value={issueDate}
-            onChange={(e) => setIssueDate(e.target.value)}
-            required
-            className="rounded-md border px-3 py-2"
-          />
+    <form onSubmit={handleSubmit} className="max-w-3xl space-y-6 pb-12">
+      {/* Sender Card */}
+      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
+          <User className="h-4.5 w-4.5 text-indigo-400" />
+          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">Informasi Pengirim</h2>
         </div>
-      </div>
+        <CardContent className="p-5">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Nama Pengirim / Bisnis</label>
+            <input
+              type="text"
+              value={senderName}
+              onChange={(e) => setSenderName(e.target.value)}
+              required
+              placeholder="e.g. John Doe, CV Digital Solusi"
+              className="block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-lg border bg-white p-4">
-        <h2 className="mb-3 font-semibold">Item</h2>
-        <div className="space-y-3">
-          {items.map((item, index) => (
-            <div key={index} className="flex gap-2">
+      {/* Client Card */}
+      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
+          <Users className="h-4.5 w-4.5 text-purple-400" />
+          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">Informasi Klien</h2>
+        </div>
+        <CardContent className="p-5">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Nama Klien / Perusahaan</label>
+            <input
+              type="text"
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              required
+              placeholder="e.g. PT Sukses Makmur"
+              className="block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Details Card */}
+      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
+          <Calendar className="h-4.5 w-4.5 text-pink-400" />
+          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">Detail Dokumen</h2>
+        </div>
+        <CardContent className="p-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Nomor Invoice</label>
               <input
                 type="text"
-                value={item.description}
-                onChange={(e) =>
-                  updateItem(index, "description", e.target.value)
-                }
+                value={invoiceNumber}
+                onChange={(e) => setInvoiceNumber(e.target.value)}
                 required
-                className="flex-1 rounded-md border px-3 py-2"
+                placeholder="e.g. INV-2026-001"
+                className="block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
               />
-              <input
-                type="number"
-                value={item.quantity}
-                onChange={(e) =>
-                  updateItem(index, "quantity", Number(e.target.value))
-                }
-                min={1}
-                required
-                className="w-20 rounded-md border px-3 py-2"
-              />
-              <input
-                type="number"
-                value={item.unitPrice}
-                onChange={(e) =>
-                  updateItem(index, "unitPrice", Number(e.target.value))
-                }
-                min={0}
-                required
-                className="w-32 rounded-md border px-3 py-2"
-              />
-              {items.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeItem(index)}
-                  className="px-2 text-red-500"
-                >
-                  ✕
-                </button>
-              )}
             </div>
-          ))}
+            
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">Tanggal Terbit</label>
+              <input
+                type="date"
+                value={issueDate}
+                onChange={(e) => setIssueDate(e.target.value)}
+                required
+                className="block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Items Card */}
+      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <FileSpreadsheet className="h-4.5 w-4.5 text-emerald-400" />
+            <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">Daftar Item & Jasa</h2>
+          </div>
+          <button
+            type="button"
+            onClick={addItem}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+          >
+            <Plus className="h-4 w-4" /> Tambah Item
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={addItem}
-          className="mt-3 text-sm text-blue-600 hover:underline"
-        >
-          + Tambah Item
-        </button>
-        <div className="mt-3 border-t pt-3 text-right">
-          <p className="text-sm text-gray-500">Total</p>
-          <p className="text-lg font-bold">
-            Rp{total.toLocaleString("id-ID")}
-          </p>
+        
+        <CardContent className="p-5">
+          {/* Header Row on Desktop */}
+          <div className="hidden sm:grid sm:grid-cols-12 gap-3 mb-2 px-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+            <div className="col-span-6">Deskripsi Layanan</div>
+            <div className="col-span-2 text-center">Jumlah</div>
+            <div className="col-span-3">Harga Satuan (Rp)</div>
+            <div className="col-span-1"></div>
+          </div>
+
+          <div className="space-y-4 sm:space-y-2.5">
+            {items.map((item, index) => (
+              <div key={index} className="flex flex-col sm:grid sm:grid-cols-12 gap-3.5 sm:gap-3 p-4 sm:p-0 rounded-xl sm:rounded-none bg-zinc-950/40 sm:bg-transparent border border-zinc-800/60 sm:border-0 relative">
+                {/* Description */}
+                <div className="col-span-6 space-y-1 sm:space-y-0">
+                  <label className="block sm:hidden text-[10px] font-semibold text-zinc-500 uppercase">Deskripsi</label>
+                  <input
+                    type="text"
+                    value={item.description}
+                    onChange={(e) =>
+                      updateItem(index, "description", e.target.value)
+                    }
+                    required
+                    placeholder="e.g. Jasa Pembuatan Website, Desain Logo"
+                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-850 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                  />
+                </div>
+
+                {/* Quantity */}
+                <div className="col-span-2 space-y-1 sm:space-y-0">
+                  <label className="block sm:hidden text-[10px] font-semibold text-zinc-500 uppercase">Jumlah</label>
+                  <input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      updateItem(index, "quantity", Number(e.target.value))
+                    }
+                    min={1}
+                    required
+                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-850 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center transition-all"
+                  />
+                </div>
+
+                {/* Unit Price */}
+                <div className="col-span-3 space-y-1 sm:space-y-0">
+                  <label className="block sm:hidden text-[10px] font-semibold text-zinc-500 uppercase">Harga Satuan</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={item.unitPrice}
+                      onChange={(e) =>
+                        updateItem(index, "unitPrice", Number(e.target.value))
+                      }
+                      min={0}
+                      required
+                      className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-850 pl-3 pr-3.5 sm:pr-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Delete Button */}
+                <div className="col-span-1 flex items-center justify-end sm:justify-center">
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="p-2 sm:p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors shrink-0"
+                      title="Hapus Item"
+                    >
+                      <Trash2 className="h-4.5 w-4.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Grand Summary Display */}
+          <div className="mt-6 border-t border-zinc-800/80 pt-5 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Ketentuan Harga</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Automated Calculation (IDR)</p>
+            </div>
+            
+            <div className="text-right">
+              <p className="text-xs text-zinc-500">Total Tagihan</p>
+              <p className="text-2xl font-extrabold tracking-tight text-emerald-400 mt-0.5">
+                Rp{total.toLocaleString("id-ID")}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notes Card */}
+      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
+          <FileText className="h-4.5 w-4.5 text-zinc-400" />
+          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">Catatan Tambahan</h2>
         </div>
-      </div>
+        <CardContent className="p-5">
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            placeholder="e.g. Pembayaran paling lambat 14 hari setelah invoice diterima. Transfer ke rekening Bank BCA 1234567 a.n John Doe."
+            className="block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+          />
+        </CardContent>
+      </Card>
 
-      <div className="rounded-lg border bg-white p-4">
-        <h2 className="mb-3 font-semibold">Catatan</h2>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-          className="w-full rounded-md border px-3 py-2"
-        />
-      </div>
+      {error && (
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-2.5">
+          <AlertCircle className="h-4.5 w-4.5 text-rose-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-rose-300 font-semibold">{error}</p>
+        </div>
+      )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
+      {/* Submit Button */}
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-md bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 disabled:opacity-50"
+        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 hover:shadow-indigo-500/25 transition-all disabled:opacity-50"
       >
-        {loading ? "Menyimpan..." : "Simpan Perubahan"}
+        <Save className="h-4.5 w-4.5" /> {loading ? "Menyimpan Perubahan..." : "Simpan Perubahan & Lanjut ke Preview"}
       </button>
     </form>
   );

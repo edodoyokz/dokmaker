@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import InvoicePreview from "@/components/invoices/invoice-preview";
+import PreviewClient from "./preview-client";
 
 export default async function InvoicePreviewPage({
   params,
@@ -11,9 +11,11 @@ export default async function InvoicePreviewPage({
   const user = await requireUser();
   const { invoiceId } = await params;
 
+  // Fetch invoice details with active version
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId, userId: user.id },
     include: {
+      template: true,
       versions: {
         orderBy: { versionNumber: "desc" as const },
       },
@@ -32,6 +34,11 @@ export default async function InvoicePreviewPage({
     notFound();
   }
 
+  // Fetch user wallet balance
+  const wallet = await prisma.wallet.findUnique({
+    where: { userId: user.id },
+  });
+
   const content = activeVersion.contentSnapshot as {
     sender: { name: string; address?: string; email?: string };
     client: { name: string; address?: string; email?: string };
@@ -42,22 +49,23 @@ export default async function InvoicePreviewPage({
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
-      <InvoicePreview
-        content={content}
-        isPreview={true}
-        previewMeta={{
-          email: user.email,
-          timestamp: new Date().toISOString(),
-          versionId: activeVersion.id,
-        }}
-      />
-
-      <div className="mx-auto mt-6 max-w-2xl text-center">
-        <p className="text-sm text-gray-500">
-          Ini adalah preview. Untuk mendapatkan PDF final, lakukan pembayaran.
-        </p>
-      </div>
-    </div>
+    <PreviewClient
+      invoiceId={invoice.id}
+      invoiceNumber={invoice.invoiceNumber}
+      initialStatus={activeVersion.status}
+      initialBalance={wallet?.currentBalance ?? 0}
+      content={content}
+      previewMeta={{
+        email: user.email,
+        timestamp: new Date(activeVersion.createdAt).toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        }),
+        versionId: activeVersion.id,
+      }}
+    />
   );
 }
