@@ -45,11 +45,11 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [ ] Verify: auth guard tests pass
 
 ### Phase 3: Template Catalog & Admin Templates
-- [ ] User template catalog (active templates only, with name/thumbnail/price)
-- [ ] Template detail page with CTA to create invoice
-- [ ] Admin template CRUD (list, create, edit, activate/deactivate)
-- [ ] Audit log for admin template changes
-- [ ] Authorization: user cannot access admin template APIs
+- [x] User template catalog (active templates only, with name/thumbnail/price)
+- [x] Template detail page with CTA to create invoice
+- [x] Admin template CRUD (list, create, edit, activate/deactivate)
+- [x] Audit log for admin template changes
+- [x] Authorization: user cannot access admin template APIs
 
 ### Phase 4: Invoice Drafting & Versioning
 - [ ] Invoice content schema validation (sender/client/meta/items/summary)
