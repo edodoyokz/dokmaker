@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DokMaker
 
-## Getting Started
+Mobile-first PWA untuk generate invoice dari template dengan sistem wallet dan paid PDF download.
 
-First, run the development server:
+## Fitur
+
+### User
+- 📄 Template invoice profesional
+- ✏️ Buat & edit invoice
+- 👁️ Preview dengan watermark
+- 💰 Top up saldo via Pakasir
+- 📥 Download PDF final (Rp10.000/invoice)
+- 🔄 Re-download gratis untuk versi yang sama
+
+### Admin
+- 👥 Kelola template invoice
+- 📊 Lihat transaksi & ledger
+- 💳 Penyesuaian saldo manual
+- 📝 Audit log
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS
+- **Backend:** Next.js API Routes, Prisma ORM
+- **Database:** PostgreSQL (Supabase)
+- **Auth:** Supabase Auth
+- **Payment:** Pakasir
+- **PDF:** Puppeteer (optional)
+- **Deployment:** Vercel
+
+## Quick Start
 
 ```bash
+# 1. Install dependencies
+npm install
+
+# 2. Setup environment
+cp .env.example .env
+# Edit .env with your Supabase & Pakasir credentials
+
+# 3. Setup database
+npx prisma migrate dev --name init
+npx prisma db seed
+
+# 4. Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+📖 Lihat [SETUP.md](SETUP.md) untuk panduan lengkap.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev          # Development server
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run typecheck    # TypeScript check
+npm test             # Run tests (65 tests)
+npx prisma validate  # Validate schema
+npx prisma studio    # Open Prisma Studio
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                  # Next.js App Router
+│   ├── (auth)/          # Login, Register
+│   ├── app/             # User dashboard
+│   ├── admin/           # Admin dashboard
+│   └── api/             # API routes
+├── components/          # React components
+├── lib/                 # Utilities
+│   ├── db/             # Prisma client
+│   ├── supabase/       # Supabase client
+│   ├── pdf/            # PDF generation
+│   └── logger.ts       # Structured logging
+├── modules/            # Domain modules
+│   ├── auth/           # Authentication
+│   ├── invoices/       # Invoice management
+│   ├── wallet/         # Wallet operations
+│   ├── payments/       # Pakasir integration
+│   └── ...
+prisma/
+├── schema.prisma       # Database schema
+└── seed.ts             # Seed data
+tests/                  # Test files
+docs/                   # Documentation
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Business Rules
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Rule | Implementation |
+|------|----------------|
+| Top up hanya Rp50rb/100rb | `ALLOWED_TOPUP_AMOUNTS` constant |
+| Download Rp10rb/invoice | `FINAL_DOWNLOAD_PRICE` constant |
+| Re-download gratis | Cek status `paid` di version |
+| Edit invoice paid → versi baru | Versioning logic di service |
+| Webhook idempotent | `idempotency_key` di ledger |
+| Saldo tidak boleh negatif | Balance check sebelum debit |
 
-## Deploy on Vercel
+## Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [Product Requirements](docs/plans/2026-06-12-dokmaker-prd.md)
+- [System Design](docs/plans/2026-06-12-dokmaker-system-design.md)
+- [API Contract](docs/plans/2026-06-12-dokmaker-api-contract.md)
+- [Database Schema](docs/plans/2026-06-12-dokmaker-database-schema.md)
+- [Production Checklist](docs/production/env-checklist.md)
+- [Rollback Plan](docs/production/rollback-plan.md)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+
+```bash
+# Deploy to staging
+./scripts/deploy.sh staging
+
+# Deploy to production
+./scripts/deploy.sh production
+```
+
+Atau via Vercel:
+1. Push ke GitHub
+2. Import di vercel.com
+3. Add environment variables
+4. Deploy
+
+## License
+
+Proprietary - DokMaker

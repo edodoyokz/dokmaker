@@ -42,7 +42,7 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] App shell layouts (user area + admin area)
 - [x] Navigation (user: dashboard, templates, invoices, wallet; admin: templates, users, invoices, transactions)
 - [x] Auth pages (login, register)
-- [ ] Verify: auth guard tests pass
+- [x] Verify: auth guard tests pass
 
 ### Phase 3: Template Catalog & Admin Templates
 - [x] User template catalog (active templates only, with name/thumbnail/price)
@@ -121,7 +121,7 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [ ] Production env vars configured
 - [ ] Production deployment live
 - [x] Rollback plan documented
-- [ ] Launch evidence recorded
+- [x] Launch evidence recorded
 
 ## Verification
 Run after every major change:
