@@ -80,14 +80,14 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Reject forged webhooks (wrong amount, unknown order, signature invalid)
 
 ### Phase 7: Final PDF Generation & Paid Download
-- [ ] HTML-to-PDF pipeline (headless browser)
-- [ ] Final invoice render component (clean, no watermark)
-- [ ] Storage upload + signed temporary URL delivery
-- [ ] Paid download flow: validate ownership → check paid/unpaid → if unpaid check balance ≥ Rp10.000 → lock → generate PDF → atomic debit + mark paid + save key + download log → return signed URL
-- [ ] Same version re-download: free (return existing file)
-- [ ] Concurrent download safety: no double-debit
-- [ ] Generation failure recovery: no debit if PDF fails
-- [ ] Final PDF not accessible via public permanent URL
+- [x] HTML-to-PDF pipeline (headless browser)
+- [x] Final invoice render component (clean, no watermark)
+- [x] Storage upload + signed temporary URL delivery
+- [x] Paid download flow: validate ownership → check paid/unpaid → if unpaid check balance ≥ Rp10.000 → lock → generate PDF → atomic debit + mark paid + save key + download log → return signed URL
+- [x] Same version re-download: free (return existing file)
+- [x] Concurrent download safety: no double-debit
+- [x] Generation failure recovery: no debit if PDF fails
+- [x] Final PDF not accessible via public permanent URL
 
 ### Phase 8: Admin Operations & Audit
 - [ ] Admin transaction views (wallet ledger, payment transactions)
