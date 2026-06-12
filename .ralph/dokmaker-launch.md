@@ -67,17 +67,17 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Guest and other-user blocked from preview
 
 ### Phase 6: Wallet & Pakasir Top Up
-- [ ] Wallet summary page (balance + ledger history)
-- [ ] Ownership enforcement (user sees own wallet only)
-- [ ] Top up package selection (Rp50.000 and Rp100.000 only)
-- [ ] Reject arbitrary amounts server-side
-- [ ] Create payment_transaction with unique Pakasir order_id
-- [ ] Build Pakasir payment URL (https://app.pakasir.com/pay/{slug}/{amount}?order_id={id})
-- [ ] Pakasir webhook handler: persist event, match order_id, verify amount/project/status
-- [ ] Pakasir Transaction Detail API verification
-- [ ] Credit wallet exactly once on completed webhook
-- [ ] Idempotent: duplicate webhook does not double-credit
-- [ ] Reject forged webhooks (wrong amount, unknown order, signature invalid)
+- [x] Wallet summary page (balance + ledger history)
+- [x] Ownership enforcement (user sees own wallet only)
+- [x] Top up package selection (Rp50.000 and Rp100.000 only)
+- [x] Reject arbitrary amounts server-side
+- [x] Create payment_transaction with unique Pakasir order_id
+- [x] Build Pakasir payment URL (https://app.pakasir.com/pay/{slug}/{amount}?order_id={id})
+- [x] Pakasir webhook handler: persist event, match order_id, verify amount/project/status
+- [x] Pakasir Transaction Detail API verification
+- [x] Credit wallet exactly once on completed webhook
+- [x] Idempotent: duplicate webhook does not double-credit
+- [x] Reject forged webhooks (wrong amount, unknown order, signature invalid)
 
 ### Phase 7: Final PDF Generation & Paid Download
 - [ ] HTML-to-PDF pipeline (headless browser)
