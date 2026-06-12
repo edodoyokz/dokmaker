@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/modules/auth/session";
 import { createTopUpPayment } from "@/modules/payments/pakasir";
+import {
+  checkRateLimit,
+  getRateLimitKey,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+
+    // Rate limit check
+    const rateLimitKey = getRateLimitKey(request, user.id, "topup");
+    const rateLimitResponse = checkRateLimit(rateLimitKey, RATE_LIMITS.TOP_UP);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const body = await request.json();
     const { amount } = body;
 

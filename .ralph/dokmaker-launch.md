@@ -90,11 +90,11 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Final PDF not accessible via public permanent URL
 
 ### Phase 8: Admin Operations & Audit
-- [ ] Admin transaction views (wallet ledger, payment transactions)
-- [ ] Admin user/invoice support views (read-only)
-- [ ] Admin refund/adjustment (credit/debit with reason)
-- [ ] Audit log for all sensitive admin actions
-- [ ] Authorization: regular user blocked from admin operations
+- [x] Admin transaction views (wallet ledger, payment transactions)
+- [x] Admin user/invoice support views (read-only)
+- [x] Admin refund/adjustment (credit/debit with reason)
+- [x] Audit log for all sensitive admin actions
+- [x] Authorization: regular user blocked from admin operations
 
 ### Phase 9: Hardening & Polish
 - [ ] User dashboard (balance, recent invoices, recent transactions, quick actions)

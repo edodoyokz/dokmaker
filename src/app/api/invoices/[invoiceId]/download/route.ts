@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/modules/auth/session";
 import { processDownload } from "@/modules/downloads/service";
+import {
+  checkRateLimit,
+  getRateLimitKey,
+  RATE_LIMITS,
+} from "@/lib/rate-limit";
 
 export async function GET(
   request: Request,
@@ -8,6 +13,15 @@ export async function GET(
 ) {
   try {
     const user = await requireUser();
+
+    // Rate limit check
+    const rateLimitKey = getRateLimitKey(request, user.id, "download");
+    const rateLimitResponse = checkRateLimit(
+      rateLimitKey,
+      RATE_LIMITS.DOWNLOAD
+    );
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { invoiceId } = await params;
 
     const { pdf, filename } = await processDownload(user.id, invoiceId);
