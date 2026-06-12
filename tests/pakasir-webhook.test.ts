@@ -100,6 +100,31 @@ describe("handlePakasirWebhook", () => {
         amount: 50000,
       })
     ).rejects.toThrow(/amount/i);
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(creditWalletMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects webhook when pakasir API key is not configured", async () => {
+    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+      id: "payment-0",
+      userId: "user-0",
+      amount: 50000,
+      status: "created",
+    } satisfies PaymentRecord);
+
+    delete process.env.PAKASIR_API_KEY;
+
+    await expect(
+      handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-0",
+        amount: 50000,
+      })
+    ).rejects.toThrow(/api key/i);
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(creditWalletMock).not.toHaveBeenCalled();
   });
 
   it("does not credit wallet when pakasir detail status is not completed", async () => {
