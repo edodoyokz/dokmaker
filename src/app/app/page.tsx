@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
 
@@ -35,18 +36,18 @@ export default async function AppDashboard() {
         <div className="rounded-lg border bg-white p-4">
           <p className="text-sm text-gray-500">Aksi Cepat</p>
           <div className="mt-2 flex gap-2">
-            <a
+            <Link
               href="/app/templates"
               className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
             >
               Buat Invoice
-            </a>
-            <a
+            </Link>
+            <Link
               href="/app/wallet"
               className="rounded-md bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200"
             >
               Top Up
-            </a>
+            </Link>
           </div>
         </div>
       </div>

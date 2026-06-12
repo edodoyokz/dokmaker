@@ -33,15 +33,15 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Add pricing constants (FINAL_DOWNLOAD_PRICE=10000, ALLOWED_TOPUP_AMOUNTS=[50000,100000])
 
 ### Phase 2: Auth, Roles & App Shell
-- [ ] Implement Supabase Auth (client + server + middleware)
-- [ ] Login/register/logout flows
-- [ ] Sync local users record on auth
-- [ ] `requireUser()` and `requireAdmin()` helpers
-- [ ] Auto-create wallet for new users
-- [ ] Route protection middleware (guest→/app blocked, guest→/admin blocked, user→/admin blocked)
-- [ ] App shell layouts (user area + admin area)
-- [ ] Navigation (user: dashboard, templates, invoices, wallet; admin: templates, users, invoices, transactions)
-- [ ] Auth pages (login, register)
+- [x] Implement Supabase Auth (client + server + middleware)
+- [x] Login/register/logout flows
+- [x] Sync local users record on auth
+- [x] `requireUser()` and `requireAdmin()` helpers
+- [x] Auto-create wallet for new users
+- [x] Route protection middleware (guest→/app blocked, guest→/admin blocked, user→/admin blocked)
+- [x] App shell layouts (user area + admin area)
+- [x] Navigation (user: dashboard, templates, invoices, wallet; admin: templates, users, invoices, transactions)
+- [x] Auth pages (login, register)
 - [ ] Verify: auth guard tests pass
 
 ### Phase 3: Template Catalog & Admin Templates
