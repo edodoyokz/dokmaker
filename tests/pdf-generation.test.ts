@@ -17,6 +17,7 @@ const sampleContent: InvoiceContent = {
     invoiceNumber: "INV-001",
     issueDate: "2026-06-12",
     dueDate: "2026-06-19",
+    currency: "IDR",
   },
   items: [
     {
