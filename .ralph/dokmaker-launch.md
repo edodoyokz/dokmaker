@@ -52,12 +52,12 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Authorization: user cannot access admin template APIs
 
 ### Phase 4: Invoice Drafting & Versioning
-- [ ] Invoice content schema validation (sender/client/meta/items/summary)
-- [ ] Create invoice draft from active template (version 1 unpaid, active_version_id set)
-- [ ] Invoice list page
-- [ ] Edit unpaid version (overwrites snapshot, stays unpaid)
-- [ ] Edit paid version (creates new unpaid version, old paid remains)
-- [ ] Ownership enforcement on all invoice operations
+- [x] Invoice content schema validation (sender/client/meta/items/summary)
+- [x] Create invoice draft from active template (version 1 unpaid, active_version_id set)
+- [x] Invoice list page
+- [x] Edit unpaid version (overwrites snapshot, stays unpaid)
+- [x] Edit paid version (creates new unpaid version, old paid remains)
+- [x] Ownership enforcement on all invoice operations
 
 ### Phase 5: Preview Rendering
 - [ ] Protected preview page (auth + ownership check)
