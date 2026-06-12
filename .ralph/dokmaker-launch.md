@@ -60,11 +60,11 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Ownership enforcement on all invoice operations
 
 ### Phase 5: Preview Rendering
-- [ ] Protected preview page (auth + ownership check)
-- [ ] Render invoice from active version snapshot
-- [ ] Watermark: PREVIEW, user email, timestamp, version ID
-- [ ] Light anti-copy deterrence (no print/copy/context menu)
-- [ ] Guest and other-user blocked from preview
+- [x] Protected preview page (auth + ownership check)
+- [x] Render invoice from active version snapshot
+- [x] Watermark: PREVIEW, user email, timestamp, version ID
+- [x] Light anti-copy deterrence (no print/copy/context menu)
+- [x] Guest and other-user blocked from preview
 
 ### Phase 6: Wallet & Pakasir Top Up
 - [ ] Wallet summary page (balance + ledger history)
