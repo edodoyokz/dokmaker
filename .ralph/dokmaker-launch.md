@@ -100,8 +100,8 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] User dashboard (balance, recent invoices, recent transactions, quick actions)
 - [x] Loading, empty, and error states across all pages
 - [x] Rate limiting on top up, download, webhook endpoints
-- [ ] Structured logging (auth, payment, wallet, invoice, PDF, admin events)
-- [ ] Mobile-first responsive check (360px viewport, no horizontal overflow)
+- [x] Structured logging (auth, payment, wallet, invoice, PDF, admin events)
+- [x] Mobile-first responsive check (360px viewport, no horizontal overflow)
 
 ### Phase 10: Test Coverage
 - [ ] Financial integrity tests (top up, webhook, download, idempotency)
