@@ -24,13 +24,13 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Verify: `npm run lint && npm run typecheck && npm run build`
 
 ### Phase 1: Database & Domain Skeleton
-- [ ] Add Prisma with PostgreSQL
-- [ ] Implement full schema (users, wallets, wallet_ledger_entries, payment_transactions, payment_webhook_events, invoice_templates, invoices, invoice_versions, download_logs, admin_audit_logs)
-- [ ] Add enums, relationships, indexes, unique constraints
-- [ ] Run migration: `npx prisma validate && npx prisma migrate dev --name init_dokmaker`
-- [ ] Add seed data (admin user, test user, active template, inactive template)
-- [ ] Create domain module skeletons (auth, users, templates, invoices, wallet, payments, downloads, admin, audit)
-- [ ] Add pricing constants (FINAL_DOWNLOAD_PRICE=10000, ALLOWED_TOPUP_AMOUNTS=[50000,100000])
+- [x] Add Prisma with PostgreSQL
+- [x] Implement full schema (users, wallets, wallet_ledger_entries, payment_transactions, payment_webhook_events, invoice_templates, invoices, invoice_versions, download_logs, admin_audit_logs)
+- [x] Add enums, relationships, indexes, unique constraints
+- [x] Run migration: `npx prisma validate && npx prisma migrate dev --name init_dokmaker`
+- [x] Add seed data (admin user, test user, active template, inactive template)
+- [x] Create domain module skeletons (auth, users, templates, invoices, wallet, payments, downloads, admin, audit)
+- [x] Add pricing constants (FINAL_DOWNLOAD_PRICE=10000, ALLOWED_TOPUP_AMOUNTS=[50000,100000])
 
 ### Phase 2: Auth, Roles & App Shell
 - [ ] Implement Supabase Auth (client + server + middleware)
