@@ -1,7 +1,7 @@
 {
   "name": "dokmaker-launch",
   "taskFile": ".ralph/dokmaker-launch.md",
-  "iteration": 2,
+  "iteration": 3,
   "maxIterations": 50,
   "itemsPerIteration": 3,
   "reflectEvery": 5,

@@ -59,6 +59,22 @@ async function main() {
     },
   });
 
+  // Create GoCar invoice template
+  const gocarTemplate = await prisma.invoiceTemplate.upsert({
+    where: { id: "template-gocar-1" },
+    update: {},
+    create: {
+      id: "template-gocar-1",
+      name: "GoCar Receipt",
+      description:
+        "Template bukti pembayaran perjalanan GoCar Prioritas / GoCar Receipt.",
+      htmlTemplate: "<div>GoCar Template Placeholder</div>",
+      price: 10000,
+      status: "active",
+      sortOrder: 2,
+    },
+  });
+
   // Create inactive invoice template
   await prisma.invoiceTemplate.upsert({
     where: { id: "template-inactive-1" },
@@ -70,7 +86,7 @@ async function main() {
       htmlTemplate: "<div>Invoice Template Placeholder</div>",
       price: 10000,
       status: "inactive",
-      sortOrder: 2,
+      sortOrder: 3,
     },
   });
 
@@ -78,6 +94,7 @@ async function main() {
   console.log(`  Admin: ${admin.email} (${admin.id})`);
   console.log(`  Test user: ${testUser.email} (${testUser.id})`);
   console.log(`  Active template: ${activeTemplate.name} (${activeTemplate.id})`);
+  console.log(`  GoCar template: ${gocarTemplate.name} (${gocarTemplate.id})`);
 }
 
 main()

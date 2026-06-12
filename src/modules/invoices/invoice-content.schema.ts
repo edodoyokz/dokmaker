@@ -30,6 +30,23 @@ export const invoiceContentSchema = z.object({
     .min(1, "Minimal 1 item diperlukan"),
   notes: z.string().optional(),
   paymentInstruction: z.string().optional(),
+  gocar: z
+    .object({
+      driverName: z.string().optional(),
+      vehiclePlate: z.string().optional(),
+      vehicleType: z.string().optional(),
+      distance: z.string().optional(),
+      duration: z.string().optional(),
+      pickupTime: z.string().optional(),
+      pickupLocationName: z.string().optional(),
+      pickupAddress: z.string().optional(),
+      dropoffTime: z.string().optional(),
+      dropoffLocationName: z.string().optional(),
+      dropoffAddress: z.string().optional(),
+      paymentMethod: z.string().optional(),
+      serviceFeeDiscount: z.number().optional(),
+    })
+    .optional(),
 });
 
 export type InvoiceContent = z.infer<typeof invoiceContentSchema>;

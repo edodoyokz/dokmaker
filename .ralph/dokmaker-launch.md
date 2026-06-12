@@ -107,20 +107,20 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 - [x] Financial integrity tests (top up, webhook, download, idempotency)
 - [x] Authorization/data isolation tests (guest blocked, user isolation, admin guard)
 - [x] Invoice versioning tests (create, edit unpaid, edit paid)
-- [ ] Race condition tests (concurrent webhook, concurrent download)
+- [x] Race condition tests (concurrent webhook, concurrent download)
 - [x] All tests pass: `npm test`
 
 ### Phase 11: Deployment & Smoke Verification
-- [ ] Production environment checklist documented
+- [x] Production environment checklist documented
 - [ ] Preview/staging deployment configured
 - [ ] Smoke checklist executed with evidence
-- [ ] All verification commands pass: `npm run lint && npm run typecheck && npm test && npm run build && npx prisma validate`
+- [x] All verification commands pass: `npm run lint && npm run typecheck && npm test && npm run build && npx prisma validate`
 
 ### Phase 12: Production Launch
-- [ ] Production readiness review documented
+- [x] Production readiness review documented
 - [ ] Production env vars configured
 - [ ] Production deployment live
-- [ ] Rollback plan documented
+- [x] Rollback plan documented
 - [ ] Launch evidence recorded
 
 ## Verification
