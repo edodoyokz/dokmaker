@@ -16,12 +16,12 @@ Build DokMaker from scratch into a production-ready mobile-first PWA for invoice
 ## Checklist
 
 ### Phase 0: Repo Bootstrap
-- [ ] Initialize git repo
-- [ ] Scaffold Next.js + TypeScript + Tailwind + shadcn/ui
-- [ ] Add scripts: dev, build, start, lint, typecheck, test
-- [ ] Add .env.example with all required env categories
-- [ ] Add baseline linting and test config
-- [ ] Verify: `npm run lint && npm run typecheck && npm run build`
+- [x] Initialize git repo
+- [x] Scaffold Next.js + TypeScript + Tailwind + shadcn/ui
+- [x] Add scripts: dev, build, start, lint, typecheck, test
+- [x] Add .env.example with all required env categories
+- [x] Add baseline linting and test config
+- [x] Verify: `npm run lint && npm run typecheck && npm run build`
 
 ### Phase 1: Database & Domain Skeleton
 - [ ] Add Prisma with PostgreSQL

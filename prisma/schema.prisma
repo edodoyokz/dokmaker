@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  user
+  admin
+}
+
+enum TemplateStatus {
+  active
+  inactive
+}
+
+enum InvoiceStatus {
+  draft
+  active
+  archived
+}
+
+enum InvoiceVersionStatus {
+  unpaid
+  processing_payment
+  paid
+  generation_failed
+}
+
+enum WalletLedgerEntryType {
+  topup_credit
+  download_debit
+  refund_credit
+  manual_adjustment_credit
+  manual_adjustment_debit
+}
+
+enum LedgerStatus {
+  pending
+  success
+  failed
+  cancelled
+}
+
+enum PaymentStatus {
+  created
+  pending
+  success
+  failed
+  expired
+  cancelled
+}
+
+enum WebhookProcessingStatus {
+  received
+  processed
+  ignored_duplicate
+  failed
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  fullName           String?   @map("full_name")
+  role               UserRole  @default(user)
+  authProvider        String?   @map("auth_provider")
+  authProviderUserId String?   @map("auth_provider_user_id")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  wallet             Wallet?
+  invoices           Invoice[]
+  paymentTransactions PaymentTransaction[]
+  downloadLogs       DownloadLog[]
+  adminAuditLogs     AdminAuditLog[] @relation("AdminActor")
+  walletLedgerEntries WalletLedgerEntry[]
+
+  @@unique([authProvider, authProviderUserId])
+  @@map("users")
+}
+
+// ─── Wallets ─────────────────────────────────────────────────────────────────
+
+model Wallet {
+  id             String   @id @default(cuid())
+  userId         String   @unique @map("user_id")
+  currency       String   @default("IDR")
+  currentBalance Int      @default(0) @map("current_balance")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user           User     @relation(fields: [userId], references: [id])
+  ledgerEntries  WalletLedgerEntry[]
+
+  @@map("wallets")
+}
+
+// ─── Wallet Ledger Entries (append-only) ─────────────────────────────────────
+
+model WalletLedgerEntry {
+  id                    String                @id @default(cuid())
+  walletId              String                @map("wallet_id")
+  userId                String                @map("user_id")
+  entryType             WalletLedgerEntryType @map("entry_type")
+  amount                Int
+  currency              String                @default("IDR")
+  status                LedgerStatus
+  referenceType         String?               @map("reference_type")
+  referenceId           String?               @map("reference_id")
+  description           String?
+  idempotencyKey        String?               @unique @map("idempotency_key")
+  createdByActorType    String?               @map("created_by_actor_type")
+  createdByActorId      String?               @map("created_by_actor_id")
+  createdAt             DateTime              @default(now()) @map("created_at")
+
+  wallet                Wallet                @relation(fields: [walletId], references: [id])
+  user                  User                  @relation(fields: [userId], references: [id])
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([referenceType, referenceId])
+  @@map("wallet_ledger_entries")
+}
+
+// ─── Payment Transactions ────────────────────────────────────────────────────
+
+model PaymentTransaction {
+  id               String        @id @default(cuid())
+  userId           String        @map("user_id")
+  provider         String
+  providerReference String?      @map("provider_reference")
+  providerOrderId  String?       @map("provider_order_id")
+  amount           Int
+  currency         String        @default("IDR")
+  status           PaymentStatus @default(created)
+  redirectUrl      String?       @map("redirect_url")
+  rawPayloadSnapshot Json?       @map("raw_payload_snapshot")
+  paidAt           DateTime?     @map("paid_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  user             User          @relation(fields: [userId], references: [id])
+  webhookEvents    PaymentWebhookEvent[]
+
+  @@index([userId])
+  @@index([status])
+  @@unique([provider, providerReference])
+  @@unique([provider, providerOrderId])
+  @@map("payment_transactions")
+}
+
+// ─── Payment Webhook Events ──────────────────────────────────────────────────
+
+model PaymentWebhookEvent {
+  id              String                  @id @default(cuid())
+  provider        String
+  providerEventId String?                 @map("provider_event_id")
+  paymentTransactionId String?            @map("payment_transaction_id")
+  status          WebhookProcessingStatus @default(received)
+  rawBody         Json                    @map("raw_body")
+  errorMessage    String?                 @map("error_message")
+  processedAt     DateTime?               @map("processed_at")
+  createdAt       DateTime                @default(now()) @map("created_at")
+
+  paymentTransaction PaymentTransaction?  @relation(fields: [paymentTransactionId], references: [id])
+
+  @@index([provider, providerEventId])
+  @@index([paymentTransactionId])
+  @@map("payment_webhook_events")
+}
+
+// ─── Invoice Templates ───────────────────────────────────────────────────────
+
+model InvoiceTemplate {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  thumbnailUrl String?       @map("thumbnail_url")
+  htmlTemplate String         @map("html_template")
+  price       Int            @default(10000) // Rp10.000
+  currency    String         @default("IDR")
+  status      TemplateStatus @default(active)
+  sortOrder   Int            @default(0) @map("sort_order")
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  invoices    Invoice[]
+
+  @@map("invoice_templates")
+}
+
+// ─── Invoices ────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id               String       @id @default(cuid())
+  userId           String       @map("user_id")
+  templateId       String       @map("template_id")
+  invoiceNumber    String       @map("invoice_number")
+  status           InvoiceStatus @default(draft)
+  activeVersionId  String?      @map("active_version_id")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  user             User         @relation(fields: [userId], references: [id])
+  template         InvoiceTemplate @relation(fields: [templateId], references: [id])
+  versions         InvoiceVersion[]
+
+  @@index([userId])
+  @@index([templateId])
+  @@map("invoices")
+}
+
+// ─── Invoice Versions ────────────────────────────────────────────────────────
+
+model InvoiceVersion {
+  id              String               @id @default(cuid())
+  invoiceId       String               @map("invoice_id")
+  versionNumber   Int                  @map("version_number")
+  status          InvoiceVersionStatus @default(unpaid)
+  contentSnapshot Json                 @map("content_snapshot")
+  contentHash     String?              @map("content_hash")
+  storageKey      String?              @map("storage_key")
+  paidAt          DateTime?            @map("paid_at")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  invoice         Invoice              @relation(fields: [invoiceId], references: [id])
+  downloadLogs    DownloadLog[]
+
+  @@unique([invoiceId, versionNumber])
+  @@index([invoiceId])
+  @@index([status])
+  @@map("invoice_versions")
+}
+
+// ─── Download Logs ───────────────────────────────────────────────────────────
+
+model DownloadLog {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  invoiceVersionId String  @map("invoice_version_id")
+  wasPaidDownload Boolean  @default(false) @map("was_paid_download")
+  amount          Int      @default(0)
+  storageKey      String?  @map("storage_key")
+  userAgent       String?  @map("user_agent")
+  ipAddress       String?  @map("ip_address")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user            User          @relation(fields: [userId], references: [id])
+  invoiceVersion  InvoiceVersion @relation(fields: [invoiceVersionId], references: [id])
+
+  @@index([userId])
+  @@index([invoiceVersionId])
+  @@map("download_logs")
+}
+
+// ─── Admin Audit Logs ────────────────────────────────────────────────────────
+
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  adminUserId String   @map("admin_user_id")
+  action      String
+  targetType  String   @map("target_type")
+  targetId    String   @map("target_id")
+  detail      Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  adminUser   User     @relation("AdminActor", fields: [adminUserId], references: [id])
+
+  @@index([adminUserId])
+  @@index([targetType, targetId])
+  @@map("admin_audit_logs")
+}
