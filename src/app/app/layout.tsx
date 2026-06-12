@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/modules/auth/session";
 import LogoutButton from "@/components/auth/logout-button";
+import MobileNav from "@/components/layout/mobile-nav";
 
 export default async function AppLayout({
   children,
@@ -17,15 +18,17 @@ export default async function AppLayout({
           <Link href="/app" className="text-lg font-bold">
             DokMaker
           </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{user.email}</span>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="hidden text-sm text-gray-600 sm:block">
+              {user.email}
+            </span>
             <LogoutButton />
           </div>
         </div>
       </header>
 
       <div className="mx-auto flex max-w-7xl">
-        {/* Sidebar */}
+        {/* Sidebar - desktop only */}
         <aside className="hidden w-56 border-r bg-white py-4 md:block">
           <nav className="space-y-1 px-3">
             <NavLink href="/app" label="Dashboard" />
@@ -35,9 +38,12 @@ export default async function AppLayout({
           </nav>
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 p-4">{children}</main>
+        {/* Main content - with bottom padding for mobile nav */}
+        <main className="flex-1 p-4 pb-20 md:pb-4">{children}</main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <MobileNav />
     </div>
   );
 }
