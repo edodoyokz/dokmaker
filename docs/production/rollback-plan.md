@@ -1,164 +1,69 @@
-# DokMaker Rollback Plan
+# DokMaker Rollback / Forward-Fix Plan
 
-**Version:** v1.0
-**Last Updated:** 2026-06-12
-
----
-
-## 1. Overview
-
-This document describes procedures for rolling back DokMaker in case of critical issues after deployment.
+**Status:** Launch-preparation reference
+**Last updated:** 2026-06-12
+**Scope:** Safe recovery for code deploys, database migrations, and payment/wallet incidents.
 
 ---
 
-## 2. Rollback Triggers
+## 1. Principles
 
-Initiate rollback if:
-- Users cannot login
-- Invoice creation fails
-- Payment webhook fails repeatedly
-- Wallet balance inconsistencies detected
-- PDF download fails for all users
-- Security vulnerability discovered
+- Prefer forward-fix for small, low-risk issues; prefer rollback for broad regressions or data-integrity risk.
+- Never run destructive database operations without a confirmed backup.
+- Wallet ledger is append-only. Corrections are made with new compensating entries, never by editing/deleting existing rows.
 
 ---
 
-## 3. Rollback Procedures
+## 2. Code deploy rollback (Vercel)
 
-### 3.1 Application Rollback (Vercel)
+1. Identify the last known-good deployment in the Vercel dashboard or via `vercel_list_deployments`.
+2. Roll back the production alias to that deployment (`vercel rollback <deployment-url>` / `vercel_rollback`).
+3. Confirm the alias points to the known-good build.
+4. Re-run smoke checks: auth, template list, invoice create, wallet view.
+5. Record the incident in the launch evidence log.
 
-**Time to rollback:** ~2 minutes
+Rollback is safe when the schema is unchanged between the bad and good deploys. If a migration shipped with the bad deploy, see section 3 first.
 
-1. Go to Vercel Dashboard
-2. Select DokMaker project
-3. Go to Deployments
-4. Find last known-good deployment
-5. Click "..." → "Promote to Production"
+## 3. Database migration rollback
 
-**Alternative (CLI):**
-```bash
-npx vercel rollback
-```
+DokMaker uses Prisma migrations (`prisma/migrations`). There is currently 1 migration and schema is up to date.
 
-### 3.2 Database Rollback
+Before any migration in production:
+1. Take a verified backup/snapshot of the database.
+2. Review the generated SQL for destructive operations (DROP, ALTER that loses data).
+3. Apply with `prisma migrate deploy` (never `migrate dev` in production).
 
-**Important:** Database rollbacks are destructive. Prefer forward-fix.
+If a migration causes problems:
+- **Non-destructive migration:** forward-fix with a new corrective migration. This is the default and preferred path.
+- **Destructive migration:** restore from the pre-migration backup. Do not attempt manual partial reversals on financial tables.
 
-**If rollback needed:**
+Hard stop: if a migration is destructive and no backup exists, do not deploy.
 
-1. **Stop application** (set Vercel to maintenance mode)
-2. **Backup current state:**
-   ```bash
-   pg_dump $DATABASE_URL > backup_$(date +%Y%m%d_%H%M%S).sql
-   ```
-3. **Check migration status:**
-   ```bash
-   npx prisma migrate status
-   ```
-4. **For additive migrations:** Usually safe to keep
-5. **For destructive migrations:** Restore from backup
+## 4. Payment / wallet incident handling
 
-**Forward-fix preferred:**
-- Create new migration to fix issue
-- Deploy fix instead of rolling back
+### Duplicate credit suspected
+- Webhook crediting is idempotent via unique `idempotencyKey` on the ledger and an early-return for already-`success` payments (`src/modules/payments/pakasir.ts`, `src/modules/wallet/service.ts`).
+- Investigate via admin transaction views before any manual change.
+- If a genuine duplicate credit occurred, issue a compensating debit ledger entry with a documented reason via admin tooling. Do not delete the original entry.
 
-### 3.3 Pakasir Webhook Rollback
+### Duplicate / double download charge suspected
+- Download debit is idempotent via `download:{invoiceId}:{versionNumber}` key and a transactional paid transition.
+- If a user was double-charged, issue a compensating credit adjustment with reason via admin tooling.
 
-**If webhook causing issues:**
+### Webhook outage / missed credit
+- Pakasir transaction-detail API is the source of truth. Re-verification of a completed payment will credit once (idempotency prevents double credit on replay).
 
-1. **Disable webhook in Pakasir:**
-   - Login to Pakasir dashboard
-   - Go to project settings
-   - Remove/disable webhook URL
+## 5. Post-incident checklist
 
-2. **Manual reconciliation:**
-   - Check `payment_webhook_events` table
-   - Check `payment_transactions` status
-   - Manually credit wallet if needed via admin
+- [ ] Incident root cause recorded
+- [ ] Compensating ledger entries (if any) documented with reason
+- [ ] Affected users identified
+- [ ] Verification commands re-run after fix
+- [ ] Launch evidence log updated
 
-3. **Re-enable webhook:**
-   - Fix application code
-   - Deploy fix
-   - Re-enable webhook in Pakasir
+## 6. Hard stops (escalate, do not improvise)
 
-### 3.4 Emergency Contacts
-
-| Service | Contact | Notes |
-|---------|---------|-------|
-| Vercel | Dashboard | Self-service |
-| Supabase | Dashboard | Self-service |
-| Pakasir | Support | For payment issues |
-| Database | Provider support | For DB issues |
-
----
-
-## 4. Communication Plan
-
-### 4.1 During Rollback
-
-1. **Status page:** Update with issue description
-2. **Users:** Email if payment/wallet affected
-3. **Team:** Notify via internal channel
-
-### 4.2 After Rollback
-
-1. **Post-mortem:** Document what happened
-2. **Root cause:** Identify and fix
-3. **Prevention:** Add tests/monitoring
-
----
-
-## 5. Recovery Procedures
-
-### 5.1 Payment Reconciliation
-
-If wallet balances incorrect:
-
-```sql
--- Check ledger sum vs balance
-SELECT 
-  w.user_id,
-  w.current_balance,
-  COALESCE(SUM(CASE WHEN wle.entry_type LIKE '%credit' THEN wle.amount ELSE -wle.amount END), 0) as calculated_balance
-FROM wallets w
-LEFT JOIN wallet_ledger_entries wle ON w.id = wle.wallet_id AND wle.status = 'success'
-GROUP BY w.user_id, w.current_balance
-HAVING w.current_balance != COALESCE(SUM(CASE WHEN wle.entry_type LIKE '%credit' THEN wle.amount ELSE -wle.amount END), 0);
-```
-
-### 5.2 Missing Webhook Recovery
-
-```sql
--- Find successful payments not credited
-SELECT pt.id, pt.provider_order_id, pt.amount, pt.user_id
-FROM payment_transactions pt
-LEFT JOIN wallet_ledger_entries wle ON wle.reference_id = pt.id AND wle.entry_type = 'topup_credit'
-WHERE pt.status = 'success' 
-AND wle.id IS NULL;
-```
-
----
-
-## 6. Testing Rollback
-
-Quarterly rollback drill:
-1. Deploy to staging
-2. Simulate issue
-3. Execute rollback
-4. Verify recovery
-5. Document time taken
-
----
-
-## 7. Checklist
-
-Before declaring rollback complete:
-
-- [ ] Application serving responses
-- [ ] Users can login
-- [ ] Invoice creation works
-- [ ] Payment webhook processing
-- [ ] Wallet balances correct
-- [ ] PDF download working
-- [ ] Admin access working
-- [ ] No error spikes in logs
+- Destructive migration without backup
+- Wallet mutation that cannot be made atomic
+- Webhook idempotency cannot be guaranteed
+- Final file served publicly without authorization
