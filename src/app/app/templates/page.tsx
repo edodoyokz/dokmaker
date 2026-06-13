@@ -1,11 +1,11 @@
 import { requireUser } from "@/modules/auth";
 import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Layers, Sparkles, FileText, ArrowRight, Eye } from "lucide-react";
+import { Layers, Sparkles, ArrowRight } from "lucide-react";
 
 export default async function TemplatesPage() {
   await requireUser();

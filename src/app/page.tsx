@@ -7,7 +7,6 @@ import {
   Sparkles, 
   ShieldCheck, 
   Smartphone, 
-  Download, 
   Zap 
 } from "lucide-react";
 

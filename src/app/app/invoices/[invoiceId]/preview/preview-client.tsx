@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import InvoicePreview from "@/components/invoices/invoice-preview";
 import { 
-  FileText, 
   ArrowLeft, 
   Download, 
   CreditCard, 
   Sparkles, 
   Edit3, 
   AlertCircle,
-  CheckCircle2,
   Wallet
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";

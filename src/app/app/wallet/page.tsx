@@ -10,7 +10,6 @@ import {
   Plus, 
   ArrowUpRight, 
   ArrowDownLeft, 
-  HelpCircle, 
   AlertCircle, 
   CheckCircle2, 
   History 

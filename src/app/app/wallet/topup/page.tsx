@@ -9,11 +9,9 @@ import {
   CheckCircle2, 
   CreditCard, 
   ShieldCheck, 
-  Zap,
-  Sparkles
+  Zap
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
 export default function TopUpPage() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);

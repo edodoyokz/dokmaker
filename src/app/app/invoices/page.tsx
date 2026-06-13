@@ -8,12 +8,10 @@ import { cn } from "@/lib/utils";
 import { 
   FileText, 
   Plus, 
-  Layers, 
   Eye, 
   Edit3, 
   Calendar, 
-  User, 
-  AlertCircle 
+  User 
 } from "lucide-react";
 
 export default async function InvoicesPage() {

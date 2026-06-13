@@ -8,7 +8,6 @@ import {
   FileText, 
   Layers, 
   Plus, 
-  History, 
   Wallet, 
   Home, 
   LayoutDashboard 
