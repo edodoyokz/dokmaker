@@ -1,5 +1,44 @@
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
 
+interface PageLike {
+  setContent(html: string, options: { waitUntil: string }): Promise<void>;
+  pdf(options: {
+    format: string;
+    printBackground: boolean;
+    margin: { top: string; right: string; bottom: string; left: string };
+  }): Promise<Uint8Array | Buffer>;
+}
+
+interface BrowserLike {
+  newPage(): Promise<PageLike>;
+  close(): Promise<void>;
+}
+
+interface PuppeteerLike {
+  launch(options: { headless: boolean }): Promise<BrowserLike>;
+}
+
+interface PuppeteerModuleLike {
+  default: PuppeteerLike;
+}
+
+interface GenerateInvoicePdfOptions {
+  loadPuppeteer?: () => Promise<PuppeteerModuleLike>;
+}
+
+let cachedPuppeteerModule: PuppeteerModuleLike | null = null;
+
+async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
+  if (cachedPuppeteerModule) {
+    return cachedPuppeteerModule;
+  }
+
+  const runtimeEval = globalThis.eval as typeof eval;
+  const imported = (await runtimeEval('import("puppeteer")')) as PuppeteerModuleLike;
+  cachedPuppeteerModule = imported;
+  return imported;
+}
+
 /**
  * Generate HTML for final invoice PDF.
  * This produces a clean invoice without watermark.
@@ -124,14 +163,17 @@ export function generateInvoiceHtml(content: InvoiceContent): string {
  * For now, returns the HTML as a placeholder.
  */
 export async function generateInvoicePdf(
-  content: InvoiceContent
+  content: InvoiceContent,
+  options: GenerateInvoicePdfOptions = {}
 ): Promise<Buffer> {
   const html = generateInvoiceHtml(content);
+  const loadPuppeteer = options.loadPuppeteer ?? loadRuntimePuppeteer;
 
-  // Try to use Puppeteer if available
+  let browser: BrowserLike | null = null;
+
   try {
-    const puppeteer = await import("puppeteer" as string);
-    const browser = await puppeteer.default.launch({ headless: true });
+    const puppeteer = await loadPuppeteer();
+    browser = await puppeteer.default.launch({ headless: true });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
     const pdfBuffer = await page.pdf({
@@ -139,14 +181,18 @@ export async function generateInvoicePdf(
       printBackground: true,
       margin: { top: "20mm", right: "20mm", bottom: "20mm", left: "20mm" },
     });
-    await browser.close();
     return Buffer.from(pdfBuffer);
-  } catch {
-    // Fallback: return HTML buffer if Puppeteer not available
-    // In production, this should fail with a proper error
-    console.warn(
-      "Puppeteer not available, returning HTML buffer as fallback"
+  } catch (error) {
+    throw new Error(
+      `PDF engine unavailable for final invoice generation: ${error instanceof Error ? error.message : "unknown error"}`
     );
-    return Buffer.from(html, "utf-8");
+  } finally {
+    if (browser) {
+      try {
+        await browser.close();
+      } catch {
+        // Ignore browser close errors so the original PDF failure is preserved.
+      }
+    }
   }
 }

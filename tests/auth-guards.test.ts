@@ -77,7 +77,6 @@ describe("Auth Guard Rules", () => {
   describe("User Sync", () => {
     it("new auth user should create local user record", () => {
       // Business rule: on first login, create local user
-      const authUser = { id: "auth-123", email: "new@example.com" };
       const localUser = null; // doesn't exist yet
       const shouldCreate = !localUser;
       expect(shouldCreate).toBe(true);

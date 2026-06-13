@@ -23,7 +23,6 @@ describe("Invoice Versioning Rules", () => {
 
   describe("Edit Unpaid Version", () => {
     it("editing unpaid version should overwrite content", () => {
-      const originalContent = { items: [{ description: "A" }] };
       const updatedContent = { items: [{ description: "B" }] };
       // Business rule: same version, updated content
       expect(updatedContent.items[0].description).toBe("B");
