@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { creditWallet, debitWallet } from "@/modules/wallet/service";
+import { writeAuditLog } from "@/modules/audit";
 
 export async function POST(
   request: Request,
@@ -78,14 +79,12 @@ export async function POST(
       }
 
       // Audit log
-      await tx.adminAuditLog.create({
-        data: {
-          adminUserId: admin.id,
-          action: `manual_adjustment_${type}`,
-          targetType: "wallet",
-          targetId: userId,
-          detail: { amount, reason },
-        },
+      await writeAuditLog(tx, {
+        adminUserId: admin.id,
+        action: `manual_adjustment_${type}`,
+        targetType: "wallet",
+        targetId: userId,
+        detail: { amount, reason },
       });
     });
 
