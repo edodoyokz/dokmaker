@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { writeAuditLog } from "@/modules/audit";
 
 export async function PATCH(
   request: Request,
@@ -25,14 +26,12 @@ export async function PATCH(
     });
 
     // Audit log
-    await prisma.adminAuditLog.create({
-      data: {
-        adminUserId: admin.id,
-        action: "update_template_status",
-        targetType: "invoice_template",
-        targetId: templateId,
-        detail: { status },
-      },
+    await writeAuditLog(prisma, {
+      adminUserId: admin.id,
+      action: "update_template_status",
+      targetType: "invoice_template",
+      targetId: templateId,
+      detail: { status },
     });
 
     return NextResponse.json(template);

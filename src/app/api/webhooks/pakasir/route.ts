@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       request.headers.get("x-real-ip") ||
       "unknown";
     const rateLimitKey = `webhook:${ip}`;
-    const rateLimitResponse = checkRateLimit(rateLimitKey, RATE_LIMITS.WEBHOOK);
+    const rateLimitResponse = await checkRateLimit(rateLimitKey, RATE_LIMITS.WEBHOOK);
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();

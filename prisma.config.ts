@@ -1,4 +1,10 @@
-import { defineConfig, env } from "prisma/config";
+// prisma.config.ts
+import { defineConfig } from "prisma/config";
+
+// `prisma generate` must work in CI/fresh checkouts where no live DB exists.
+// `migrate`/`db push`/`deploy` always run with a real DATABASE_URL set.
+const placeholderUrl =
+  "postgresql://placeholder:placeholder@localhost:5432/placeholder";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -8,7 +14,8 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: env("DATABASE_URL"),
-    directUrl: env("DIRECT_URL"),
+    url: process.env.DATABASE_URL ?? placeholderUrl,
+    directUrl:
+      process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? placeholderUrl,
   },
 });

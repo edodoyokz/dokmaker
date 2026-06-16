@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     // Rate limit check
     const rateLimitKey = getRateLimitKey(request, user.id, "topup");
-    const rateLimitResponse = checkRateLimit(rateLimitKey, RATE_LIMITS.TOP_UP);
+    const rateLimitResponse = await checkRateLimit(rateLimitKey, RATE_LIMITS.TOP_UP);
     if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();

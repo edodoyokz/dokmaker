@@ -125,11 +125,17 @@ export async function debitWallet(
     throw new Error("Wallet tidak ditemukan");
   }
 
-  if (wallet.currentBalance < amount) {
-    throw new Error("Saldo tidak mencukupi");
+  if (amount <= 0) {
+    throw new Error("Jumlah debit harus lebih dari 0");
   }
 
-  // Create ledger entry and update balance atomically
+  // Create ledger entry and update balance atomically.
+  //
+  // The balance check + decrement MUST be a single conditional UPDATE so that
+  // two concurrent debits for DIFFERENT idempotency keys (e.g. two distinct
+  // invoice versions at once) cannot both pass a pre-read balance check and
+  // overdraw the wallet. updateMany is atomic at the row level in Postgres and
+  // returns count=0 when the WHERE clause (balance >= amount) no longer holds.
   const entry = await tx.walletLedgerEntry.create({
     data: {
       walletId: wallet.id,
@@ -147,14 +153,21 @@ export async function debitWallet(
     },
   });
 
-  await tx.wallet.update({
-    where: { id: wallet.id },
+  const result = await tx.wallet.updateMany({
+    where: { id: wallet.id, currentBalance: { gte: amount } },
     data: {
       currentBalance: {
         decrement: amount,
       },
     },
   });
+
+  if (result.count === 0) {
+    // Balance was insufficient at commit time. The ledger entry above was
+    // created inside this transaction, which will be rolled back by the caller's
+    // $transaction wrapper when we throw — leaving no partial mutation.
+    throw new Error("Saldo tidak mencukupi");
+  }
 
   return entry;
 }

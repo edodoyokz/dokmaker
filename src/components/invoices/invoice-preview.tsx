@@ -15,6 +15,20 @@ interface Props {
   };
 }
 
+/**
+ * Build the tiled watermark text shown over draft previews. Each tile carries
+ * the viewer's email + the preview timestamp so a leaked draft can be traced
+ * back to its origin. Per AGENTS.md §2 this is deterrence, not a guarantee.
+ */
+function buildWatermarkText(
+  previewMeta?: { email: string; timestamp: string; versionId: string }
+): string {
+  const who = previewMeta?.email || "preview";
+  const when = previewMeta?.timestamp || new Date().toISOString();
+  const tile = `PREVIEW • ${who} • ${when}    `;
+  return tile.repeat(120);
+}
+
 export default function InvoicePreview({ content, isPreview, previewMeta }: Props) {
   const total = content.items.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
@@ -22,14 +36,48 @@ export default function InvoicePreview({ content, isPreview, previewMeta }: Prop
   );
 
   return (
-    <div className="relative mx-auto max-w-2xl bg-white p-8 shadow-lg">
-      {/* Watermark for preview */}
+    <div
+      className="relative mx-auto max-w-2xl bg-white p-8 shadow-lg"
+      style={
+        isPreview
+          ? { userSelect: "none", WebkitUserSelect: "none" }
+          : undefined
+      }
+    >
+      {/* Deterrence watermark for preview.
+          AGENTS.md §2: this is deterrence only — NOT screenshot-proof. We overlay a
+          repeating, email+timestamp-bearing watermark to discourage copying and to
+          identify the source if a draft leaks. Print is also disabled via CSS. */}
       {isPreview && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="rotate-[-30deg] text-6xl font-bold text-gray-200 opacity-30">
-            PREVIEW
+        <>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 overflow-hidden"
+            style={{ zIndex: 5 }}
+          >
+            <div
+              className="absolute inset-0 dokmaker-preview-watermark"
+              style={{
+                fontSize: "14px",
+                fontWeight: 700,
+                color: "rgba(17,24,39,0.12)",
+                transform: "rotate(-30deg)",
+                transformOrigin: "center",
+                whiteSpace: "pre",
+                lineHeight: "3.2em",
+                letterSpacing: "0.1em",
+                wordBreak: "break-all",
+                // Tiled repeating text via a long repeated string.
+                content: '"PREVIEW"',
+              }}
+            >
+              {buildWatermarkText(previewMeta)}
+            </div>
           </div>
-        </div>
+          {/* Print deterrence: a print-only overlay hides the document body. */}
+          <style>{`@media print { .dokmaker-preview-watermark-print { position: fixed; inset: 0; background: #fff; z-index: 9999; } body * { visibility: hidden; } }`}</style>
+          <div className="dokmaker-preview-watermark-print hidden" />
+        </>
       )}
 
       {/* Header */}
