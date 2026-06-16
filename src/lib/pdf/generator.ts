@@ -1,4 +1,6 @@
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
+import puppeteerCore from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 interface PageLike {
   setContent(html: string, options: { waitUntil: string }): Promise<void>;
@@ -15,7 +17,11 @@ interface BrowserLike {
 }
 
 interface PuppeteerLike {
-  launch(options: { headless: boolean }): Promise<BrowserLike>;
+  launch(options?: {
+    headless?: boolean | "shell";
+    executablePath?: string;
+    args?: string[];
+  }): Promise<BrowserLike>;
 }
 
 interface PuppeteerModuleLike {
@@ -23,20 +29,42 @@ interface PuppeteerModuleLike {
 }
 
 interface GenerateInvoicePdfOptions {
+  /** Injectable launcher for tests. Defaults to the serverless Chromium runtime. */
   loadPuppeteer?: () => Promise<PuppeteerModuleLike>;
 }
 
 let cachedPuppeteerModule: PuppeteerModuleLike | null = null;
 
+/**
+ * Build a Puppeteer module backed by @sparticuz/chromium.
+ *
+ * @sparticuz/chromium ships a single AWS-Lambda/Vercel-compatible Chromium binary,
+ * which is the only reliable way to render PDFs inside serverless Node runtimes
+ * (stock Puppeteer's downloaded Chromium cannot run there). In development the
+ * same launcher also works because chromium.executablePath() resolves the local
+ * binary extracted to /tmp.
+ */
 async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
   if (cachedPuppeteerModule) {
     return cachedPuppeteerModule;
   }
 
-  const runtimeEval = globalThis.eval as typeof eval;
-  const imported = (await runtimeEval('import("puppeteer")')) as PuppeteerModuleLike;
-  cachedPuppeteerModule = imported;
-  return imported;
+  const puppeteerModule: PuppeteerModuleLike = {
+    default: {
+      launch: async (options = {}) => {
+        const executablePath = await chromium.executablePath();
+        const browser = await puppeteerCore.launch({
+          executablePath,
+          args: chromium.args,
+          headless: options.headless ?? true,
+        });
+        return browser as unknown as BrowserLike;
+      },
+    },
+  };
+
+  cachedPuppeteerModule = puppeteerModule;
+  return puppeteerModule;
 }
 
 /**
