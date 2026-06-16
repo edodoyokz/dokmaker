@@ -22,7 +22,7 @@ export async function GET(
 
     // Rate limit check
     const rateLimitKey = getRateLimitKey(request, user.id, "download");
-    const rateLimitResponse = checkRateLimit(
+    const rateLimitResponse = await checkRateLimit(
       rateLimitKey,
       RATE_LIMITS.DOWNLOAD
     );
