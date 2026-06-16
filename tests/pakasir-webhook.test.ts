@@ -5,6 +5,9 @@ vi.mock("@/lib/db/prisma", () => ({
     paymentTransaction: {
       findFirst: vi.fn(),
     },
+    paymentWebhookEvent: {
+      findUnique: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -45,6 +48,9 @@ const prismaMock = prisma as unknown as {
   paymentTransaction: {
     findFirst: ReturnType<typeof vi.fn>;
   };
+  paymentWebhookEvent: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
   $transaction: ReturnType<typeof vi.fn>;
 };
 const creditWalletMock = creditWallet as unknown as ReturnType<typeof vi.fn>;
@@ -56,6 +62,9 @@ describe("handlePakasirWebhook", () => {
     process.env.PAKASIR_PROJECT_SLUG = "dokmaker-test";
     process.env.PAKASIR_API_KEY = "secret-key";
     process.env.PAKASIR_BASE_URL = "https://app.pakasir.com";
+    delete process.env.PAKASIR_WEBHOOK_SECRET;
+    // By default, no prior webhook event exists.
+    prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue(null);
   });
 
   it("rejects webhook when project slug does not match", async () => {
@@ -266,5 +275,134 @@ describe("handlePakasirWebhook", () => {
       "pakasir"
     );
     expect(createMock).toHaveBeenCalledTimes(1);
+  });
+
+  // ── P1-2: intake-level dedup + optional HMAC signature ────────────────
+  describe("intake-level event dedup", () => {
+    it("returns ignored_duplicate when a processed event with the same id exists", async () => {
+      prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue({
+        id: "evt-1",
+        status: "processed",
+      });
+
+      const result = await handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-DUP",
+        amount: 50000,
+        providerEventId: "EVT-1",
+      });
+
+      expect(result).toEqual({ status: "ignored_duplicate" });
+      // Never reaches the DB credit path or the upstream verify call.
+      expect(prismaMock.paymentTransaction.findFirst).not.toHaveBeenCalled();
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+      expect(creditWalletMock).not.toHaveBeenCalled();
+    });
+
+    it("dedups by order_id when providerEventId is omitted", async () => {
+      prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue({
+        id: "evt-order",
+        status: "processed",
+      });
+
+      const result = await handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-FALLBACK",
+        amount: 50000,
+      });
+
+      expect(result).toEqual({ status: "ignored_duplicate" });
+      expect(prismaMock.paymentWebhookEvent.findUnique).toHaveBeenCalledWith({
+        where: {
+          provider_providerEventId: {
+            provider: "pakasir",
+            providerEventId: "ORDER-FALLBACK",
+          },
+        },
+      });
+    });
+
+    it("does not dedup on a non-processed (e.g. failed) prior event", async () => {
+      prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue({
+        id: "evt-failed",
+        status: "failed",
+      });
+      prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+        id: "payment-1",
+        userId: "user-1",
+        amount: 50000,
+        status: "created",
+      } satisfies PaymentRecord);
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: false,
+          json: async () => ({ message: "upstream failure" }),
+        })
+      );
+
+      // Should proceed past dedup and fail at verification, not be ignored.
+      await expect(
+        handlePakasirWebhook({
+          project: "dokmaker-test",
+          order_id: "ORDER-RETRY",
+          amount: 50000,
+        })
+      ).rejects.toThrow(/verifikasi transaksi/i);
+    });
+  });
+
+  describe("optional HMAC signature verification", () => {
+    it("rejects a webhook missing a signature when a secret is configured", async () => {
+      process.env.PAKASIR_WEBHOOK_SECRET = "shared-secret";
+      await expect(
+        handlePakasirWebhook({
+          project: "dokmaker-test",
+          order_id: "ORDER-NOSIG",
+          amount: 50000,
+        })
+      ).rejects.toThrow(/tanda tangan webhook hilang/i);
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("rejects a webhook with an invalid signature", async () => {
+      process.env.PAKASIR_WEBHOOK_SECRET = "shared-secret";
+      await expect(
+        handlePakasirWebhook({
+          project: "dokmaker-test",
+          order_id: "ORDER-BADSIG",
+          amount: 50000,
+          signature: "deadbeef",
+        })
+      ).rejects.toThrow(/tanda tangan webhook tidak valid/i);
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("accepts a webhook with a valid signature", async () => {
+      process.env.PAKASIR_WEBHOOK_SECRET = "shared-secret";
+      // Build the expected signature the same way the handler does.
+      const { createHmac } = await import("node:crypto");
+      const signature = createHmac("sha256", "shared-secret")
+        .update("ORDER-GOODSIG:50000")
+        .digest("hex");
+
+      prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+        id: "payment-9",
+        userId: "user-9",
+        amount: 50000,
+        status: "success",
+      } satisfies PaymentRecord);
+
+      const result = await handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-GOODSIG",
+        amount: 50000,
+        signature,
+      });
+
+      // Signature valid → proceeds past verification; payment already success.
+      expect(result).toEqual({ status: "already_processed" });
+    });
   });
 });
