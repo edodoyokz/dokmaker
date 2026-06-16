@@ -46,12 +46,15 @@ async function main() {
   // Create active invoice template
   const activeTemplate = await prisma.invoiceTemplate.upsert({
     where: { id: "template-active-1" },
-    update: {},
+    update: {
+      thumbnailUrl: "/templates/profesional-invoice.png",
+    },
     create: {
       id: "template-active-1",
       name: "Invoice Profesional",
       description:
         "Template invoice profesional untuk freelancer dan bisnis kecil.",
+      thumbnailUrl: "/templates/profesional-invoice.png",
       htmlTemplate: "<div>Invoice Template Placeholder</div>",
       price: 10000,
       status: "active",
@@ -62,12 +65,15 @@ async function main() {
   // Create GoCar invoice template
   const gocarTemplate = await prisma.invoiceTemplate.upsert({
     where: { id: "template-gocar-1" },
-    update: {},
+    update: {
+      thumbnailUrl: "/templates/gocar-receipt.png",
+    },
     create: {
       id: "template-gocar-1",
       name: "GoCar Receipt",
       description:
         "Template bukti pembayaran perjalanan GoCar Prioritas / GoCar Receipt.",
+      thumbnailUrl: "/templates/gocar-receipt.png",
       htmlTemplate: "<div>GoCar Template Placeholder</div>",
       price: 10000,
       status: "active",
