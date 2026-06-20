@@ -7,7 +7,25 @@ import Link from "next/link";
 export default function NewTemplatePage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [htmlTemplate, setHtmlTemplate] = useState("<div>Invoice Template</div>");
+  const [htmlTemplate, setHtmlTemplate] = useState(`<div class="invoice">
+  {{preview.watermark}}
+  <h1>INVOICE {{invoice.number}}</h1>
+  <p>Tanggal: {{invoice.issueDate}}</p>
+  <p>Dari: {{sender.name}}</p>
+  <p>Untuk: {{client.name}}</p>
+  <table>
+    <thead><tr><th>Deskripsi</th><th>Qty</th><th>Harga</th><th>Subtotal</th></tr></thead>
+    <tbody>
+      {{#items}}
+      <tr><td>{{description}}</td><td>{{quantity}}</td><td>{{unitPrice}}</td><td>{{subtotal}}</td></tr>
+      {{/items}}
+    </tbody>
+  </table>
+  <p>Total: {{total}}</p>
+  <p>{{notes}}</p>
+  <p>{{paymentInstruction}}</p>
+  {{preview.meta}}
+</div>`);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -84,6 +102,34 @@ export default function NewTemplatePage() {
             required
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
           />
+          <p className="mt-2 text-xs text-gray-500 leading-relaxed">
+            Placeholder yang tersedia:{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{invoice.number}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{invoice.issueDate}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{invoice.dueDate}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{invoice.currency}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{sender.name}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{sender.address}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{sender.email}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{sender.phone}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{client.name}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{client.address}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{client.email}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{client.phone}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{total}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{notes}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{paymentInstruction}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{preview.watermark}}"}</code> (hanya preview),{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{preview.meta}}"}</code> (hanya preview).
+            Blok item:{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{#items}}"}...{"{{/items}}"}</code>{" "}
+            dengan{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{description}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{quantity}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{unitPrice}}"}</code>,{" "}
+            <code className="bg-gray-100 px-1 rounded">{"{{subtotal}}"}</code>.
+            Gunakan system font (Arial, Georgia, Courier) dan inline <code className="bg-gray-100 px-1 rounded">&lt;style&gt;</code> di dalam template.
+          </p>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
