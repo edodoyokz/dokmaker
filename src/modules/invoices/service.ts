@@ -3,6 +3,7 @@ import {
   invoiceContentSchema,
   type InvoiceContent,
 } from "./invoice-content.schema";
+import { hashInvoiceContent } from "./content-hash";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -43,6 +44,7 @@ export async function createInvoice(
         versionNumber: 1,
         status: "unpaid",
         contentSnapshot: validated as unknown as Prisma.InputJsonValue,
+        contentHash: hashInvoiceContent(validated),
       },
     });
 
@@ -104,6 +106,7 @@ export async function editInvoice(
       where: { id: activeVersion.id },
       data: {
         contentSnapshot: validated as unknown as Prisma.InputJsonValue,
+        contentHash: hashInvoiceContent(validated),
       },
     });
     return { invoice, version: updated, isNewVersion: false };
@@ -126,6 +129,7 @@ export async function editInvoice(
           versionNumber: newVersionNumber,
           status: "unpaid",
           contentSnapshot: validated as unknown as Prisma.InputJsonValue,
+          contentHash: hashInvoiceContent(validated),
         },
       });
 
