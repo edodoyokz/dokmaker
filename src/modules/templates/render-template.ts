@@ -2,7 +2,6 @@ import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
 import type { DocumentType } from "@/modules/documents/types";
 import {
   getDocumentTypeDefinition,
-  isSupportedDocumentType,
 } from "@/modules/documents/document-type-registry";
 import { escapeHtml, formatRupiah } from "./render-utils";
 
@@ -23,7 +22,7 @@ export type RenderInvoiceTemplateHtmlInput = {
 
 export type RenderDocumentTemplateHtmlInput = {
   htmlTemplate: string;
-  documentType: DocumentType | string;
+  documentType: DocumentType;
   content: unknown;
   mode: RenderMode;
   previewMeta?: PreviewMeta;
@@ -91,21 +90,18 @@ export function renderDocumentTemplateHtml({
   mode,
   previewMeta,
 }: RenderDocumentTemplateHtmlInput): string {
-  const resolvedType = isSupportedDocumentType(documentType)
-    ? documentType
-    : "invoice";
-  const definition = getDocumentTypeDefinition(resolvedType);
+  const definition = getDocumentTypeDefinition(documentType);
   const parsed = definition.schema.parse(content);
 
   const scalarValues: Record<string, string> = {
-    ...(definition.buildRenderContext as (content: unknown) => Record<string, string>)(parsed),
+    ...definition.buildRenderContext(parsed),
     "preview.watermark": renderPreviewWatermark(mode),
     "preview.meta": renderPreviewMeta(mode, previewMeta),
   };
 
   let html = htmlTemplate;
 
-  if (resolvedType === "invoice") {
+  if (documentType === "invoice") {
     html = renderInvoiceItemsBlock(html, parsed as InvoiceContent);
   }
 
