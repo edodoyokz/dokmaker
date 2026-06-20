@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 import { FINAL_DOWNLOAD_PRICE } from "@/modules/pricing/constants";
 import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
+import { pdfStorage, buildInvoiceFinalPdfStorageKey } from "./pdf-storage";
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
 
 /**
@@ -39,9 +40,35 @@ export async function processDownload(
   // If already paid, return free re-download
   if (activeVersion.status === "paid") {
     logger.download("Free re-download", { invoiceId, versionId: activeVersion.id }, userId);
-    const pdf = await generateInvoicePdf(content, {
-      template: { htmlTemplate: invoice.template.htmlTemplate },
-    });
+
+    let pdf: Buffer;
+
+    if (activeVersion.storageKey) {
+      // Read from storage — immutable artifact, no regeneration needed
+      pdf = await pdfStorage.get(activeVersion.storageKey);
+    } else {
+      // Legacy/migration path: artifact missing, regenerate once and persist
+      logger.warn(
+        "download",
+        "Paid version missing storageKey, regenerating",
+        { versionId: activeVersion.id },
+        userId
+      );
+      pdf = await generateInvoicePdf(content, {
+        template: { htmlTemplate: invoice.template.htmlTemplate },
+      });
+      const recoveryKey = buildInvoiceFinalPdfStorageKey({
+        userId,
+        invoiceId: invoice.id,
+        versionId: activeVersion.id,
+        contentHash: activeVersion.contentHash,
+      });
+      await pdfStorage.put(recoveryKey, pdf);
+      await prisma.invoiceVersion.update({
+        where: { id: activeVersion.id },
+        data: { storageKey: recoveryKey },
+      });
+    }
 
     // Log re-download
     await prisma.downloadLog.create({
@@ -93,6 +120,55 @@ export async function processDownload(
       pdf = await generateInvoicePdf(content, {
         template: { htmlTemplate: invoice.template.htmlTemplate },
       });
+
+      // Persist the generated PDF artifact BEFORE the financial transaction.
+      // If storage fails, the catch below marks generation_failed without touching the wallet.
+      const storageKey = buildInvoiceFinalPdfStorageKey({
+        userId,
+        invoiceId: invoice.id,
+        versionId: activeVersion.id,
+        contentHash: activeVersion.contentHash,
+      });
+      await pdfStorage.put(storageKey, pdf);
+
+      // Debit wallet and mark as paid in atomic transaction.
+      await prisma.$transaction(async (tx) => {
+        await debitWallet(
+          tx,
+          userId,
+          FINAL_DOWNLOAD_PRICE,
+          "download_debit",
+          `download:${invoiceId}:${activeVersion.versionNumber}`,
+          "invoice_version",
+          activeVersion.id,
+          `Download invoice ${invoice.invoiceNumber} v${activeVersion.versionNumber}`,
+          "user",
+          userId
+        );
+
+        await tx.invoiceVersion.update({
+          where: { id: activeVersion.id },
+          data: {
+            status: "paid",
+            paidAt: new Date(),
+            storageKey,
+          },
+        });
+
+        await tx.downloadLog.create({
+          data: {
+            userId,
+            invoiceVersionId: activeVersion.id,
+            wasPaidDownload: true,
+            amount: FINAL_DOWNLOAD_PRICE,
+          },
+        });
+      });
+
+      return {
+        pdf,
+        filename: `invoice-${invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
+      };
     } catch (error) {
       await prisma.invoiceVersion.update({
         where: { id: activeVersion.id },
@@ -100,44 +176,6 @@ export async function processDownload(
       });
       throw error;
     }
-
-    // Debit wallet and mark as paid in atomic transaction.
-    await prisma.$transaction(async (tx) => {
-      await debitWallet(
-        tx,
-        userId,
-        FINAL_DOWNLOAD_PRICE,
-        "download_debit",
-        `download:${invoiceId}:${activeVersion.versionNumber}`,
-        "invoice_version",
-        activeVersion.id,
-        `Download invoice ${invoice.invoiceNumber} v${activeVersion.versionNumber}`,
-        "user",
-        userId
-      );
-
-      await tx.invoiceVersion.update({
-        where: { id: activeVersion.id },
-        data: {
-          status: "paid",
-          paidAt: new Date(),
-        },
-      });
-
-      await tx.downloadLog.create({
-        data: {
-          userId,
-          invoiceVersionId: activeVersion.id,
-          wasPaidDownload: true,
-          amount: FINAL_DOWNLOAD_PRICE,
-        },
-      });
-    });
-
-    return {
-      pdf,
-      filename: `invoice-${invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
-    };
   }
 
   throw new Error("Status versi tidak valid");

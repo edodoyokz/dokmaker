@@ -35,10 +35,30 @@ vi.mock("@/lib/pdf/generator", () => ({
   generateInvoicePdf: vi.fn(),
 }));
 
+vi.mock("@/modules/downloads/pdf-storage", () => ({
+  pdfStorage: {
+    put: vi.fn(),
+    get: vi.fn(),
+  },
+  buildInvoiceFinalPdfStorageKey: vi.fn(
+    (input: {
+      userId: string;
+      invoiceId: string;
+      versionId: string;
+      contentHash?: string | null;
+    }) =>
+      `invoice-finals/${input.userId}/${input.invoiceId}/${input.versionId}.pdf`
+  ),
+}));
+
 import { processDownload } from "@/modules/downloads/service";
 import { prisma } from "@/lib/db/prisma";
 import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
+import {
+  pdfStorage,
+  buildInvoiceFinalPdfStorageKey,
+} from "@/modules/downloads/pdf-storage";
 
 type InvoiceRecord = {
   id: string;
@@ -53,6 +73,8 @@ type InvoiceVersionRecord = {
   versionNumber: number;
   status: string;
   contentSnapshot: Record<string, unknown>;
+  storageKey?: string | null;
+  contentHash?: string | null;
 };
 
 type WalletRecord = {
@@ -85,6 +107,12 @@ const debitWalletMock = debitWallet as unknown as ReturnType<typeof vi.fn>;
 const generateInvoicePdfMock = generateInvoicePdf as unknown as ReturnType<
   typeof vi.fn
 >;
+const pdfStorageMock = pdfStorage as unknown as {
+  put: ReturnType<typeof vi.fn>;
+  get: ReturnType<typeof vi.fn>;
+};
+const buildKeyMock =
+  buildInvoiceFinalPdfStorageKey as unknown as ReturnType<typeof vi.fn>;
 
 const sampleContent = {
   sender: { name: "DokMaker Studio" },
@@ -116,6 +144,8 @@ function mockVersion(
     versionNumber: 1,
     status: "unpaid",
     contentSnapshot: sampleContent,
+    storageKey: null,
+    contentHash: "hash-1",
     ...overrides,
   };
 }
@@ -316,5 +346,80 @@ describe("processDownload", () => {
         template: { htmlTemplate: expect.stringContaining("data-tpl='custom'") },
       })
     );
+  });
+
+  it("stores generated PDF and sets storageKey when unpaid version becomes paid", async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined);
+    const createMock = vi.fn().mockResolvedValue(undefined);
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: DownloadTxMock) => unknown) =>
+        callback({
+          invoiceVersion: { update: updateMock },
+          downloadLog: { create: createMock },
+        })
+    );
+    pdfStorageMock.put.mockResolvedValue(undefined);
+    buildKeyMock.mockReturnValue(
+      "invoice-finals/user-1/invoice-1/version-1-hash1.pdf"
+    );
+
+    await processDownload("user-1", "invoice-1");
+
+    // PDF is stored BEFORE the transaction marks version paid
+    expect(pdfStorageMock.put).toHaveBeenCalledTimes(1);
+    expect(pdfStorageMock.put).toHaveBeenCalledWith(
+      "invoice-finals/user-1/invoice-1/version-1-hash1.pdf",
+      expect.any(Buffer)
+    );
+    // Version update inside transaction includes storageKey
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "version-1" },
+      data: expect.objectContaining({
+        status: "paid",
+        storageKey:
+          "invoice-finals/user-1/invoice-1/version-1-hash1.pdf",
+      }),
+    });
+  });
+
+  it("reads PDF from storage instead of regenerating when paid version has storageKey", async () => {
+    prismaMock.invoiceVersion.findUnique.mockResolvedValue(
+      mockVersion({
+        status: "paid",
+        storageKey: "invoice-finals/user-1/invoice-1/version-1.pdf",
+      })
+    );
+    const storedPdf = Buffer.from("%PDF-stored-final");
+    pdfStorageMock.get.mockResolvedValue(storedPdf);
+
+    const result = await processDownload("user-1", "invoice-1");
+
+    expect(pdfStorageMock.get).toHaveBeenCalledWith(
+      "invoice-finals/user-1/invoice-1/version-1.pdf"
+    );
+    expect(generateInvoicePdfMock).not.toHaveBeenCalled();
+    expect(result.pdf).toBe(storedPdf);
+  });
+
+  it("regenerates and stores PDF when paid version lost its storageKey (migration safety)", async () => {
+    prismaMock.invoiceVersion.findUnique.mockResolvedValue(
+      mockVersion({ status: "paid", storageKey: null })
+    );
+    pdfStorageMock.put.mockResolvedValue(undefined);
+    buildKeyMock.mockReturnValue(
+      "invoice-finals/user-1/invoice-1/version-1-recovered.pdf"
+    );
+
+    await processDownload("user-1", "invoice-1");
+
+    expect(generateInvoicePdfMock).toHaveBeenCalledTimes(1);
+    expect(pdfStorageMock.put).toHaveBeenCalledTimes(1);
+    expect(prismaMock.invoiceVersion.update).toHaveBeenCalledWith({
+      where: { id: "version-1" },
+      data: {
+        storageKey:
+          "invoice-finals/user-1/invoice-1/version-1-recovered.pdf",
+      },
+    });
   });
 });
