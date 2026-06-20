@@ -72,30 +72,54 @@ async function syncLocalUser(
   metadata: Record<string, unknown> | undefined
 ): Promise<User> {
   // Check if user exists
-  let localUser = await prisma.user.findUnique({
+  const existingUser = await prisma.user.findUnique({
     where: { id: authUserId },
   });
 
-  if (!localUser) {
-    // Create local user
-    localUser = await prisma.user.create({
-      data: {
-        id: authUserId,
-        email,
-        fullName: (metadata?.full_name as string) || null,
-        role: "user",
-        authProvider: "supabase",
-        authProviderUserId: authUserId,
-      },
-    });
-
-    // Create wallet for new user
-    await prisma.wallet.create({
-      data: {
-        userId: authUserId,
-      },
-    });
+  if (existingUser) {
+    return existingUser;
   }
 
-  return localUser;
+  // New user: create user and wallet atomically.
+  // Guard against the race where two concurrent requests for the same
+  // brand-new Supabase user both see findUnique === null and try to create.
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const localUser = await tx.user.create({
+        data: {
+          id: authUserId,
+          email,
+          fullName: (metadata?.full_name as string) || null,
+          role: "user",
+          authProvider: "supabase",
+          authProviderUserId: authUserId,
+        },
+      });
+
+      await tx.wallet.create({
+        data: {
+          userId: authUserId,
+        },
+      });
+
+      return localUser;
+    });
+  } catch (err) {
+    // Prisma unique-constraint violation (P2002).
+    // If the race lost, the row was created by the winner — re-read it.
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err as { code: string }).code === "P2002"
+    ) {
+      const existing = await prisma.user.findUnique({
+        where: { id: authUserId },
+      });
+      if (existing) {
+        return existing;
+      }
+    }
+    throw err;
+  }
 }
