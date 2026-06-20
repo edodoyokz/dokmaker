@@ -185,6 +185,8 @@ model InvoiceTemplate {
   description String?
   thumbnailUrl String?       @map("thumbnail_url")
   htmlTemplate String         @map("html_template")
+  // Semantic document kind used to pick validation schema and render context.
+  // Current values: "invoice", "gocar_receipt". See src/modules/documents/document-type-registry.ts.
   documentType String         @default("invoice") @map("document_type")
   price       Int            @default(10000) // Rp10.000
   currency    String         @default("IDR")
