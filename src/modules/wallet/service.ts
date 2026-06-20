@@ -116,20 +116,35 @@ export async function debitWallet(
     return existing; // Already processed
   }
 
-  // Get wallet with lock
+  // Get wallet id first, then perform an atomic conditional debit.
   const wallet = await tx.wallet.findUnique({
     where: { userId },
+    select: { id: true },
   });
 
   if (!wallet) {
     throw new Error("Wallet tidak ditemukan");
   }
 
-  if (wallet.currentBalance < amount) {
+  // Atomic balance guard: only decrement when the wallet still has enough balance.
+  // This prevents concurrent debits from overspending the same wallet.
+  const debitResult = await tx.wallet.updateMany({
+    where: {
+      id: wallet.id,
+      currentBalance: { gte: amount },
+    },
+    data: {
+      currentBalance: {
+        decrement: amount,
+      },
+    },
+  });
+
+  if (debitResult.count !== 1) {
     throw new Error("Saldo tidak mencukupi");
   }
 
-  // Create ledger entry and update balance atomically
+  // Create ledger entry in the same transaction after the guarded debit.
   const entry = await tx.walletLedgerEntry.create({
     data: {
       walletId: wallet.id,
@@ -144,15 +159,6 @@ export async function debitWallet(
       idempotencyKey,
       createdByActorType: actorType || "system",
       createdByActorId: actorId,
-    },
-  });
-
-  await tx.wallet.update({
-    where: { id: wallet.id },
-    data: {
-      currentBalance: {
-        decrement: amount,
-      },
     },
   });
 

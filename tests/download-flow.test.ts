@@ -7,6 +7,8 @@ vi.mock("@/lib/db/prisma", () => ({
     },
     invoiceVersion: {
       findUnique: vi.fn(),
+      updateMany: vi.fn(),
+      update: vi.fn(),
     },
     wallet: {
       findUnique: vi.fn(),
@@ -69,7 +71,11 @@ type DownloadTxMock = {
 
 const prismaMock = prisma as unknown as {
   invoice: { findUnique: ReturnType<typeof vi.fn> };
-  invoiceVersion: { findUnique: ReturnType<typeof vi.fn> };
+  invoiceVersion: {
+    findUnique: ReturnType<typeof vi.fn>;
+    updateMany: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
   wallet: { findUnique: ReturnType<typeof vi.fn> };
   downloadLog: { create: ReturnType<typeof vi.fn> };
   $transaction: ReturnType<typeof vi.fn>;
@@ -126,6 +132,8 @@ describe("processDownload", () => {
     vi.clearAllMocks();
     prismaMock.invoice.findUnique.mockResolvedValue(mockInvoice());
     prismaMock.invoiceVersion.findUnique.mockResolvedValue(mockVersion());
+    prismaMock.invoiceVersion.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.invoiceVersion.update.mockResolvedValue(undefined);
     prismaMock.wallet.findUnique.mockResolvedValue(mockWallet());
     generateInvoicePdfMock.mockResolvedValue(Buffer.from("%PDF-test"));
   });

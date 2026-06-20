@@ -60,7 +60,7 @@ export async function processDownload(
     };
   }
 
-  // If unpaid, check balance and charge
+  // If unpaid, claim the version first, then charge exactly once.
   if (activeVersion.status === "unpaid") {
     const wallet = await prisma.wallet.findUnique({
       where: { userId },
@@ -77,14 +77,31 @@ export async function processDownload(
       );
     }
 
+    const claim = await prisma.invoiceVersion.updateMany({
+      where: { id: activeVersion.id, status: "unpaid" },
+      data: { status: "processing_payment" },
+    });
+
+    if (claim.count !== 1) {
+      throw new Error("Download invoice sedang diproses atau sudah dibayar");
+    }
+
     logger.download("Paid download initiated", { invoiceId, versionId: activeVersion.id, amount: FINAL_DOWNLOAD_PRICE }, userId);
 
-    // Generate PDF first (before charging)
-    const pdf = await generateInvoicePdf(content);
+    let pdf: Buffer;
+    try {
+      // Generate PDF before charging. If generation fails, no wallet debit is created.
+      pdf = await generateInvoicePdf(content);
+    } catch (error) {
+      await prisma.invoiceVersion.update({
+        where: { id: activeVersion.id },
+        data: { status: "generation_failed" },
+      });
+      throw error;
+    }
 
-    // Debit wallet and mark as paid in atomic transaction
+    // Debit wallet and mark as paid in atomic transaction.
     await prisma.$transaction(async (tx) => {
-      // Debit wallet
       await debitWallet(
         tx,
         userId,
@@ -98,7 +115,6 @@ export async function processDownload(
         userId
       );
 
-      // Mark version as paid
       await tx.invoiceVersion.update({
         where: { id: activeVersion.id },
         data: {
@@ -107,7 +123,6 @@ export async function processDownload(
         },
       });
 
-      // Create download log
       await tx.downloadLog.create({
         data: {
           userId,
