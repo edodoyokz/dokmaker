@@ -185,6 +185,7 @@ model InvoiceTemplate {
   description String?
   thumbnailUrl String?       @map("thumbnail_url")
   htmlTemplate String         @map("html_template")
+  documentType String         @default("invoice") @map("document_type")
   price       Int            @default(10000) // Rp10.000
   currency    String         @default("IDR")
   status      TemplateStatus @default(active)
@@ -203,7 +204,9 @@ model Invoice {
   id               String       @id @default(cuid())
   userId           String       @map("user_id")
   templateId       String       @map("template_id")
+  documentType     String       @default("invoice") @map("document_type")
   invoiceNumber    String       @map("invoice_number")
+  title            String?      // generic display title (e.g. "GoCar RB-4153...")
   status           InvoiceStatus @default(draft)
   activeVersionId  String?      @map("active_version_id")
   createdAt        DateTime     @default(now()) @map("created_at")

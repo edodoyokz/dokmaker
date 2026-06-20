@@ -50,6 +50,7 @@ async function main() {
     create: {
       id: "template-active-1",
       name: "Invoice Profesional",
+      documentType: "invoice",
       description:
         "Template invoice profesional untuk freelancer dan bisnis kecil.",
       htmlTemplate: `<style>
@@ -149,6 +150,7 @@ async function main() {
     create: {
       id: "template-gocar-1",
       name: "GoCar Receipt",
+      documentType: "gocar_receipt",
       description:
         "Template bukti pembayaran perjalanan GoCar Prioritas / GoCar Receipt.",
       htmlTemplate: `<style>
@@ -221,6 +223,7 @@ async function main() {
     create: {
       id: "template-inactive-1",
       name: "Invoice Minimalis (Draft)",
+      documentType: "invoice",
       description: "Template invoice minimalis - belum tersedia.",
       htmlTemplate: `<style>
   .tpl-minimal { font-family: Arial, sans-serif; color: #333; max-width: 100%; }
