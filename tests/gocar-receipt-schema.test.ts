@@ -35,6 +35,12 @@ describe("gocarReceiptContentSchema", () => {
     const invalid = getDefaultGoCarReceiptContent();
     invalid.payment.totalPaid = -1;
 
-    expect(gocarReceiptContentSchema.safeParse(invalid).success).toBe(false);
+    const result = gocarReceiptContentSchema.safeParse(invalid);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const paths = result.error.issues.map((issue) => issue.path.join("."));
+      expect(paths).toContain("payment.totalPaid");
+    }
   });
 });

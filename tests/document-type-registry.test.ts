@@ -21,7 +21,7 @@ describe("document type registry", () => {
   });
 
   it("throws for unsupported types", () => {
-    expect(() => getDocumentTypeDefinition("receipt" as never)).toThrow(
+    expect(() => getDocumentTypeDefinition("receipt")).toThrow(
       /unsupported document type/i
     );
   });

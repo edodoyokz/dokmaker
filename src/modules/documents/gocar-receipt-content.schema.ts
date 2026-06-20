@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const gocarReceiptContentSchema = z.object({
   service: z.object({
-    name: z.string().min(1).default("GoCar"),
+    name: z.string().min(1, "Nama layanan wajib diisi").default("GoCar"),
     orderDate: z.string().min(1, "Tanggal pesanan wajib diisi"),
     orderId: z.string().min(1, "ID pesanan wajib diisi"),
   }),
@@ -10,11 +10,11 @@ export const gocarReceiptContentSchema = z.object({
     name: z.string().min(1, "Nama customer wajib diisi"),
   }),
   payment: z.object({
-    totalPaid: z.number().nonnegative(),
-    tripFee: z.number().nonnegative(),
-    appFee: z.number().nonnegative(),
-    appFeeDiscount: z.number().nonnegative().default(0),
-    method: z.string().min(1).default("GoPay"),
+    totalPaid: z.number().nonnegative("Total pembayaran tidak boleh negatif"),
+    tripFee: z.number().nonnegative("Biaya perjalanan tidak boleh negatif"),
+    appFee: z.number().nonnegative("Biaya jasa aplikasi tidak boleh negatif"),
+    appFeeDiscount: z.number().nonnegative("Diskon biaya jasa aplikasi tidak boleh negatif").default(0),
+    method: z.string().min(1, "Metode pembayaran wajib diisi").default("GoPay"),
   }),
   trip: z.object({
     driverName: z.string().min(1, "Nama driver wajib diisi"),
