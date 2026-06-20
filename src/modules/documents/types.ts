@@ -8,4 +8,5 @@ export type DocumentTypeDefinition<TContent> = {
   label: string;
   schema: z.ZodType<TContent>;
   getDefaultContent: () => TContent;
+  buildRenderContext: (content: TContent) => Record<string, string>;
 };

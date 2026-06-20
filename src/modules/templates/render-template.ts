@@ -1,5 +1,10 @@
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
-import { calculateInvoiceTotal } from "@/modules/invoices/invoice-content.schema";
+import type { DocumentType } from "@/modules/documents/types";
+import {
+  getDocumentTypeDefinition,
+  isSupportedDocumentType,
+} from "@/modules/documents/document-type-registry";
+import { escapeHtml, formatRupiah } from "./render-utils";
 
 type RenderMode = "preview" | "final";
 
@@ -16,18 +21,13 @@ export type RenderInvoiceTemplateHtmlInput = {
   previewMeta?: PreviewMeta;
 };
 
-function escapeHtml(value: unknown): string {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function formatRupiah(amount: number): string {
-  return `Rp${amount.toLocaleString("id-ID")}`;
-}
+export type RenderDocumentTemplateHtmlInput = {
+  htmlTemplate: string;
+  documentType: DocumentType | string;
+  content: unknown;
+  mode: RenderMode;
+  previewMeta?: PreviewMeta;
+};
 
 function renderPreviewWatermark(mode: RenderMode): string {
   if (mode !== "preview") return "";
@@ -48,35 +48,11 @@ function renderPreviewMeta(
   ].join("");
 }
 
-export function renderInvoiceTemplateHtml({
-  htmlTemplate,
-  content,
-  mode,
-  previewMeta,
-}: RenderInvoiceTemplateHtmlInput): string {
-  const total = calculateInvoiceTotal(content);
-
-  const scalarValues: Record<string, string> = {
-    "invoice.number": escapeHtml(content.meta.invoiceNumber),
-    "invoice.issueDate": escapeHtml(content.meta.issueDate),
-    "invoice.dueDate": escapeHtml(content.meta.dueDate),
-    "invoice.currency": escapeHtml(content.meta.currency),
-    "sender.name": escapeHtml(content.sender.name),
-    "sender.address": escapeHtml(content.sender.address),
-    "sender.email": escapeHtml(content.sender.email),
-    "sender.phone": escapeHtml(content.sender.phone),
-    "client.name": escapeHtml(content.client.name),
-    "client.address": escapeHtml(content.client.address),
-    "client.email": escapeHtml(content.client.email),
-    "client.phone": escapeHtml(content.client.phone),
-    notes: escapeHtml(content.notes),
-    paymentInstruction: escapeHtml(content.paymentInstruction),
-    total: formatRupiah(total),
-    "preview.watermark": renderPreviewWatermark(mode),
-    "preview.meta": renderPreviewMeta(mode, previewMeta),
-  };
-
-  let html = htmlTemplate.replace(
+function renderInvoiceItemsBlock(
+  html: string,
+  content: InvoiceContent
+): string {
+  return html.replace(
     /{{#items}}([\s\S]*?){{\/items}}/g,
     (_match, itemTemplate: string) => {
       return content.items
@@ -96,11 +72,57 @@ export function renderInvoiceTemplateHtml({
         .join("");
     }
   );
+}
 
-  html = html.replace(
+function replaceScalarPlaceholders(
+  html: string,
+  values: Record<string, string>
+): string {
+  return html.replace(
     /{{\s*([\w.]+)\s*}}/g,
-    (_match, key: string) => scalarValues[key] ?? ""
+    (_match, key: string) => values[key] ?? ""
   );
+}
 
-  return html;
+export function renderDocumentTemplateHtml({
+  htmlTemplate,
+  documentType,
+  content,
+  mode,
+  previewMeta,
+}: RenderDocumentTemplateHtmlInput): string {
+  const resolvedType = isSupportedDocumentType(documentType)
+    ? documentType
+    : "invoice";
+  const definition = getDocumentTypeDefinition(resolvedType);
+  const parsed = definition.schema.parse(content);
+
+  const scalarValues: Record<string, string> = {
+    ...(definition.buildRenderContext as (content: unknown) => Record<string, string>)(parsed),
+    "preview.watermark": renderPreviewWatermark(mode),
+    "preview.meta": renderPreviewMeta(mode, previewMeta),
+  };
+
+  let html = htmlTemplate;
+
+  if (resolvedType === "invoice") {
+    html = renderInvoiceItemsBlock(html, parsed as InvoiceContent);
+  }
+
+  return replaceScalarPlaceholders(html, scalarValues);
+}
+
+export function renderInvoiceTemplateHtml({
+  htmlTemplate,
+  content,
+  mode,
+  previewMeta,
+}: RenderInvoiceTemplateHtmlInput): string {
+  return renderDocumentTemplateHtml({
+    htmlTemplate,
+    documentType: "invoice",
+    content,
+    mode,
+    previewMeta,
+  });
 }
