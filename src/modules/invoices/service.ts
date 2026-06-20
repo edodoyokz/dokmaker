@@ -1,23 +1,45 @@
 import { prisma } from "@/lib/db/prisma";
-import {
-  invoiceContentSchema,
-  type InvoiceContent,
-} from "./invoice-content.schema";
+import type { InvoiceContent } from "./invoice-content.schema";
+import type { GoCarReceiptContent } from "@/modules/documents/gocar-receipt-content.schema";
 import { hashInvoiceContent } from "./content-hash";
+import { getDocumentTypeDefinition } from "@/modules/documents/document-type-registry";
 import { Prisma } from "@prisma/client";
 
 /**
- * Create a new invoice draft from a template.
+ * Derive a human-readable display title based on document type.
+ */
+function deriveDocumentTitle(documentType: string, content: unknown): string {
+  if (documentType === "invoice") {
+    const c = content as InvoiceContent;
+    return c.meta?.invoiceNumber || "Invoice";
+  }
+  if (documentType === "gocar_receipt") {
+    const c = content as GoCarReceiptContent;
+    const parts = [c.service?.name, c.service?.orderId].filter(Boolean);
+    return parts.join(" ") || "GoCar Receipt";
+  }
+  return "Untitled document";
+}
+
+/**
+ * Serialize validated (unknown) content to a JSON-safe value for Prisma.
+ * The content has already been validated by the registry schema so it is
+ * guaranteed to be a plain object.
+ */
+function toJsonValue(content: unknown): Prisma.InputJsonValue {
+  return content as Prisma.InputJsonValue;
+}
+
+/**
+ * Create a new document (invoice / GoCar receipt / …) draft from a template.
+ * Validates content against the document-type-specific schema from the registry.
  * Creates version 1 (unpaid) and sets it as active.
  */
 export async function createInvoice(
   userId: string,
   templateId: string,
-  content: InvoiceContent
+  content: unknown
 ) {
-  // Validate content
-  const validated = invoiceContentSchema.parse(content);
-
   // Verify template exists and is active
   const template = await prisma.invoiceTemplate.findUnique({
     where: { id: templateId, status: "active" },
@@ -27,13 +49,24 @@ export async function createInvoice(
     throw new Error("Template tidak ditemukan atau tidak aktif");
   }
 
+  // Validate content against the template's document type schema
+  const definition = getDocumentTypeDefinition(template.documentType);
+  const validated = definition.schema.parse(content);
+  const title = deriveDocumentTitle(template.documentType, validated);
+  const invoiceNumber =
+    template.documentType === "invoice"
+      ? (validated as InvoiceContent).meta.invoiceNumber
+      : "";
+
   // Create invoice with first version in a transaction
   return prisma.$transaction(async (tx) => {
     const invoice = await tx.invoice.create({
       data: {
         userId,
         templateId,
-        invoiceNumber: validated.meta.invoiceNumber,
+        documentType: template.documentType,
+        title,
+        invoiceNumber,
         status: "draft",
       },
     });
@@ -43,7 +76,7 @@ export async function createInvoice(
         invoiceId: invoice.id,
         versionNumber: 1,
         status: "unpaid",
-        contentSnapshot: validated as unknown as Prisma.InputJsonValue,
+        contentSnapshot: toJsonValue(validated),
         contentHash: hashInvoiceContent(validated),
       },
     });
@@ -62,26 +95,19 @@ export async function createInvoice(
 }
 
 /**
- * Edit an invoice. Handles versioning rules:
- * - Unpaid active version: overwrite content
+ * Edit a document. Validates content against the document's registered type.
+ * Handles versioning rules:
+ * - Unpaid active version: overwrite content + title
  * - Paid active version: create new unpaid version
  */
 export async function editInvoice(
   userId: string,
   invoiceId: string,
-  content: InvoiceContent
+  content: unknown
 ) {
-  const validated = invoiceContentSchema.parse(content);
-
-  // Verify ownership
+  // Verify ownership and fetch document type
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId, userId },
-    include: {
-      versions: {
-        where: { id: undefined },
-        take: 0,
-      },
-    },
   });
 
   if (!invoice) {
@@ -91,6 +117,15 @@ export async function editInvoice(
   if (!invoice.activeVersionId) {
     throw new Error("Invoice tidak memiliki versi aktif");
   }
+
+  // Validate content against the document's registered type
+  const definition = getDocumentTypeDefinition(invoice.documentType);
+  const validated = definition.schema.parse(content);
+  const title = deriveDocumentTitle(invoice.documentType, validated);
+  const invoiceNumber =
+    invoice.documentType === "invoice"
+      ? (validated as InvoiceContent).meta.invoiceNumber
+      : "";
 
   const activeVersion = await prisma.invoiceVersion.findUnique({
     where: { id: invoice.activeVersionId },
@@ -105,10 +140,17 @@ export async function editInvoice(
     const updated = await prisma.invoiceVersion.update({
       where: { id: activeVersion.id },
       data: {
-        contentSnapshot: validated as unknown as Prisma.InputJsonValue,
+        contentSnapshot: toJsonValue(validated),
         contentHash: hashInvoiceContent(validated),
       },
     });
+
+    // Update invoice row title + invoiceNumber (if changed)
+    await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { title, invoiceNumber },
+    });
+
     return { invoice, version: updated, isNewVersion: false };
   }
 
@@ -128,14 +170,18 @@ export async function editInvoice(
           invoiceId,
           versionNumber: newVersionNumber,
           status: "unpaid",
-          contentSnapshot: validated as unknown as Prisma.InputJsonValue,
+          contentSnapshot: toJsonValue(validated),
           contentHash: hashInvoiceContent(validated),
         },
       });
 
       await tx.invoice.update({
         where: { id: invoiceId },
-        data: { activeVersionId: newVersion.id },
+        data: {
+          activeVersionId: newVersion.id,
+          title,
+          invoiceNumber,
+        },
       });
 
       return { invoice, version: newVersion, isNewVersion: true };

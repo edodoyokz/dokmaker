@@ -1,5 +1,4 @@
 import { createHash } from "node:crypto";
-import type { InvoiceContent } from "./invoice-content.schema";
 
 /**
  * Deterministic JSON-like stringify that sorts object keys so key order
@@ -19,6 +18,10 @@ function stableStringify(value: unknown): string {
   return JSON.stringify(value);
 }
 
-export function hashInvoiceContent(content: InvoiceContent): string {
+/**
+ * SHA-256 hash of arbitrary document content (JSON-stable serialization).
+ * Accepts any shape so both invoice and GoCar receipt content can be hashed.
+ */
+export function hashInvoiceContent(content: unknown): string {
   return createHash("sha256").update(stableStringify(content)).digest("hex");
 }
