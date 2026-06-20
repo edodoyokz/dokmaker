@@ -37,10 +37,41 @@ async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
     return cachedPuppeteerModule;
   }
 
-  const runtimeEval = globalThis.eval as typeof eval;
-  const imported = (await runtimeEval('import("puppeteer")')) as PuppeteerModuleLike;
-  cachedPuppeteerModule = imported;
-  return imported;
+  // Vercel serverless + @sparticuz/chromium production path
+  try {
+    const chromiumModule = await import("@sparticuz/chromium");
+    const chromium = chromiumModule.default ?? chromiumModule;
+    const puppeteerModule = await import("puppeteer-core");
+
+    const puppeteerLike: PuppeteerModuleLike = {
+      default: {
+        launch: async () => {
+          const browser = await puppeteerModule.default.launch({
+            args: chromium.args,
+            defaultViewport: { width: 1920, height: 1080 },
+            executablePath: await chromium.executablePath(),
+            headless: true,
+          });
+          return browser as BrowserLike;
+        },
+      },
+    };
+
+    cachedPuppeteerModule = puppeteerLike;
+    return puppeteerLike;
+  } catch {
+    // Fallback: try global puppeteer (container/VPS with system Chromium)
+    try {
+      const runtimeEval = globalThis.eval as typeof eval;
+      const imported = (await runtimeEval('import("puppeteer")')) as PuppeteerModuleLike;
+      cachedPuppeteerModule = imported;
+      return imported;
+    } catch {
+      throw new Error(
+        "PDF engine unavailable. Install puppeteer-core + @sparticuz/chromium for Vercel, or puppeteer for containers."
+      );
+    }
+  }
 }
 
 /**
