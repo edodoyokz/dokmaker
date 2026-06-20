@@ -90,12 +90,12 @@ export function generateInvoiceHtml(
   content: unknown,
   template?: InvoiceRenderTemplate
 ): string {
-  if (template?.htmlTemplate) {
-    const effectiveType = template.documentType ?? "invoice";
-    const documentType: DocumentType = isSupportedDocumentType(effectiveType)
-      ? (effectiveType as DocumentType)
-      : "invoice";
+  const effectiveType = template?.documentType ?? "invoice";
+  const documentType: DocumentType = isSupportedDocumentType(effectiveType)
+    ? (effectiveType as DocumentType)
+    : "invoice";
 
+  if (template?.htmlTemplate) {
     const bodyHtml = renderDocumentTemplateHtml({
       htmlTemplate: template.htmlTemplate,
       documentType,
@@ -118,8 +118,14 @@ ${bodyHtml}
 `.trim();
   }
 
-  // Fallback: existing hardcoded layout for backward compatibility
-  // Only works with invoice-shaped content
+  // Fallback: existing hardcoded layout for backward compatibility.
+  // Only valid for invoice-shaped content. Non-invoice documents MUST provide a template.
+  if (!template?.htmlTemplate && documentType !== "invoice") {
+    throw new Error(
+      `PDF generation for document type "${documentType}" requires an htmlTemplate.`
+    );
+  }
+
   const invoiceContent = content as InvoiceContent;
   const total = invoiceContent.items.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,

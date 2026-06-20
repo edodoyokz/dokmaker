@@ -83,7 +83,7 @@ export async function processDownload(
 
     return {
       pdf,
-      filename: `${invoice.title || invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
+      filename: `${invoice.title || invoice.invoiceNumber || invoice.id}-v${activeVersion.versionNumber}.pdf`,
     };
   }
 
@@ -171,7 +171,7 @@ export async function processDownload(
 
       return {
         pdf,
-        filename: `${invoice.title || invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
+        filename: `${invoice.title || invoice.invoiceNumber || invoice.id}-v${activeVersion.versionNumber}.pdf`,
       };
     } catch (error) {
       await prisma.invoiceVersion.update({
