@@ -39,6 +39,28 @@ describe("generateInvoiceHtml", () => {
     expect(html).toContain("DokMaker Studio");
     expect(html).toContain("Client Example");
   });
+
+  it("renders using the provided invoice template html", () => {
+    const html = generateInvoiceHtml(sampleContent, {
+      htmlTemplate: `<section class="custom-template">Invoice {{invoice.number}} for {{client.name}}</section>`,
+    });
+
+    expect(html).toContain('class="custom-template"');
+    expect(html).toContain("Invoice INV-001 for Client Example");
+  });
+
+  it("produces different html for different templates with the same content", () => {
+    const modern = generateInvoiceHtml(sampleContent, {
+      htmlTemplate: `<section data-template="modern">{{invoice.number}}</section>`,
+    });
+    const receipt = generateInvoiceHtml(sampleContent, {
+      htmlTemplate: `<section data-template="receipt">{{invoice.number}}</section>`,
+    });
+
+    expect(modern).toContain('data-template="modern"');
+    expect(receipt).toContain('data-template="receipt"');
+    expect(modern).not.toBe(receipt);
+  });
 });
 
 describe("generateInvoicePdf", () => {

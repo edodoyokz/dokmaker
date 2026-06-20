@@ -1,4 +1,7 @@
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
+import { renderInvoiceTemplateHtml } from "@/modules/templates/render-template";
+
+export type InvoiceRenderTemplate = { htmlTemplate: string };
 
 interface PageLike {
   setContent(html: string, options: { waitUntil: string }): Promise<void>;
@@ -23,6 +26,7 @@ interface PuppeteerModuleLike {
 }
 
 interface GenerateInvoicePdfOptions {
+  template?: InvoiceRenderTemplate;
   loadPuppeteer?: () => Promise<PuppeteerModuleLike>;
 }
 
@@ -41,9 +45,36 @@ async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
 
 /**
  * Generate HTML for final invoice PDF.
- * This produces a clean invoice without watermark.
+ * Uses the provided template HTML when available, otherwise falls back
+ * to the built-in hardcoded layout.
  */
-export function generateInvoiceHtml(content: InvoiceContent): string {
+export function generateInvoiceHtml(
+  content: InvoiceContent,
+  template?: InvoiceRenderTemplate
+): string {
+  if (template?.htmlTemplate) {
+    const bodyHtml = renderInvoiceTemplateHtml({
+      htmlTemplate: template.htmlTemplate,
+      content,
+      mode: "final",
+    });
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+  </style>
+</head>
+<body>
+${bodyHtml}
+</body>
+</html>
+`.trim();
+  }
+
+  // Fallback: existing hardcoded layout for backward compatibility
   const total = content.items.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
     0
@@ -166,7 +197,7 @@ export async function generateInvoicePdf(
   content: InvoiceContent,
   options: GenerateInvoicePdfOptions = {}
 ): Promise<Buffer> {
-  const html = generateInvoiceHtml(content);
+  const html = generateInvoiceHtml(content, options.template);
   const loadPuppeteer = options.loadPuppeteer ?? loadRuntimePuppeteer;
 
   let browser: BrowserLike | null = null;
