@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDefaultGoCarReceiptContent } from "@/modules/documents/gocar-receipt-content.schema";
+import { GOCAR_RECEIPT_HTML_TEMPLATE } from "@/modules/documents/gocar-receipt-template";
 import { renderDocumentTemplateHtml } from "@/modules/templates/render-template";
 
 const template = `
@@ -59,6 +60,32 @@ describe("GoCar receipt rendering", () => {
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;");
     expect(html).toContain("A &amp; B &lt; C");
+  });
+
+  it("renders a two-page GoCar receipt with receipt and faktur sections", () => {
+    const html = renderDocumentTemplateHtml({
+      htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
+      documentType: "gocar_receipt",
+      content: getDefaultGoCarReceiptContent(),
+      mode: "final",
+    });
+
+    // Page 1: receipt
+    expect(html).toContain("Makasih udah pesan GoCar");
+    expect(html).toContain("Rincian pembayaran");
+    expect(html).toContain("Detail perjalanan");
+    expect(html).toContain("Hai Bernadus Putra,");
+    expect(html).toContain("UDIN SAPRUDIN");
+    expect(html).toContain("B2036UZX");
+
+    // Page 2: faktur
+    expect(html).toContain("Faktur");
+    expect(html).toContain("Semua jumlah sudah termasuk PPN");
+    expect(html).toContain("Total biaya jasa aplikasi");
+    expect(html).toContain("NPWP: 0745704361064000");
+
+    // Two-page structure
+    expect(html).toContain("gocar-page-break");
   });
 
   it("adds preview watermark only in preview mode", () => {

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { GOCAR_RECEIPT_HTML_TEMPLATE } from "../src/modules/documents/gocar-receipt-template";
 
 const prisma = new PrismaClient();
 
@@ -153,63 +154,7 @@ async function main() {
       documentType: "gocar_receipt",
       description:
         "Template bukti pembayaran perjalanan GoCar Prioritas / GoCar Receipt.",
-      htmlTemplate: `<style>
-  .tpl-gocar { font-family: Helvetica, Arial, sans-serif; color: #222; max-width: 100%; }
-  .tpl-gocar .gc-card { border: 2px solid #00aa6c; border-radius: 16px; padding: 24px; max-width: 480px; margin: 0 auto; }
-  .tpl-gocar .gc-header { text-align: center; margin-bottom: 20px; }
-  .tpl-gocar .gc-header .gc-title { font-size: 22px; font-weight: 800; color: #00aa6c; text-transform: uppercase; letter-spacing: 1px; }
-  .tpl-gocar .gc-header .gc-sub { font-size: 12px; color: #888; margin-top: 4px; }
-  .tpl-gocar .gc-info { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 12px; }
-  .tpl-gocar .gc-info-label { color: #888; text-transform: uppercase; font-weight: 600; font-size: 10px; letter-spacing: 0.5px; }
-  .tpl-gocar .gc-info-value { color: #333; font-weight: 600; }
-  .tpl-gocar .gc-divider { border: none; border-top: 1px dashed #e0e0e0; margin: 16px 0; }
-  .tpl-gocar .gc-items { margin-bottom: 16px; }
-  .tpl-gocar .gc-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
-  .tpl-gocar .gc-item-desc { flex: 1; }
-  .tpl-gocar .gc-item-detail { color: #888; font-size: 11px; margin: 0 12px; text-align: right; white-space: nowrap; }
-  .tpl-gocar .gc-item-subtotal { font-weight: 600; font-family: 'Courier New', monospace; min-width: 80px; text-align: right; }
-  .tpl-gocar .gc-total { text-align: center; margin: 20px 0; }
-  .tpl-gocar .gc-total-label { font-size: 10px; text-transform: uppercase; color: #888; letter-spacing: 1px; }
-  .tpl-gocar .gc-total-amount { font-size: 28px; font-weight: 800; color: #00aa6c; font-family: 'Courier New', monospace; }
-  .tpl-gocar .gc-footer { font-size: 11px; color: #888; text-align: center; margin-top: 16px; }
-</style>
-<div class="tpl-gocar">
-  {{preview.watermark}}
-  <div class="gc-card">
-    <div class="gc-header">
-      <div class="gc-title">GoCar Receipt</div>
-      <div class="gc-sub">{{invoice.number}} &bull; {{invoice.issueDate}}</div>
-    </div>
-    <div class="gc-info">
-      <div>
-        <div class="gc-info-label">Pengemudi</div>
-        <div class="gc-info-value">{{sender.name}}</div>
-      </div>
-      <div>
-        <div class="gc-info-label">Penumpang</div>
-        <div class="gc-info-value">{{client.name}}</div>
-      </div>
-    </div>
-    <hr class="gc-divider">
-    <div class="gc-items">
-      {{#items}}
-      <div class="gc-item">
-        <span class="gc-item-desc">{{description}}</span>
-        <span class="gc-item-detail">{{quantity}} &times; {{unitPrice}}</span>
-        <span class="gc-item-subtotal">{{subtotal}}</span>
-      </div>
-      {{/items}}
-    </div>
-    <hr class="gc-divider">
-    <div class="gc-total">
-      <div class="gc-total-label">Total Pembayaran</div>
-      <div class="gc-total-amount">{{total}}</div>
-    </div>
-    <div class="gc-footer">{{notes}}</div>
-    <div class="gc-footer">{{paymentInstruction}}</div>
-  </div>
-  {{preview.meta}}
-</div>`,
+      htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
       price: 10000,
       status: "active",
       sortOrder: 2,
