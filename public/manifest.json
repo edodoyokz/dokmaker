@@ -1,0 +1,21 @@
+{
+  "name": "DokMaker",
+  "short_name": "DokMaker",
+  "description": "Buat invoice profesional dari template siap pakai. Preview gratis, bayar hanya saat download PDF final.",
+  "start_url": "/app",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#4f46e5",
+  "categories": ["business", "productivity", "finance"],
+  "lang": "id",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

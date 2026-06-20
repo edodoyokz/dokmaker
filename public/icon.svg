@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- Document body -->
+  <g transform="translate(88, 64)">
+    <!-- Document sheet -->
+    <rect x="0" y="0" width="336" height="384" rx="24" fill="#ffffff"/>
+    <!-- Folded corner -->
+    <path d="M276,0 L336,0 L336,60 L300,24 L276,0 Z" fill="#e5e7eb" stroke="#d1d5db" stroke-width="2"/>
+    <path d="M276,0 L336,60 L300,24 Z" fill="#f3f4f6" stroke="#d1d5db" stroke-width="2" stroke-linejoin="round"/>
+    <!-- Header line (thick) -->
+    <rect x="36" y="48" width="140" height="16" rx="8" fill="#4f46e5" opacity="0.85"/>
+    <!-- Sub-header lines -->
+    <rect x="36" y="80" width="100" height="10" rx="5" fill="#a5b4fc" opacity="0.7"/>
+    <rect x="36" y="98" width="80" height="10" rx="5" fill="#c7d2fe" opacity="0.6"/>
+    <!-- Line items (invoice rows) -->
+    <rect x="36" y="148" width="264" height="12" rx="6" fill="#e5e7eb"/>
+    <rect x="36" y="172" width="264" height="12" rx="6" fill="#e5e7eb"/>
+    <rect x="36" y="196" width="240" height="12" rx="6" fill="#f3f4f6"/>
+    <rect x="36" y="220" width="264" height="12" rx="6" fill="#e5e7eb"/>
+    <rect x="36" y="244" width="200" height="12" rx="6" fill="#f3f4f6"/>
+    <!-- Divider -->
+    <line x1="36" y1="284" x2="300" y2="284" stroke="#e5e7eb" stroke-width="3" stroke-linecap="round"/>
+    <!-- Total line -->
+    <rect x="220" y="300" width="80" height="14" rx="7" fill="#4f46e5" opacity="0.85"/>
+    <!-- Footer lines -->
+    <rect x="36" y="344" width="160" height="8" rx="4" fill="#d1d5db"/>
+    <rect x="36" y="358" width="120" height="8" rx="4" fill="#e5e7eb"/>
+  </g>
+</svg>
