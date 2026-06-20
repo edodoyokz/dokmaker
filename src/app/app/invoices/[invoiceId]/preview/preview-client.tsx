@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import InvoicePreview from "@/components/invoices/invoice-preview";
+import TemplatePreview from "@/components/invoices/template-preview";
+import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
 import { 
   ArrowLeft, 
   Download, 
@@ -21,14 +22,8 @@ interface Props {
   invoiceNumber: string;
   initialStatus: string;
   initialBalance: number;
-  content: {
-    sender: { name: string; address?: string; email?: string };
-    client: { name: string; address?: string; email?: string };
-    meta: { invoiceNumber: string; issueDate: string; dueDate?: string; currency: string };
-    items: { description: string; quantity: number; unitPrice: number }[];
-    notes?: string;
-    paymentInstruction?: string;
-  };
+  content: InvoiceContent;
+  htmlTemplate: string;
   previewMeta: {
     email: string;
     timestamp: string;
@@ -42,6 +37,7 @@ export default function PreviewClient({
   initialStatus,
   initialBalance,
   content,
+  htmlTemplate,
   previewMeta,
 }: Props) {
   const router = useRouter();
@@ -134,9 +130,9 @@ export default function PreviewClient({
             </div>
             
             <div className="min-w-[600px] border border-zinc-900 rounded-lg overflow-hidden bg-white">
-              <InvoicePreview
+              <TemplatePreview
+                htmlTemplate={htmlTemplate}
                 content={content}
-                isPreview={!isPaid}
                 previewMeta={previewMeta}
               />
             </div>
