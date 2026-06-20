@@ -17,10 +17,7 @@ export async function processDownload(
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId, userId },
     include: {
-      versions: {
-        where: { id: undefined },
-        take: 0,
-      },
+      template: true,
     },
   });
 
@@ -42,7 +39,9 @@ export async function processDownload(
   // If already paid, return free re-download
   if (activeVersion.status === "paid") {
     logger.download("Free re-download", { invoiceId, versionId: activeVersion.id }, userId);
-    const pdf = await generateInvoicePdf(content);
+    const pdf = await generateInvoicePdf(content, {
+      template: { htmlTemplate: invoice.template.htmlTemplate },
+    });
 
     // Log re-download
     await prisma.downloadLog.create({
@@ -91,7 +90,9 @@ export async function processDownload(
     let pdf: Buffer;
     try {
       // Generate PDF before charging. If generation fails, no wallet debit is created.
-      pdf = await generateInvoicePdf(content);
+      pdf = await generateInvoicePdf(content, {
+        template: { htmlTemplate: invoice.template.htmlTemplate },
+      });
     } catch (error) {
       await prisma.invoiceVersion.update({
         where: { id: activeVersion.id },

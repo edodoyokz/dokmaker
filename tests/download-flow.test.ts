@@ -45,6 +45,7 @@ type InvoiceRecord = {
   userId: string;
   invoiceNumber: string;
   activeVersionId: string | null;
+  template?: { htmlTemplate: string };
 };
 
 type InvoiceVersionRecord = {
@@ -102,6 +103,7 @@ function mockInvoice(overrides: Partial<InvoiceRecord> = {}): InvoiceRecord {
     userId: "user-1",
     invoiceNumber: "INV-001",
     activeVersionId: "version-1",
+    template: { htmlTemplate: "<div data-tpl='custom'>{{invoice.number}}</div>" },
     ...overrides,
   };
 }
@@ -274,5 +276,45 @@ describe("processDownload", () => {
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
     expect(updateMock).toHaveBeenCalledTimes(1);
     expect(createMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("forwards the invoice template htmlTemplate to the pdf generator for unpaid download", async () => {
+    const updateMock = vi.fn().mockResolvedValue(undefined);
+    const createMock = vi.fn().mockResolvedValue(undefined);
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: DownloadTxMock) => unknown) =>
+        callback({
+          invoiceVersion: {
+            update: updateMock,
+          },
+          downloadLog: {
+            create: createMock,
+          },
+        })
+    );
+
+    await processDownload("user-1", "invoice-1");
+
+    expect(generateInvoicePdfMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        template: { htmlTemplate: expect.stringContaining("data-tpl='custom'") },
+      })
+    );
+  });
+
+  it("forwards the invoice template htmlTemplate to the pdf generator for paid re-download", async () => {
+    prismaMock.invoiceVersion.findUnique.mockResolvedValue(
+      mockVersion({ status: "paid" })
+    );
+
+    await processDownload("user-1", "invoice-1");
+
+    expect(generateInvoicePdfMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        template: { htmlTemplate: expect.stringContaining("data-tpl='custom'") },
+      })
+    );
   });
 });
