@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { generateInvoiceHtml, generateInvoicePdf } from "@/lib/pdf/generator";
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
+import { getDefaultGoCarReceiptContent } from "@/modules/documents/gocar-receipt-content.schema";
+import { GOCAR_RECEIPT_HTML_TEMPLATE } from "@/modules/documents/gocar-receipt-template";
 
 const sampleContent: InvoiceContent = {
   sender: {
@@ -40,13 +42,36 @@ describe("generateInvoiceHtml", () => {
     expect(html).toContain("Client Example");
   });
 
-  it("renders using the provided invoice template html", () => {
+  it("renders using the provided invoice template html (backward compat, no documentType)", () => {
     const html = generateInvoiceHtml(sampleContent, {
       htmlTemplate: `<section class="custom-template">Invoice {{invoice.number}} for {{client.name}}</section>`,
     });
 
     expect(html).toContain('class="custom-template"');
     expect(html).toContain("Invoice INV-001 for Client Example");
+  });
+
+  it("renders invoice with documentType passed explicitly", () => {
+    const html = generateInvoiceHtml(sampleContent, {
+      htmlTemplate: `<section class="custom-template">Invoice {{invoice.number}} for {{client.name}}</section>`,
+      documentType: "invoice",
+    });
+
+    expect(html).toContain('class="custom-template"');
+    expect(html).toContain("Invoice INV-001 for Client Example");
+  });
+
+  it("renders GoCar final PDF HTML from document template", () => {
+    const gocarContent = getDefaultGoCarReceiptContent() as unknown as InvoiceContent;
+    const html = generateInvoiceHtml(gocarContent, {
+      documentType: "gocar_receipt",
+      htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
+    });
+
+    expect(html).toContain("RB-4153088-49607870");
+    expect(html).toContain("Faktur");
+    expect(html).toContain("Makasih udah pesan GoCar");
+        expect(html).toContain("gocar-page-break");
   });
 
   it("produces different html for different templates with the same content", () => {

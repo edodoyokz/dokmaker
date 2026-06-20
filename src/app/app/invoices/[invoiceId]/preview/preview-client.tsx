@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TemplatePreview from "@/components/invoices/template-preview";
-import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
 import { 
   ArrowLeft, 
   Download, 
@@ -20,9 +19,11 @@ import { Badge } from "@/components/ui/badge";
 interface Props {
   invoiceId: string;
   invoiceNumber: string;
+  documentType: string;
+  title?: string | null;
   initialStatus: string;
   initialBalance: number;
-  content: InvoiceContent;
+  content: unknown;
   htmlTemplate: string;
   previewMeta: {
     email: string;
@@ -34,6 +35,8 @@ interface Props {
 export default function PreviewClient({
   invoiceId,
   invoiceNumber,
+  documentType,
+  title,
   initialStatus,
   initialBalance,
   content,
@@ -74,7 +77,7 @@ export default function PreviewClient({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Invoice-${invoiceNumber}.pdf`;
+      a.download = `${title || invoiceNumber}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -132,6 +135,7 @@ export default function PreviewClient({
             <div className="min-w-[600px] border border-zinc-900 rounded-lg overflow-hidden bg-white">
               <TemplatePreview
                 htmlTemplate={htmlTemplate}
+                documentType={documentType}
                 content={content}
                 previewMeta={previewMeta}
               />

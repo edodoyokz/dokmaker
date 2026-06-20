@@ -1,7 +1,14 @@
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
-import { renderInvoiceTemplateHtml } from "@/modules/templates/render-template";
+import { renderDocumentTemplateHtml } from "@/modules/templates/render-template";
+import {
+  isSupportedDocumentType,
+} from "@/modules/documents/document-type-registry";
+import type { DocumentType } from "@/modules/documents/types";
 
-export type InvoiceRenderTemplate = { htmlTemplate: string };
+export type InvoiceRenderTemplate = {
+  htmlTemplate: string;
+  documentType?: DocumentType | string;
+};
 
 interface PageLike {
   setContent(html: string, options: { waitUntil: string }): Promise<void>;
@@ -80,12 +87,18 @@ async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
  * to the built-in hardcoded layout.
  */
 export function generateInvoiceHtml(
-  content: InvoiceContent,
+  content: unknown,
   template?: InvoiceRenderTemplate
 ): string {
   if (template?.htmlTemplate) {
-    const bodyHtml = renderInvoiceTemplateHtml({
+    const effectiveType = template.documentType ?? "invoice";
+    const documentType: DocumentType = isSupportedDocumentType(effectiveType)
+      ? (effectiveType as DocumentType)
+      : "invoice";
+
+    const bodyHtml = renderDocumentTemplateHtml({
       htmlTemplate: template.htmlTemplate,
+      documentType,
       content,
       mode: "final",
     });
@@ -106,7 +119,9 @@ ${bodyHtml}
   }
 
   // Fallback: existing hardcoded layout for backward compatibility
-  const total = content.items.reduce(
+  // Only works with invoice-shaped content
+  const invoiceContent = content as InvoiceContent;
+  const total = invoiceContent.items.reduce(
     (sum, item) => sum + item.quantity * item.unitPrice,
     0
   );
@@ -141,26 +156,26 @@ ${bodyHtml}
   <div class="header">
     <div>
       <h1>INVOICE</h1>
-      <div style="color: #666; margin-top: 4px;">${content.meta.invoiceNumber}</div>
+      <div style="color: #666; margin-top: 4px;">${invoiceContent.meta.invoiceNumber}</div>
     </div>
     <div class="meta">
-      <div>Tanggal: ${content.meta.issueDate}</div>
-      ${content.meta.dueDate ? `<div>Jatuh Tempo: ${content.meta.dueDate}</div>` : ""}
+      <div>Tanggal: ${invoiceContent.meta.issueDate}</div>
+      ${invoiceContent.meta.dueDate ? `<div>Jatuh Tempo: ${invoiceContent.meta.dueDate}</div>` : ""}
     </div>
   </div>
 
   <div class="parties">
     <div class="party">
       <div class="party-label">Pengirim</div>
-      <div class="party-name">${content.sender.name}</div>
-      ${content.sender.address ? `<div class="party-detail">${content.sender.address}</div>` : ""}
-      ${content.sender.email ? `<div class="party-detail">${content.sender.email}</div>` : ""}
+      <div class="party-name">${invoiceContent.sender.name}</div>
+      ${invoiceContent.sender.address ? `<div class="party-detail">${invoiceContent.sender.address}</div>` : ""}
+      ${invoiceContent.sender.email ? `<div class="party-detail">${invoiceContent.sender.email}</div>` : ""}
     </div>
     <div class="party">
       <div class="party-label">Klien</div>
-      <div class="party-name">${content.client.name}</div>
-      ${content.client.address ? `<div class="party-detail">${content.client.address}</div>` : ""}
-      ${content.client.email ? `<div class="party-detail">${content.client.email}</div>` : ""}
+      <div class="party-name">${invoiceContent.client.name}</div>
+      ${invoiceContent.client.address ? `<div class="party-detail">${invoiceContent.client.address}</div>` : ""}
+      ${invoiceContent.client.email ? `<div class="party-detail">${invoiceContent.client.email}</div>` : ""}
     </div>
   </div>
 
@@ -174,7 +189,7 @@ ${bodyHtml}
       </tr>
     </thead>
     <tbody>
-      ${content.items
+      ${invoiceContent.items
         .map(
           (item) => `
         <tr>
@@ -194,22 +209,22 @@ ${bodyHtml}
   </table>
 
   ${
-    content.notes
+    invoiceContent.notes
       ? `
     <div class="notes">
       <div class="notes-label">Catatan</div>
-      <div class="notes-text">${content.notes}</div>
+      <div class="notes-text">${invoiceContent.notes}</div>
     </div>
   `
       : ""
   }
 
   ${
-    content.paymentInstruction
+    invoiceContent.paymentInstruction
       ? `
     <div class="notes">
       <div class="notes-label">Instruksi Pembayaran</div>
-      <div class="notes-text">${content.paymentInstruction}</div>
+      <div class="notes-text">${invoiceContent.paymentInstruction}</div>
     </div>
   `
       : ""
@@ -225,7 +240,7 @@ ${bodyHtml}
  * For now, returns the HTML as a placeholder.
  */
 export async function generateInvoicePdf(
-  content: InvoiceContent,
+  content: unknown,
   options: GenerateInvoicePdfOptions = {}
 ): Promise<Buffer> {
   const html = generateInvoiceHtml(content, options.template);

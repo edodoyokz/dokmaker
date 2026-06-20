@@ -1,11 +1,13 @@
 "use client";
 
-import { renderInvoiceTemplateHtml } from "@/modules/templates/render-template";
-import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
+import { renderDocumentTemplateHtml } from "@/modules/templates/render-template";
+import { isSupportedDocumentType } from "@/modules/documents/document-type-registry";
+import type { DocumentType } from "@/modules/documents/types";
 
 interface Props {
   htmlTemplate: string;
-  content: InvoiceContent;
+  documentType: string;
+  content: unknown;
   previewMeta: {
     email: string;
     timestamp: string;
@@ -13,9 +15,10 @@ interface Props {
   };
 }
 
-export default function TemplatePreview({ htmlTemplate, content, previewMeta }: Props) {
-  const html = renderInvoiceTemplateHtml({
+export default function TemplatePreview({ htmlTemplate, documentType, content, previewMeta }: Props) {
+  const html = renderDocumentTemplateHtml({
     htmlTemplate,
+    documentType: (isSupportedDocumentType(documentType) ? documentType : "invoice") as DocumentType,
     content,
     mode: "preview",
     previewMeta,

@@ -4,8 +4,6 @@ import { FINAL_DOWNLOAD_PRICE } from "@/modules/pricing/constants";
 import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
 import { pdfStorage, buildInvoiceFinalPdfStorageKey } from "./pdf-storage";
-import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
-
 /**
  * Process final PDF download.
  * Handles paid/unpaid version logic and wallet debit.
@@ -35,7 +33,7 @@ export async function processDownload(
     throw new Error("Versi aktif tidak ditemukan");
   }
 
-  const content = activeVersion.contentSnapshot as unknown as InvoiceContent;
+  const content = activeVersion.contentSnapshot as unknown;
 
   // If already paid, return free re-download
   if (activeVersion.status === "paid") {
@@ -55,7 +53,10 @@ export async function processDownload(
         userId
       );
       pdf = await generateInvoicePdf(content, {
-        template: { htmlTemplate: invoice.template.htmlTemplate },
+        template: {
+          htmlTemplate: invoice.template.htmlTemplate,
+          documentType: invoice.documentType,
+        },
       });
       const recoveryKey = buildInvoiceFinalPdfStorageKey({
         userId,
@@ -82,7 +83,7 @@ export async function processDownload(
 
     return {
       pdf,
-      filename: `invoice-${invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
+      filename: `${invoice.title || invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
     };
   }
 
@@ -118,7 +119,10 @@ export async function processDownload(
     try {
       // Generate PDF before charging. If generation fails, no wallet debit is created.
       pdf = await generateInvoicePdf(content, {
-        template: { htmlTemplate: invoice.template.htmlTemplate },
+        template: {
+          htmlTemplate: invoice.template.htmlTemplate,
+          documentType: invoice.documentType,
+        },
       });
 
       // Persist the generated PDF artifact BEFORE the financial transaction.
@@ -141,7 +145,7 @@ export async function processDownload(
           `download:${invoiceId}:${activeVersion.versionNumber}`,
           "invoice_version",
           activeVersion.id,
-          `Download invoice ${invoice.invoiceNumber} v${activeVersion.versionNumber}`,
+          `Download invoice ${invoice.title || invoice.invoiceNumber} v${activeVersion.versionNumber}`,
           "user",
           userId
         );
@@ -167,7 +171,7 @@ export async function processDownload(
 
       return {
         pdf,
-        filename: `invoice-${invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
+        filename: `${invoice.title || invoice.invoiceNumber}-v${activeVersion.versionNumber}.pdf`,
       };
     } catch (error) {
       await prisma.invoiceVersion.update({

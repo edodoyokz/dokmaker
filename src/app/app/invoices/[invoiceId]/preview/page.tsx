@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
-import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
 import PreviewClient from "./preview-client";
 
 export default async function InvoicePreviewPage({
@@ -40,15 +39,15 @@ export default async function InvoicePreviewPage({
     where: { userId: user.id },
   });
 
-  const content = activeVersion.contentSnapshot as InvoiceContent;
-
   return (
     <PreviewClient
       invoiceId={invoice.id}
       invoiceNumber={invoice.invoiceNumber}
+      documentType={invoice.documentType as string}
+      title={invoice.title}
       initialStatus={activeVersion.status}
       initialBalance={wallet?.currentBalance ?? 0}
-      content={content}
+      content={activeVersion.contentSnapshot as unknown}
       htmlTemplate={invoice.template.htmlTemplate}
       previewMeta={{
         email: user.email,

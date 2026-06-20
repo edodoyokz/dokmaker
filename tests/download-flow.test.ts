@@ -64,8 +64,10 @@ type InvoiceRecord = {
   id: string;
   userId: string;
   invoiceNumber: string;
+  documentType: string;
+  title?: string | null;
   activeVersionId: string | null;
-  template?: { htmlTemplate: string };
+  template?: { htmlTemplate: string; documentType: string };
 };
 
 type InvoiceVersionRecord = {
@@ -130,8 +132,10 @@ function mockInvoice(overrides: Partial<InvoiceRecord> = {}): InvoiceRecord {
     id: "invoice-1",
     userId: "user-1",
     invoiceNumber: "INV-001",
+    documentType: "invoice",
+    title: null,
     activeVersionId: "version-1",
-    template: { htmlTemplate: "<div data-tpl='custom'>{{invoice.number}}</div>" },
+    template: { htmlTemplate: "<div data-tpl='custom'>{{invoice.number}}</div>", documentType: "invoice" },
     ...overrides,
   };
 }
@@ -208,7 +212,7 @@ describe("processDownload", () => {
 
     expect(result).toEqual({
       pdf: pdfBuffer,
-      filename: "invoice-INV-001-v1.pdf",
+      filename: "INV-001-v1.pdf",
     });
     expect(prismaMock.downloadLog.create).toHaveBeenCalledWith({
       data: {
@@ -252,7 +256,7 @@ describe("processDownload", () => {
 
     const result = await processDownload("user-1", "invoice-1");
 
-    expect(result.filename).toBe("invoice-INV-001-v1.pdf");
+    expect(result.filename).toBe("INV-001-v1.pdf");
     expect(generateInvoicePdfMock).toHaveBeenCalledTimes(1);
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
     expect(debitWalletMock).toHaveBeenCalledTimes(1);
@@ -308,7 +312,7 @@ describe("processDownload", () => {
     expect(createMock).toHaveBeenCalledTimes(1);
   });
 
-  it("forwards the invoice template htmlTemplate to the pdf generator for unpaid download", async () => {
+  it("forwards the invoice template htmlTemplate and documentType to the pdf generator for unpaid download", async () => {
     const updateMock = vi.fn().mockResolvedValue(undefined);
     const createMock = vi.fn().mockResolvedValue(undefined);
     prismaMock.$transaction.mockImplementation(
@@ -328,12 +332,15 @@ describe("processDownload", () => {
     expect(generateInvoicePdfMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        template: { htmlTemplate: expect.stringContaining("data-tpl='custom'") },
+        template: expect.objectContaining({
+          htmlTemplate: expect.stringContaining("data-tpl='custom'"),
+          documentType: "invoice",
+        }),
       })
     );
   });
 
-  it("forwards the invoice template htmlTemplate to the pdf generator for paid re-download", async () => {
+  it("forwards the invoice template htmlTemplate and documentType to the pdf generator for paid re-download", async () => {
     prismaMock.invoiceVersion.findUnique.mockResolvedValue(
       mockVersion({ status: "paid" })
     );
@@ -343,7 +350,10 @@ describe("processDownload", () => {
     expect(generateInvoicePdfMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
-        template: { htmlTemplate: expect.stringContaining("data-tpl='custom'") },
+        template: expect.objectContaining({
+          htmlTemplate: expect.stringContaining("data-tpl='custom'"),
+          documentType: "invoice",
+        }),
       })
     );
   });
@@ -399,6 +409,37 @@ describe("processDownload", () => {
     );
     expect(generateInvoicePdfMock).not.toHaveBeenCalled();
     expect(result.pdf).toBe(storedPdf);
+  });
+
+  it("uses invoice.title as filename prefix when set (GoCar receipt)", async () => {
+    prismaMock.invoice.findUnique.mockResolvedValue(
+      mockInvoice({
+        documentType: "gocar_receipt",
+        title: "GoCar RB-4153",
+      })
+    );
+
+    const updateMock = vi.fn().mockResolvedValue(undefined);
+    const createMock = vi.fn().mockResolvedValue(undefined);
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: DownloadTxMock) => unknown) =>
+        callback({
+          invoiceVersion: { update: updateMock },
+          downloadLog: { create: createMock },
+        })
+    );
+
+    const result = await processDownload("user-1", "invoice-1");
+
+    expect(result.filename).toBe("GoCar RB-4153-v1.pdf");
+    expect(generateInvoicePdfMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        template: expect.objectContaining({
+          documentType: "gocar_receipt",
+        }),
+      })
+    );
   });
 
   it("regenerates and stores PDF when paid version lost its storageKey (migration safety)", async () => {
