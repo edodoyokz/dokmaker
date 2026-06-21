@@ -11,7 +11,7 @@
 ## Branch & Commit
 
 - **Branch:** `main`
-- **Evidence commit:** `d0e6471523e9932f817afea9ad41e4e49257438b`
+- **Evidence commit:** `0b9381b637b9cce904abec3233dee9e7af3dbc2d`
 - **Date:** 2026-06-21
 
 ---

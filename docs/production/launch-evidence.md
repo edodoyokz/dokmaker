@@ -5,9 +5,9 @@
 **Environment:** Production
 **URL:** _______________
 
-> **Audit remediation progress (2026-06-21):** The static verification
-> section below reflects the local codebase state after the 2026-06-21
-> production audit remediation. Real deployment URL, DB migration status,
+> **Audit remediation + Generic Document Engine progress (2026-06-21):** The static verification
+> section below reflects the local codebase state after the 2026-06-21 production audit remediation
+> and Generic Document Engine implementation (Tasks 1–8, 10). Real deployment URL, DB migration status,
 > and Pakasir sandbox verification still need to be filled at launch time.
 
 ---
@@ -16,7 +16,7 @@
 
 | Item | Value |
 |------|-------|
-| Git Commit SHA | Latest local `main` (fill exact `git rev-parse HEAD` at deployment time) |
+| Git Commit SHA | `0b9381b637b9cce904abec3233dee9e7af3dbc2d` (update to deployed SHA at launch) |
 | Vercel Deployment ID | TBD |
 | Database Migration Status | **UP TO DATE** (3 migrations applied, 0 drift) |
 | Pakasir Project Mode | sandbox / production (TBD) |
@@ -41,12 +41,12 @@
 
 ## 3. Verification Commands
 
-Local static verification (2026-06-21 audit remediation commit `a83bf87`):
+Local static verification (2026-06-21 Generic Document Engine commit `0b9381b637b9cce904abec3233dee9e7af3dbc2d`):
 
 ```
 npm run lint:           PASS
 npm run typecheck:      PASS
-npm test:               PASS (22 files / 170 tests)
+npm test:               PASS (23 files / 174 tests)
 npm run build:          PASS
 npx prisma validate:    PASS (with env set)
 npx prisma migrate status: PASS — Database schema is up to date!
@@ -68,6 +68,13 @@ At launch, re-run the above and fill results for the deployed commit.
 ### Templates
 - [ ] User catalog: PASS / FAIL
 - [ ] Admin CRUD: PASS / FAIL
+
+### Generic Document Engine (GoCar Receipt)
+- [ ] Create GoCar receipt draft: PASS / FAIL
+- [ ] Edit GoCar receipt: PASS / FAIL
+- [ ] Preview GoCar receipt (watermarked): PASS / FAIL
+- [ ] Download final GoCar PDF: PASS / FAIL / SKIP
+- [ ] Free re-download same GoCar version: PASS / FAIL / SKIP
 
 ### Invoices
 - [ ] Create draft: PASS / FAIL
@@ -112,6 +119,7 @@ At launch, re-run the above and fill results for the deployed commit.
 | Pakasir API key sent in Transaction Detail query string | Medium | Documented risk; logger redaction active; Transaction Detail URL now uses required `amount` param and documented `{ transaction }` response shape |
 | In-memory rate limiter not production-grade for serverless | Medium | Gated/Redis-backed limiter planned (Task 7) |
 | `prisma migrate status` drift between repo and remote DB | Medium | RESOLVED 2026-06-21: history synced, schema up to date |
+| Generic Document Engine Prisma rename (`Invoice*` → `Document*`) | Low | Deferred optional cleanup; no production data, feature functional |
 | PostCSS moderate advisory via `next` | Low | Upgrade Next when patch version available |
 | `generation_failed` version requires manual recovery (post-debit) | Low | Future admin recovery action |
 
