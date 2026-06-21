@@ -105,21 +105,34 @@ export async function handlePakasirWebhook(body: {
     throw new Error("Amount tidak sesuai");
   }
 
-  // Verify with Pakasir Transaction Detail API
+  // Verify with Pakasir Transaction Detail API.
+  // Official Pakasir docs (https://pakasir.com/p/docs section E):
+  //   GET /api/transactiondetail?project={slug}&amount={amount}&order_id={order_id}&api_key={api_key}
+  //   200 response shape: { transaction: { amount, order_id, project, status,
+  //                                       payment_method, completed_at } }
+  // The `amount` query parameter is REQUIRED by the API (otherwise 400).
   const apiKey = process.env.PAKASIR_API_KEY;
   if (!apiKey) {
     throw new Error("Pakasir API key not configured");
   }
 
   const detailResponse = await fetch(
-    `${process.env.PAKASIR_BASE_URL || "https://app.pakasir.com"}/api/transactiondetail?project=${project}&order_id=${order_id}&api_key=${apiKey}`
+    `${process.env.PAKASIR_BASE_URL || "https://app.pakasir.com"}/api/transactiondetail?project=${encodeURIComponent(project)}&amount=${payment.amount}&order_id=${encodeURIComponent(order_id)}&api_key=${encodeURIComponent(apiKey)}`
   );
 
   if (!detailResponse.ok) {
     throw new Error("Gagal verifikasi transaksi dengan Pakasir");
   }
 
-  const detail = await detailResponse.json();
+  const raw = await detailResponse.json();
+  // Defensive: the documented shape is { transaction: {...} }, but some error
+  // responses return { message, data: null }. Treat any missing/invalid
+  // transaction object as a failed verification.
+  const detail = raw?.transaction ?? null;
+
+  if (!detail) {
+    throw new Error("Response Transaction Detail Pakasir tidak valid");
+  }
 
   // Authoritative verification against Pakasir Transaction Detail API.
   // Never trust the webhook body alone; confirm status, project, order_id, and amount.
@@ -138,6 +151,9 @@ export async function handlePakasirWebhook(body: {
   if (Number(detail.amount) !== payment.amount) {
     throw new Error("Amount detail Pakasir tidak sesuai");
   }
+
+  // Pakasir's documented transaction shape has no separate `reference` field;
+  // we use order_id as the provider reference for traceability.
 
   // Import wallet service
   const { creditWallet } = await import("@/modules/wallet/service");
@@ -158,7 +174,7 @@ export async function handlePakasirWebhook(body: {
       data: {
         status: "success",
         paidAt: new Date(),
-        providerReference: detail.reference || null,
+        providerReference: order_id,
       },
     });
 

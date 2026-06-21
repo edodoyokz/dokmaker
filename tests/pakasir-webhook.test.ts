@@ -50,6 +50,21 @@ const prismaMock = prisma as unknown as {
 };
 const creditWalletMock = creditWallet as unknown as ReturnType<typeof vi.fn>;
 
+/**
+ * Build a mocked global.fetch Response whose body matches the documented
+ * Pakasir Transaction Detail API shape: `{ transaction: { ... } }`.
+ * See https://pakasir.com/p/docs section E.
+ */
+function pakasirDetailResponse(
+  transaction: Record<string, unknown>,
+  ok = true
+): Response {
+  return {
+    ok,
+    json: async () => ({ transaction }),
+  } as unknown as Response;
+}
+
 describe("handlePakasirWebhook", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -159,16 +174,15 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        pakasirDetailResponse({
           status: "completed",
           project: "wrong-project",
           order_id: "ORDER-project-mismatch",
           amount: 50000,
           reference: "REF-PM",
-        }),
-      })
+        })
+      )
     );
 
     await expect(
@@ -194,16 +208,15 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        pakasirDetailResponse({
           status: "completed",
           project: "dokmaker-test",
           order_id: "DIFFERENT-ORDER",
           amount: 50000,
           reference: "REF-OM",
-        }),
-      })
+        })
+      )
     );
 
     await expect(
@@ -229,16 +242,15 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        pakasirDetailResponse({
           status: "completed",
           project: "dokmaker-test",
           order_id: "ORDER-amount-mismatch",
           amount: 500000,
           reference: "REF-AM",
-        }),
-      })
+        })
+      )
     );
 
     await expect(
@@ -287,15 +299,14 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        pakasirDetailResponse({
           status: "pending",
           project: "dokmaker-test",
           order_id: "ORDER-2",
           amount: 50000,
-        }),
-      })
+        })
+      )
     );
 
     await expect(
@@ -387,16 +398,15 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        pakasirDetailResponse({
           status: "completed",
           project: "dokmaker-test",
           order_id: "ORDER-5",
           amount: 50000,
           reference: "REF-123",
-        }),
-      })
+        })
+      )
     );
 
     const result = await handlePakasirWebhook({
@@ -412,7 +422,7 @@ describe("handlePakasirWebhook", () => {
       where: { id: "payment-2", status: { not: "success" } },
       data: expect.objectContaining({
         status: "success",
-        providerReference: "REF-123",
+        providerReference: "ORDER-5",
       }),
     });
     expect(creditWalletMock).toHaveBeenCalledTimes(1);
@@ -461,16 +471,15 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
+      vi.fn().mockResolvedValue(
+        pakasirDetailResponse({
           status: "completed",
           project: "dokmaker-test",
           order_id: "ORDER-race",
           amount: 50000,
           reference: "REF-RACE",
-        }),
-      })
+        })
+      )
     );
 
     const result = await handlePakasirWebhook({
@@ -485,5 +494,36 @@ describe("handlePakasirWebhook", () => {
     // Loser of the race must NOT credit wallet or create webhook event.
     expect(creditWalletMock).not.toHaveBeenCalled();
     expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects when pakasir response is missing the transaction wrapper", async () => {
+    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+      id: "payment-no-tx",
+      userId: "user-1",
+      amount: 50000,
+      status: "created",
+    } satisfies PaymentRecord);
+
+    // Some upstream error responses return { message, data: null } with HTTP 200.
+    // Our parser must treat a missing `transaction` object as verification failure.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ message: "Transaksi tidak ditemukan", data: null }),
+      })
+    );
+
+    await expect(
+      handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-missing",
+        amount: 50000,
+        status: "completed",
+      })
+    ).rejects.toThrow(/Transaction Detail|tidak valid/i);
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(creditWalletMock).not.toHaveBeenCalled();
   });
 });
