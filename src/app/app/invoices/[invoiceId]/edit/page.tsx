@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { isSupportedDocumentType } from "@/modules/documents/document-type-registry";
+import type { DocumentType } from "@/modules/documents/types";
 import InvoiceEditForm from "./edit-form";
 import Link from "next/link";
 
@@ -34,13 +36,9 @@ export default async function EditInvoicePage({
     notFound();
   }
 
-  const content = activeVersion.contentSnapshot as {
-    sender: { name: string };
-    client: { name: string };
-    meta: { invoiceNumber: string; issueDate: string };
-    items: { description: string; quantity: number; unitPrice: number }[];
-    notes?: string;
-  };
+  if (!isSupportedDocumentType(invoice.documentType)) {
+    notFound();
+  }
 
   return (
     <div>
@@ -60,7 +58,7 @@ export default async function EditInvoicePage({
       </div>
 
       <div className="mb-4 flex items-center gap-3">
-        <h1 className="text-2xl font-bold">{invoice.invoiceNumber}</h1>
+        <h1 className="text-2xl font-bold">{invoice.title || invoice.invoiceNumber || "Dokumen"}</h1>
         <span
           className={`rounded-full px-2 py-1 text-xs ${
             activeVersion.status === "paid"
@@ -77,14 +75,8 @@ export default async function EditInvoicePage({
 
       <InvoiceEditForm
         invoiceId={invoiceId}
-        initialContent={{
-          senderName: content.sender.name,
-          clientName: content.client.name,
-          invoiceNumber: content.meta.invoiceNumber,
-          issueDate: content.meta.issueDate,
-          items: content.items,
-          notes: content.notes || "",
-        }}
+        documentType={invoice.documentType as DocumentType}
+        content={activeVersion.contentSnapshot}
       />
     </div>
   );
