@@ -16,7 +16,13 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Validate required fields
-    if (!body.project || !body.order_id || !body.amount) {
+    if (
+      !body.project ||
+      !body.order_id ||
+      body.amount === undefined ||
+      body.amount === null ||
+      !body.status
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }

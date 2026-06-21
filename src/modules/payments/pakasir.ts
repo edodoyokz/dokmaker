@@ -64,15 +64,22 @@ export async function handlePakasirWebhook(body: {
   project: string;
   order_id: string;
   amount: number;
+  status?: string;
   api_key?: string;
 }) {
-  const { project, order_id, amount } = body;
+  const { project, order_id, amount, status } = body;
 
-  logger.webhook("Pakasir webhook received", { project, order_id, amount });
+  logger.webhook("Pakasir webhook received", { project, order_id, amount, status });
 
   // Verify project slug
   if (project !== process.env.PAKASIR_PROJECT_SLUG) {
     throw new Error("Project slug tidak sesuai");
+  }
+
+  // Verify incoming webhook body status before any DB mutation.
+  // This is a first-line filter; the authoritative check is the Transaction Detail API.
+  if (status !== "completed") {
+    throw new Error("Status webhook Pakasir belum completed");
   }
 
   // Find payment transaction
@@ -114,9 +121,22 @@ export async function handlePakasirWebhook(body: {
 
   const detail = await detailResponse.json();
 
-  // Check if Pakasir confirms payment
+  // Authoritative verification against Pakasir Transaction Detail API.
+  // Never trust the webhook body alone; confirm status, project, order_id, and amount.
   if (detail.status !== "completed") {
     throw new Error("Transaksi belum completed di Pakasir");
+  }
+
+  if (detail.project !== project) {
+    throw new Error("Project detail Pakasir tidak sesuai");
+  }
+
+  if (detail.order_id !== order_id) {
+    throw new Error("Order ID detail Pakasir tidak sesuai");
+  }
+
+  if (Number(detail.amount) !== payment.amount) {
+    throw new Error("Amount detail Pakasir tidak sesuai");
   }
 
   // Import wallet service
