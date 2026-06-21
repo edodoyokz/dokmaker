@@ -5,42 +5,55 @@
 **Environment:** Production
 **URL:** _______________
 
+> **Audit remediation progress (2026-06-21):** The static verification
+> section below reflects the local codebase state after the 2026-06-21
+> production audit remediation. Real deployment URL, DB migration status,
+> and Pakasir sandbox verification still need to be filled at launch time.
+
 ---
 
 ## 1. Deployment Information
 
 | Item | Value |
 |------|-------|
-| Git Commit SHA | |
-| Vercel Deployment ID | |
-| Database Migration Status | |
-| Pakasir Project Mode | sandbox / production |
+| Git Commit SHA | `a83bf87` (main, audit remediation) |
+| Vercel Deployment ID | TBD |
+| Database Migration Status | TBD (requires DATABASE_URL) |
+| Pakasir Project Mode | sandbox / production (TBD) |
 
 ---
 
 ## 2. Environment Variables Verified
 
-- [ ] `DATABASE_URL` configured
-- [ ] `NEXT_PUBLIC_SUPABASE_URL` configured
-- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` configured
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` configured
-- [ ] `APP_BASE_URL` matches production URL
-- [ ] `PAKASIR_PROJECT_SLUG` configured
-- [ ] `PAKASIR_API_KEY` configured
-- [ ] `PAKASIR_WEBHOOK_URL` points to production
+- [x] `DATABASE_URL` documented as required (`.env.example`, `scripts/deploy.sh`)
+- [x] `DIRECT_URL` documented as required (added in 2026-06-21 audit remediation)
+- [x] `NEXT_PUBLIC_SUPABASE_URL` documented
+- [x] `NEXT_PUBLIC_SUPABASE_ANON_KEY` documented
+- [x] `SUPABASE_SERVICE_ROLE_KEY` documented
+- [x] `APP_BASE_URL` documented
+- [x] `PAKASIR_PROJECT_SLUG` documented
+- [x] `PAKASIR_API_KEY` documented
+- [x] `PAKASIR_WEBHOOK_URL` documented
+- [x] `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET_NAME` documented
+- [ ] Secrets actually configured in Vercel/GitHub (fill at launch)
 
 ---
 
 ## 3. Verification Commands
 
+Local static verification (2026-06-21 audit remediation commit `a83bf87`):
+
 ```
-npm run lint:           PASS / FAIL
-npm run typecheck:      PASS / FAIL
-npm test:               PASS / FAIL (65 tests)
-npm run build:          PASS / FAIL
-npx prisma validate:    PASS / FAIL
-npx prisma migrate status: PASS / FAIL
+npm run lint:           PASS
+npm run typecheck:      PASS
+npm test:               PASS (19 files / 157 tests)
+npm run build:          PASS
+npx prisma validate:    PASS (with env set)
+npx prisma migrate status: BLOCKED — requires DATABASE_URL
+npm audit --audit-level=high: PASS (no high/critical; 2 moderate PostCSS advisories via Next)
 ```
+
+At launch, re-run the above and fill results for the deployed commit.
 
 ---
 
@@ -88,6 +101,7 @@ npx prisma migrate status: PASS / FAIL
 - [ ] Admin routes require admin role
 - [ ] Rate limiting active
 - [ ] HTTPS enforced
+- [ ] Final PDF URL is private/temporary, never public permanent
 
 ---
 
@@ -95,7 +109,11 @@ npx prisma migrate status: PASS / FAIL
 
 | Issue | Severity | Mitigation |
 |-------|----------|------------|
-| | | |
+| Pakasir API key sent in Transaction Detail query string | Medium | Documented risk; do not log full URLs; add redaction (Task 9) |
+| In-memory rate limiter not production-grade for serverless | Medium | Gated/Redis-backed limiter planned (Task 7) |
+| `prisma migrate status` not run locally | Medium | Run at deploy time with configured DATABASE_URL |
+| PostCSS moderate advisory via `next` | Low | Upgrade Next when patch version available |
+| `generation_failed` version requires manual recovery (post-debit) | Low | Future admin recovery action |
 
 ---
 
@@ -104,6 +122,7 @@ npx prisma migrate status: PASS / FAIL
 - Previous deployment URL: _______________
 - Rollback command: `npx vercel rollback`
 - Pakasir webhook disable: Dashboard > Project > Webhook
+- Database migration forward-fix path: documented in `docs/production/rollback-plan.md`
 
 ---
 
@@ -112,6 +131,8 @@ npx prisma migrate status: PASS / FAIL
 - [ ] Error tracking configured
 - [ ] Uptime monitoring configured
 - [ ] Payment webhook monitoring active
+- [ ] Failed PDF generation alerting
+- [ ] Wallet adjustment audit dashboard
 
 ---
 
@@ -121,6 +142,24 @@ npx prisma migrate status: PASS / FAIL
 |------|------|-----------|------|
 | Tech Lead | | | |
 | Product Owner | | | |
+
+---
+
+## 9b. Audit-Driven Verification (2026-06-21)
+
+These are the financial-safety invariants confirmed by automated tests:
+
+- [x] Pakasir webhook rejects body when `status !== completed` (Task 1)
+- [x] Pakasir Transaction Detail API verified for status, project, order_id, amount (Task 1)
+- [x] Duplicate Pakasir webhook does not double-credit wallet via atomic conditional claim (Task 2)
+- [x] Concurrent race-loser webhook returns `already_processed` without crediting (Task 2)
+- [x] Download PDF generation failure resets version to unpaid, no debit (Task 3)
+- [x] Download storage failure resets version to unpaid, no debit (Task 3)
+- [x] Download retry after transient failure charges exactly once (Task 3)
+- [x] Sensitive API routes do not leak internal error messages (Task 6)
+- [ ] Pakasir sandbox transaction completed end-to-end (requires live sandbox)
+- [ ] Final PDF URL is private/temporary, verified at deployment
+- [ ] Authz/data isolation verified at deployment
 
 ---
 
