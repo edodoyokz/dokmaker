@@ -16,7 +16,7 @@
 
 | Item | Value |
 |------|-------|
-| Git Commit SHA | `05b421c` (main, post-Pakasir-real-API-fix) |
+| Git Commit SHA | `8994e4b` (main, docs/env finalization) |
 | Vercel Deployment ID | TBD |
 | Database Migration Status | **UP TO DATE** (3 migrations applied, 0 drift) |
 | Pakasir Project Mode | sandbox / production (TBD) |
