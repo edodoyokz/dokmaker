@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Non-secret test/CI env. Real secrets must be configured via GitHub secrets
+      # and/or Vercel project env in production. Never commit real secrets here.
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dokmaker?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/dokmaker?schema=public
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: test-service-role-key
+      APP_BASE_URL: http://localhost:3000
+      PAKASIR_PROJECT_SLUG: dokmaker-test
+      PAKASIR_API_KEY: test-pakasir-key
+      PAKASIR_BASE_URL: https://app.pakasir.com
+      PAKASIR_WEBHOOK_URL: http://localhost:3000/api/webhooks/pakasir
+      R2_ACCOUNT_ID: test-account
+      R2_ACCESS_KEY_ID: test-access-key
+      R2_SECRET_ACCESS_KEY: test-secret
+      R2_BUCKET_NAME: test-bucket
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Prisma validate
+        run: npx prisma validate
+
+      - name: Build
+        run: npm run build
