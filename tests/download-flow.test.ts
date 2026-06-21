@@ -463,4 +463,83 @@ describe("processDownload", () => {
       },
     });
   });
+
+  it("resets version to unpaid when PDF generation fails after status claim (no debit)", async () => {
+    // Claim succeeds (status moves to processing_payment), then PDF generation throws.
+    generateInvoicePdfMock.mockRejectedValue(new Error("PDF engine down"));
+
+    await expect(processDownload("user-1", "invoice-1")).rejects.toThrow(
+      /pdf engine down/i
+    );
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(debitWalletMock).not.toHaveBeenCalled();
+    // Catch must reset processing_payment -> unpaid so user can retry.
+    expect(prismaMock.invoiceVersion.updateMany).toHaveBeenCalledWith({
+      where: { id: "version-1", status: "processing_payment" },
+      data: { status: "unpaid" },
+    });
+  });
+
+  it("resets version to unpaid when storage put fails before debit (no debit)", async () => {
+    // PDF generates, but storage upload throws before wallet debit.
+    pdfStorageMock.put.mockRejectedValue(new Error("R2 timeout"));
+
+    await expect(processDownload("user-1", "invoice-1")).rejects.toThrow(
+      /r2 timeout/i
+    );
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(debitWalletMock).not.toHaveBeenCalled();
+    expect(prismaMock.invoiceVersion.updateMany).toHaveBeenCalledWith({
+      where: { id: "version-1", status: "processing_payment" },
+      data: { status: "unpaid" },
+    });
+  });
+
+  it("can retry successfully after a transient PDF generation failure and charges exactly once", async () => {
+    // First attempt: PDF generation fails, status resets to unpaid.
+    generateInvoicePdfMock.mockRejectedValueOnce(
+      new Error("PDF engine transient")
+    );
+    await expect(processDownload("user-1", "invoice-1")).rejects.toThrow(
+      /pdf engine transient/i
+    );
+    expect(prismaMock.invoiceVersion.updateMany).toHaveBeenCalledWith({
+      where: { id: "version-1", status: "processing_payment" },
+      data: { status: "unpaid" },
+    });
+
+    // Second attempt: full success path.
+    vi.clearAllMocks();
+    prismaMock.invoice.findUnique.mockResolvedValue(mockInvoice());
+    // After reset, version reads as unpaid again.
+    prismaMock.invoiceVersion.findUnique.mockResolvedValue(mockVersion());
+    prismaMock.invoiceVersion.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.wallet.findUnique.mockResolvedValue(mockWallet());
+    generateInvoicePdfMock.mockResolvedValue(Buffer.from("%PDF-retry"));
+    pdfStorageMock.put.mockResolvedValue(undefined);
+    buildKeyMock.mockReturnValue(
+      "invoice-finals/user-1/invoice-1/version-1-retry.pdf"
+    );
+
+    const updateMock = vi.fn().mockResolvedValue(undefined);
+    const createMock = vi.fn().mockResolvedValue(undefined);
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: DownloadTxMock) => unknown) =>
+        callback({
+          invoiceVersion: { update: updateMock },
+          downloadLog: { create: createMock },
+        })
+    );
+
+    const result = await processDownload("user-1", "invoice-1");
+
+    expect(result.filename).toBe("INV-001-v1.pdf");
+    expect(debitWalletMock).toHaveBeenCalledTimes(1);
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "version-1" },
+      data: expect.objectContaining({ status: "paid" }),
+    });
+  });
 });

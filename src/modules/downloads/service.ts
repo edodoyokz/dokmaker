@@ -115,6 +115,11 @@ export async function processDownload(
 
     logger.download("Paid download initiated", { invoiceId, versionId: activeVersion.id, amount: FINAL_DOWNLOAD_PRICE }, userId);
 
+    // Track whether the financial transaction has started. Pre-debit failures
+    // (PDF generation or storage upload) reset the version to unpaid so the
+    // user can retry without being stranded in generation_failed.
+    let debitTransactionStarted = false;
+
     let pdf: Buffer;
     try {
       // Generate PDF before charging. If generation fails, no wallet debit is created.
@@ -126,7 +131,7 @@ export async function processDownload(
       });
 
       // Persist the generated PDF artifact BEFORE the financial transaction.
-      // If storage fails, the catch below marks generation_failed without touching the wallet.
+      // If storage fails, the catch below resets to unpaid without touching the wallet.
       const storageKey = buildInvoiceFinalPdfStorageKey({
         userId,
         invoiceId: invoice.id,
@@ -136,6 +141,7 @@ export async function processDownload(
       await pdfStorage.put(storageKey, pdf);
 
       // Debit wallet and mark as paid in atomic transaction.
+      debitTransactionStarted = true;
       await prisma.$transaction(async (tx) => {
         await debitWallet(
           tx,
@@ -174,10 +180,22 @@ export async function processDownload(
         filename: `${invoice.title || invoice.invoiceNumber || invoice.id}-v${activeVersion.versionNumber}.pdf`,
       };
     } catch (error) {
-      await prisma.invoiceVersion.update({
-        where: { id: activeVersion.id },
-        data: { status: "generation_failed" },
-      });
+      // Only reset from processing_payment so we never overwrite a version that
+      // a concurrent worker has already flipped to paid (or another state).
+      // Pre-debit failures reset to unpaid for retry; post-debit failures are
+      // rolled back by the Prisma transaction itself, so we leave the row in
+      // processing_payment and flag generation_failed to avoid silent double charge.
+      if (!debitTransactionStarted) {
+        await prisma.invoiceVersion.updateMany({
+          where: { id: activeVersion.id, status: "processing_payment" },
+          data: { status: "unpaid" },
+        });
+      } else {
+        await prisma.invoiceVersion.updateMany({
+          where: { id: activeVersion.id, status: "processing_payment" },
+          data: { status: "generation_failed" },
+        });
+      }
       throw error;
     }
   }
