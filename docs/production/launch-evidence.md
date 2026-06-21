@@ -16,7 +16,7 @@
 
 | Item | Value |
 |------|-------|
-| Git Commit SHA | `8994e4b` (main, docs/env finalization) |
+| Git Commit SHA | Latest local `main` (fill exact `git rev-parse HEAD` at deployment time) |
 | Vercel Deployment ID | TBD |
 | Database Migration Status | **UP TO DATE** (3 migrations applied, 0 drift) |
 | Pakasir Project Mode | sandbox / production (TBD) |
