@@ -6,7 +6,6 @@ import {
 import {
   gocarReceiptContentSchema,
   getDefaultGoCarReceiptContent,
-  type GoCarReceiptContent,
 } from "@/modules/documents/gocar-receipt-content.schema";
 import { adminTemplatePayloadSchema } from "@/lib/validation/admin-template.schema";
 
