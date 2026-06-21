@@ -36,6 +36,20 @@ export async function POST(
       );
     }
 
+    // Require an idempotency key so that browser retry / double submit cannot
+    // create duplicate wallet ledger entries. Prefer the Idempotency-Key
+    // header, fall back to a client-supplied body field, else reject.
+    const idempotencyKeyInput =
+      request.headers.get("Idempotency-Key") ||
+      (typeof body.idempotencyKey === "string" ? body.idempotencyKey : null);
+
+    if (!idempotencyKeyInput) {
+      return NextResponse.json(
+        { error: "Idempotency key required" },
+        { status: 400 }
+      );
+    }
+
     // Verify target user exists
     const targetUser = await prisma.user.findUnique({
       where: { id: userId },
@@ -48,7 +62,7 @@ export async function POST(
       );
     }
 
-    const idempotencyKey = `admin-adjust:${admin.id}:${userId}:${Date.now()}`;
+    const idempotencyKey = `admin-adjust:${admin.id}:${userId}:${idempotencyKeyInput}`;
 
     await prisma.$transaction(async (tx) => {
       if (type === "credit") {
