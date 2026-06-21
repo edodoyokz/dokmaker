@@ -16,7 +16,7 @@
 
 | Item | Value |
 |------|-------|
-| Git Commit SHA | `909c70f` (main, post-migration-sync) |
+| Git Commit SHA | `05b421c` (main, post-Pakasir-real-API-fix) |
 | Vercel Deployment ID | TBD |
 | Database Migration Status | **UP TO DATE** (3 migrations applied, 0 drift) |
 | Pakasir Project Mode | sandbox / production (TBD) |
@@ -46,7 +46,7 @@ Local static verification (2026-06-21 audit remediation commit `a83bf87`):
 ```
 npm run lint:           PASS
 npm run typecheck:      PASS
-npm test:               PASS (19 files / 157 tests)
+npm test:               PASS (22 files / 170 tests)
 npm run build:          PASS
 npx prisma validate:    PASS (with env set)
 npx prisma migrate status: PASS — Database schema is up to date!
@@ -109,7 +109,7 @@ At launch, re-run the above and fill results for the deployed commit.
 
 | Issue | Severity | Mitigation |
 |-------|----------|------------|
-| Pakasir API key sent in Transaction Detail query string | Medium | Documented risk; do not log full URLs; add redaction (Task 9) |
+| Pakasir API key sent in Transaction Detail query string | Medium | Documented risk; logger redaction active; Transaction Detail URL now uses required `amount` param and documented `{ transaction }` response shape |
 | In-memory rate limiter not production-grade for serverless | Medium | Gated/Redis-backed limiter planned (Task 7) |
 | `prisma migrate status` drift between repo and remote DB | Medium | RESOLVED 2026-06-21: history synced, schema up to date |
 | PostCSS moderate advisory via `next` | Low | Upgrade Next when patch version available |
@@ -150,7 +150,7 @@ At launch, re-run the above and fill results for the deployed commit.
 These are the financial-safety invariants confirmed by automated tests:
 
 - [x] Pakasir webhook rejects body when `status !== completed` (Task 1)
-- [x] Pakasir Transaction Detail API verified for status, project, order_id, amount (Task 1)
+- [x] Pakasir Transaction Detail API verified for status, project, order_id, amount using documented response shape `{ transaction: {...} }` and required `amount` query parameter (Task 1 + follow-up real API fix)
 - [x] Duplicate Pakasir webhook does not double-credit wallet via atomic conditional claim (Task 2)
 - [x] Concurrent race-loser webhook returns `already_processed` without crediting (Task 2)
 - [x] DB-level unique index on `payment_webhook_events(provider, provider_event_id)` is now reflected in Prisma schema (resolved drift 2026-06-21)
@@ -158,7 +158,8 @@ These are the financial-safety invariants confirmed by automated tests:
 - [x] Download storage failure resets version to unpaid, no debit (Task 3)
 - [x] Download retry after transient failure charges exactly once (Task 3)
 - [x] Sensitive API routes do not leak internal error messages (Task 6)
-- [ ] Pakasir sandbox transaction completed end-to-end (requires live sandbox)
+- [x] Pakasir API credential probe succeeds (Transaction Detail endpoint responds as authenticated; invalid order returns 404, missing amount returns 400)
+- [ ] Pakasir sandbox transaction completed end-to-end (requires live payment simulation/webhook target)
 - [ ] Final PDF URL is private/temporary, verified at deployment
 - [ ] Authz/data isolation verified at deployment
 
