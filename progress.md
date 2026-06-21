@@ -17,7 +17,7 @@ In Progress — launch-prep hardening
 
 - `npm run lint` ✅
 - `npm run typecheck` ✅
-- `npm test` ✅ 24 files / 177 tests
+- `npm test` ✅ 25 files / 188 tests
 - `npm run build` ✅
 - `npx prisma validate` ✅
 - `npx prisma migrate status` ✅
