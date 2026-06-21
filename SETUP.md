@@ -43,6 +43,7 @@ nano .env
 Fill in:
 ```env
 DATABASE_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres"
+DIRECT_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres"
 NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="[anon-key]"
 SUPABASE_SERVICE_ROLE_KEY="[service-role-key]"
@@ -51,6 +52,10 @@ PAKASIR_PROJECT_SLUG="dokmaker"
 PAKASIR_API_KEY="[api-key]"
 PAKASIR_BASE_URL="https://app.pakasir.com"
 PAKASIR_WEBHOOK_URL="http://localhost:3000/api/webhooks/pakasir"
+R2_ACCOUNT_ID="[account-id]"
+R2_ACCESS_KEY_ID="[access-key]"
+R2_SECRET_ACCESS_KEY="[secret-key]"
+R2_BUCKET_NAME="dokmaker-invoice-finals"
 ```
 
 ### 4. Setup Database (2 min)

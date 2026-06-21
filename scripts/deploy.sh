@@ -23,6 +23,7 @@ npm run typecheck
 npm test
 npm run build
 npx prisma validate
+npx prisma migrate status
 echo "✓ All verifications passed"
 
 # Step 2: Check environment
@@ -39,12 +40,18 @@ source .env
 # Check required vars
 REQUIRED_VARS=(
     "DATABASE_URL"
+    "DIRECT_URL"
     "NEXT_PUBLIC_SUPABASE_URL"
     "NEXT_PUBLIC_SUPABASE_ANON_KEY"
     "SUPABASE_SERVICE_ROLE_KEY"
     "APP_BASE_URL"
     "PAKASIR_PROJECT_SLUG"
     "PAKASIR_API_KEY"
+    "PAKASIR_WEBHOOK_URL"
+    "R2_ACCOUNT_ID"
+    "R2_ACCESS_KEY_ID"
+    "R2_SECRET_ACCESS_KEY"
+    "R2_BUCKET_NAME"
 )
 
 for var in "${REQUIRED_VARS[@]}"; do
