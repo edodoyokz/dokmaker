@@ -4,7 +4,7 @@
 **Version:** v1.0 (MVP)
 **Reviewer:** AI Team
 
-> **Launch-prep update (2026-06-12):** This review was refreshed during the launch-preparation hardening pass. Stale claims were corrected. Current evidence-backed status and outstanding blockers are recorded in `launch-evidence-2026-06-12.md` and `staging-smoke-run-2026-06-12.md`. The app is NOT yet declared production-ready/live-ready per `AGENTS.md` §10 until the live/manual smoke run passes.
+> **Launch-prep update (2026-06-21):** This review reflects the current codebase after the Generic Document Engine implementation and the 2026-06-21 production audit remediation. Stale claims were corrected. Current evidence-backed status and outstanding blockers are recorded in `docs/production/launch-evidence.md` and `docs/plans/2026-06-20-generic-document-engine-launch-evidence.md`. The app is NOT yet declared production-ready/live-ready per `AGENTS.md` §10 until the live/manual smoke run passes.
 
 ---
 
@@ -12,7 +12,7 @@
 
 DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based payments via Pakasir. This review assesses production readiness across security, functionality, and operational requirements.
 
-**Status:** 🟡 Ready for staging deployment with sandbox payments
+**Status:** 🟡 Ready for staging deployment with sandbox payments; Generic Document Engine complete.
 
 ---
 
@@ -25,8 +25,11 @@ DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based paym
 | Register/Login | ✅ | Supabase Auth with email |
 | View Templates | ✅ | Active templates only |
 | Create Invoice | ✅ | From active template |
+| Create GoCar Receipt | ✅ | From active `gocar_receipt` template |
 | Edit Invoice | ✅ | Unpaid overwrite, paid creates new version |
+| Edit GoCar Receipt | ✅ | Same versioning rules as invoice |
 | Preview Invoice | ✅ | Watermarked, protected |
+| Preview GoCar Receipt | ✅ | Watermarked, protected |
 | Top Up Wallet | ✅ | Rp50k/100k via Pakasir |
 | Download PDF | ✅ | Rp10k per version, re-download free |
 | Admin Templates | ✅ | CRUD with audit |
@@ -39,8 +42,8 @@ DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based paym
 |---------|----------|-------|
 | Email verification | Medium | Supabase handles, may need config |
 | Password reset | Medium | Supabase handles |
-| PWA manifest | Low | Add for mobile install |
-| Offline support | Low | Not critical for MVP |
+| PWA manifest | ✅ | `public/manifest.json`, icons, and service worker added |
+| Offline support | ✅ | Security-safe service worker; network-first, no private data caching |
 
 ---
 
@@ -75,7 +78,8 @@ DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based paym
 | PDF not public URL | ✅ | API route with auth |
 | Preview watermarked | ✅ | PREVIEW overlay |
 | Secrets not in client | ✅ | Server-side only |
-| Rate limiting | ✅ | Top up, download, webhook |
+| Rate limiting | ✅ | Top up, download, webhook; gated in production |
+| Security headers | 🟡 | Planned/in progress via `next.config.ts` |
 
 ---
 
@@ -85,11 +89,12 @@ DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based paym
 
 | Issue | Severity | Mitigation |
 |-------|----------|------------|
-| In-memory rate limit | Medium | Works for single instance, need Redis for scale |
-| No PDF storage | Medium | Currently generated on-demand |
-| No email notifications | Low | Add post-MVP |
-| PDF engine required for final output | Medium | `generateInvoicePdf` now throws if the PDF engine is unavailable; it no longer returns an HTML buffer disguised as a PDF. Ensure Puppeteer/Chromium is available in the deploy runtime. |
-| Pakasir API key in URL query string | Medium | Transmitted as query param in transaction-detail request; may leak into logs. Track moving to header/body before live launch. |
+| In-memory rate limit | Medium | Works for single instance, Redis recommended for scale |
+| PDF storage | ✅ | Resolved — final PDFs persisted in Cloudflare R2 |
+| Pakasir API key in URL query string | Medium | Transmitted as query param in transaction-detail request; mitigated by logger redaction. Track moving to header/body before live launch. |
+| PostCSS moderate advisory | Low | Via `next`; upgrade when patch available |
+| `processing_payment` stuck versions | Low | Resolved with timeout recovery — stale claims reset to `unpaid` |
+| Generic Document Engine Prisma rename | Low | Deferred optional cleanup (`Invoice*` → `Document*`); feature functional without rename |
 
 ### 4.2 Performance Considerations
 
@@ -119,9 +124,9 @@ DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based paym
 | Build passes | ✅ | npm run build |
 | Typecheck passes | ✅ | tsc --noEmit |
 | Lint passes | ✅ | ESLint |
-| Tests pass | ✅ | 82 tests (10 files) |
-| Prisma valid | ✅ | prisma validate |
-| Migration ready | ✅ | Schema defined |
+| Tests pass | ✅ | 174 tests (23 files) |
+| Prisma valid | ✅ | `prisma validate` passes |
+| Migration ready | ✅ | 3 migrations, database schema up to date |
 
 ---
 
@@ -136,10 +141,11 @@ All critical flows implemented and verified. Safe for sandbox testing with Pakas
 **Conditions:**
 1. Configure production Supabase project
 2. Configure production Pakasir project (or sandbox with real testing)
-3. Run smoke tests on staging
+3. Run smoke tests on staging, **including the GoCar receipt flow**
 4. Verify webhook works end-to-end
 5. Add error tracking (Sentry)
 6. Document rollback procedure
+7. Verify security headers are deployed and do not break the app
 
 ---
 
@@ -159,19 +165,19 @@ All critical flows implemented and verified. Safe for sandbox testing with Pakas
 $ npm run lint
 ✓ 0 errors, 0 warnings
 
-$ npm run typecheck  
+$ npm run typecheck
 ✓ No errors
 
 $ npm test
-✓ 82 tests passed (10 files)
+✓ 174 tests passed (23 files)
 
 $ npm run build
-✓ Exit 0, 35 routes compiled
+✓ Exit 0, 45+ routes compiled
 
 $ npx prisma validate
 ✓ Schema valid
 
 $ npx prisma migrate status
-✓ Database schema is up to date (1 migration)
+✓ Database schema is up to date (3 migrations)
 ```
 
