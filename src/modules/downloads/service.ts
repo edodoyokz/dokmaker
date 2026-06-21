@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 import { FINAL_DOWNLOAD_PRICE } from "@/modules/pricing/constants";
 import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
+import { PROCESSING_PAYMENT_TIMEOUT_MS } from "./constants";
 import { pdfStorage, buildInvoiceFinalPdfStorageKey } from "./pdf-storage";
 /**
  * Process final PDF download.
@@ -25,12 +26,39 @@ export async function processDownload(
     throw new Error("Invoice tidak ditemukan");
   }
 
-  const activeVersion = await prisma.invoiceVersion.findUnique({
+  let activeVersion = await prisma.invoiceVersion.findUnique({
     where: { id: invoice.activeVersionId },
   });
 
   if (!activeVersion) {
     throw new Error("Versi aktif tidak ditemukan");
+  }
+
+  // Recover versions that were stranded in `processing_payment` after a crash.
+  // Only reset if the claim is older than the timeout; otherwise tell the user
+  // the download is still being processed.
+  if (activeVersion.status === "processing_payment") {
+    const elapsed = Date.now() - activeVersion.updatedAt.getTime();
+    if (elapsed > PROCESSING_PAYMENT_TIMEOUT_MS) {
+      logger.warn(
+        "download",
+        "Resetting stale processing_payment version",
+        { versionId: activeVersion.id, elapsedMs: elapsed },
+        userId
+      );
+      await prisma.invoiceVersion.updateMany({
+        where: { id: activeVersion.id, status: "processing_payment" },
+        data: { status: "unpaid" },
+      });
+      activeVersion = await prisma.invoiceVersion.findUnique({
+        where: { id: activeVersion.id },
+      });
+      if (!activeVersion || activeVersion.status !== "unpaid") {
+        throw new Error("Download invoice sedang diproses atau sudah dibayar");
+      }
+    } else {
+      throw new Error("Download invoice sedang diproses");
+    }
   }
 
   const content = activeVersion.contentSnapshot as unknown;

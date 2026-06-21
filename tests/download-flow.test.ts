@@ -77,6 +77,7 @@ type InvoiceVersionRecord = {
   contentSnapshot: Record<string, unknown>;
   storageKey?: string | null;
   contentHash?: string | null;
+  updatedAt?: Date;
 };
 
 type WalletRecord = {
@@ -150,6 +151,7 @@ function mockVersion(
     contentSnapshot: sampleContent,
     storageKey: null,
     contentHash: "hash-1",
+    updatedAt: new Date(),
     ...overrides,
   };
 }
@@ -226,13 +228,87 @@ describe("processDownload", () => {
     expect(debitWalletMock).not.toHaveBeenCalled();
   });
 
-  it("rejects unsupported version status safely", async () => {
+  it("rejects fresh processing_payment version with a safe message", async () => {
     prismaMock.invoiceVersion.findUnique.mockResolvedValue(
-      mockVersion({ status: "processing_payment" })
+      mockVersion({
+        status: "processing_payment",
+        updatedAt: new Date(Date.now() - 10_000), // 10 seconds ago
+      })
     );
 
     await expect(processDownload("user-1", "invoice-1")).rejects.toThrow(
-      /status versi tidak valid/i
+      /sedang diproses/i
+    );
+
+    expect(prismaMock.invoiceVersion.updateMany).not.toHaveBeenCalled();
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(debitWalletMock).not.toHaveBeenCalled();
+  });
+
+  it("recovers stale processing_payment version and proceeds with paid download", async () => {
+    const staleUpdatedAt = new Date(Date.now() - 6 * 60 * 1000); // 6 minutes ago
+    prismaMock.invoiceVersion.findUnique
+      .mockResolvedValueOnce(
+        mockVersion({
+          status: "processing_payment",
+          updatedAt: staleUpdatedAt,
+        })
+      )
+      .mockResolvedValueOnce(
+        mockVersion({
+          status: "unpaid",
+          updatedAt: staleUpdatedAt,
+        })
+      );
+
+    const updateMock = vi.fn().mockResolvedValue(undefined);
+    const createMock = vi.fn().mockResolvedValue(undefined);
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: DownloadTxMock) => unknown) =>
+        callback({
+          invoiceVersion: { update: updateMock },
+          downloadLog: { create: createMock },
+        })
+    );
+
+    const result = await processDownload("user-1", "invoice-1");
+
+    expect(result.filename).toBe("INV-001-v1.pdf");
+    // Reset call
+    expect(prismaMock.invoiceVersion.updateMany).toHaveBeenCalledWith({
+      where: { id: "version-1", status: "processing_payment" },
+      data: { status: "unpaid" },
+    });
+    // Claim call
+    expect(prismaMock.invoiceVersion.updateMany).toHaveBeenCalledWith({
+      where: { id: "version-1", status: "unpaid" },
+      data: { status: "processing_payment" },
+    });
+    expect(debitWalletMock).toHaveBeenCalledTimes(1);
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "version-1" },
+      data: expect.objectContaining({ status: "paid" }),
+    });
+  });
+
+  it("throws safely if stale processing_payment version cannot be reset to unpaid", async () => {
+    const staleUpdatedAt = new Date(Date.now() - 6 * 60 * 1000);
+    prismaMock.invoiceVersion.findUnique
+      .mockResolvedValueOnce(
+        mockVersion({
+          status: "processing_payment",
+          updatedAt: staleUpdatedAt,
+        })
+      )
+      .mockResolvedValueOnce(
+        mockVersion({
+          status: "paid", // concurrent worker already paid it
+          updatedAt: staleUpdatedAt,
+        })
+      );
+
+    await expect(processDownload("user-1", "invoice-1")).rejects.toThrow(
+      /sedang diproses atau sudah dibayar/i
     );
 
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
