@@ -79,7 +79,7 @@ DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based paym
 | Preview watermarked | ✅ | PREVIEW overlay |
 | Secrets not in client | ✅ | Server-side only |
 | Rate limiting | ✅ | Top up, download, webhook; gated in production |
-| Security headers | 🟡 | Planned/in progress via `next.config.ts` |
+| Security headers | ✅ | X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, CSP configured in `next.config.ts` |
 
 ---
 
@@ -124,7 +124,7 @@ DokMaker MVP is a mobile-first PWA for invoice generation with wallet-based paym
 | Build passes | ✅ | npm run build |
 | Typecheck passes | ✅ | tsc --noEmit |
 | Lint passes | ✅ | ESLint |
-| Tests pass | ✅ | 174 tests (23 files) |
+| Tests pass | ✅ | 188 tests (25 files) |
 | Prisma valid | ✅ | `prisma validate` passes |
 | Migration ready | ✅ | 3 migrations, database schema up to date |
 
@@ -169,7 +169,7 @@ $ npm run typecheck
 ✓ No errors
 
 $ npm test
-✓ 174 tests passed (23 files)
+✓ 188 tests passed (25 files)
 
 $ npm run build
 ✓ Exit 0, 45+ routes compiled
