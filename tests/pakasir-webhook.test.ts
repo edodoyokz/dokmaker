@@ -14,7 +14,6 @@ type PaymentRecord = {
   userId: string;
   amount: number;
   status: string;
-  providerOrderId: string | null;
 };
 
 vi.mock("@/lib/logger", () => ({

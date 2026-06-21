@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { creditWallet, debitWallet } from "@/modules/wallet/service";
+import { safeApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export async function POST(
   request: Request,
@@ -97,10 +99,15 @@ export async function POST(
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    logger.error(
+      "admin",
+      "Admin wallet adjustment failed",
+      error instanceof Error ? { message: error.message } : undefined,
+      undefined
+    );
     return NextResponse.json(
       {
-        error:
-          error instanceof Error ? error.message : "Internal server error",
+        error: safeApiError(error),
       },
       { status: 500 }
     );

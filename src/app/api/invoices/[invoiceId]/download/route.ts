@@ -6,6 +6,8 @@ import {
   getRateLimitKey,
   RATE_LIMITS,
 } from "@/lib/rate-limit";
+import { safeApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export async function GET(
   request: Request,
@@ -39,15 +41,18 @@ export async function GET(
     }
     if (
       error instanceof Error &&
-      error.message.includes("Saldo tidak mencukupi")
+      error.message.startsWith("Saldo tidak mencukupi")
     ) {
       return NextResponse.json({ error: error.message }, { status: 402 });
     }
+    logger.error(
+      "download",
+      "Final PDF download failed",
+      error instanceof Error ? { message: error.message } : undefined,
+      undefined
+    );
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Internal server error",
-      },
+      { error: safeApiError(error) },
       { status: 500 }
     );
   }

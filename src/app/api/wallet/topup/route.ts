@@ -6,6 +6,8 @@ import {
   getRateLimitKey,
   RATE_LIMITS,
 } from "@/lib/rate-limit";
+import { safeApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
@@ -32,8 +34,13 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    logger.error(
+      "payment",
+      "Top up payment creation failed",
+      error instanceof Error ? { message: error.message } : undefined
+    );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: safeApiError(error) },
       { status: 500 }
     );
   }

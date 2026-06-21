@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { handlePakasirWebhook } from "@/modules/payments/pakasir";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { safeApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
@@ -32,9 +34,15 @@ export async function POST(request: Request) {
     const result = await handlePakasirWebhook(body);
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Pakasir webhook error:", error);
+    // Log full error server-side; return generic message to webhook caller to
+    // avoid leaking internal config (e.g. "Pakasir API key not configured").
+    logger.error(
+      "webhook",
+      "Pakasir webhook processing failed",
+      error instanceof Error ? { message: error.message } : undefined
+    );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: safeApiError(error, "Webhook processing failed") },
       { status: 400 }
     );
   }
