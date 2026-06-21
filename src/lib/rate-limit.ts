@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
-// In-memory store for rate limiting
-// In production, use Redis or similar distributed store
+// In-memory store for rate limiting.
+// Suitable for local development and single-instance deployments only.
+// In production on serverless / multi-instance (e.g. Vercel), counters are
+// per-instance and reset on cold starts, so rate limiting is NOT reliable.
+// Configure RATE_LIMIT_REDIS_URL in production to switch to a distributed
+// limiter (not yet implemented; see docs/production/env-checklist.md).
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 interface RateLimitConfig {
@@ -11,14 +16,47 @@ interface RateLimitConfig {
   windowSeconds: number;
 }
 
+let productionWarningEmitted = false;
+
+/**
+ * Returns true when production rate limiting is expected to be backed by a
+ * distributed store but is not configured. Exposed for tests.
+ */
+export function isProductionWithoutDistributedStore(): boolean {
+  return (
+    process.env.NODE_ENV === "production" &&
+    !process.env.RATE_LIMIT_REDIS_URL
+  );
+}
+
+function emitProductionWarningOnce(): void {
+  if (productionWarningEmitted) return;
+  productionWarningEmitted = true;
+  logger.error(
+    "auth",
+    "Production rate limiting is running on an in-memory store. " +
+      "Configure RATE_LIMIT_REDIS_URL (Redis/Upstash/Vercel KV) for reliable " +
+      "multi-instance rate limiting. Until then, rate limits reset per " +
+      "instance/cold start and may be bypassed by distributed traffic."
+  );
+}
+
 /**
  * Check rate limit for a given key.
  * Returns null if allowed, or a 429 response if exceeded.
+ *
+ * In production without a distributed store, we still apply per-instance
+ * limiting as defense-in-depth but emit a hard warning so operators know
+ * the limit is not globally reliable.
  */
 export function checkRateLimit(
   key: string,
   config: RateLimitConfig
 ): NextResponse | null {
+  if (isProductionWithoutDistributedStore()) {
+    emitProductionWarningOnce();
+  }
+
   const now = Date.now();
   const windowMs = config.windowSeconds * 1000;
 
