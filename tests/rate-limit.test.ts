@@ -12,22 +12,18 @@ import { checkRateLimit, isProductionWithoutDistributedStore } from "@/lib/rate-
 import { logger } from "@/lib/logger";
 
 describe("rate-limit", () => {
-  const originalEnv = { ...process.env };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    // @ts-expect-error allow direct delete
-    delete process.env.NODE_ENV;
-    // @ts-expect-error allow direct delete
-    delete process.env.RATE_LIMIT_REDIS_URL;
+    vi.unstubAllEnvs();
   });
 
   afterEach(() => {
-    process.env = { ...originalEnv };
+    vi.unstubAllEnvs();
   });
 
   it("does not emit production warning in development", () => {
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("RATE_LIMIT_REDIS_URL", "");
     expect(isProductionWithoutDistributedStore()).toBe(false);
 
     const result = checkRateLimit("dev-key", { limit: 1, windowSeconds: 60 });
@@ -36,7 +32,8 @@ describe("rate-limit", () => {
   });
 
   it("emits a hard warning exactly once in production without Redis", () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("RATE_LIMIT_REDIS_URL", "");
     expect(isProductionWithoutDistributedStore()).toBe(true);
 
     // First call emits the warning.
@@ -53,8 +50,8 @@ describe("rate-limit", () => {
   });
 
   it("does not emit warning in production when Redis URL is configured", () => {
-    process.env.NODE_ENV = "production";
-    process.env.RATE_LIMIT_REDIS_URL = "redis://localhost:6379";
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("RATE_LIMIT_REDIS_URL", "redis://localhost:6379");
     expect(isProductionWithoutDistributedStore()).toBe(false);
 
     checkRateLimit("prod-redis-key", { limit: 1, windowSeconds: 60 });
@@ -62,7 +59,8 @@ describe("rate-limit", () => {
   });
 
   it("still applies per-instance limit in production without Redis", () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("RATE_LIMIT_REDIS_URL", "");
     const config = { limit: 2, windowSeconds: 60 };
 
     expect(checkRateLimit("limited-key", config)).toBeNull();

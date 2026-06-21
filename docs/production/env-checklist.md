@@ -65,6 +65,8 @@
 
 **Security note:** `PAKASIR_API_KEY` is currently sent as a URL query parameter in the transaction-detail request (`src/modules/payments/pakasir.ts`). Query-string secrets can appear in upstream/proxy/access logs. Track moving it to a header or POST body before live launch, or document as accepted risk if the Pakasir API requires query placement.
 
+**Logging redaction (added 2026-06-21):** `src/lib/logger.ts` applies `redactSecrets()` to all messages and metadata before writing to the log sink. Patterns covered: `api_key=` query params, `PAKASIR_API_KEY=...`, `SUPABASE_SERVICE_ROLE_KEY=...`, `R2_SECRET_ACCESS_KEY=...`, and `Authorization: Bearer ...`. Even with this safeguard, do not log full fetch URLs; prefer logging only `order_id`, `project`, and a success/failure boolean.
+
 **Setup Steps:**
 1. Create Pakasir account at https://app.pakasir.com
 2. Create project with slug `dokmaker` (or custom)
