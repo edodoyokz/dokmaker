@@ -87,15 +87,29 @@ Content-Type: application/json
 
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|
-| `STORAGE_ENDPOINT` | S3 endpoint URL | Optional* | `https://xxx.r2.cloudflarestorage.com` |
-| `STORAGE_ACCESS_KEY` | S3 access key | Optional* | `xxx` |
-| `STORAGE_SECRET_KEY` | S3 secret key | Optional* | `xxx` |
-| `STORAGE_BUCKET` | S3 bucket name | Optional* | `dokmaker-pdfs` |
-| `STORAGE_PUBLIC_URL` | Public URL prefix | Optional* | `https://files.dokmaker.com` |
+| `R2_ACCOUNT_ID` | Cloudflare account ID | ✅ for production PDF storage | `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` |
+| `R2_ACCESS_KEY_ID` | R2 access key ID | ✅ for production PDF storage | `xxx` |
+| `R2_SECRET_ACCESS_KEY` | R2 secret access key | ✅ for production PDF storage | `xxx` |
+| `R2_BUCKET_NAME` | R2 bucket name | ✅ for production PDF storage | `dokmaker-pdfs` |
+| `R2_PUBLIC_URL` | Optional public/custom URL prefix | Optional | `https://files.dokmaker.com` |
 
 **Notes:**
-- *Optional for MVP if serving PDFs directly from API
-- Required for production with signed URLs
+- Final PDFs must not be served as permanent public URLs.
+- Use signed temporary URLs or backend streaming for final downloads.
+- `R2_PUBLIC_URL` is optional and must not bypass authorization for final PDFs.
+
+---
+
+### 1.6 Rate Limiting
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `RATE_LIMIT_REDIS_URL` | Distributed rate limiting store (Redis/Upstash/Vercel KV) | Recommended for production | `redis://...` |
+| `RATE_LIMIT_REDIS_TOKEN` | Optional Redis auth token (provider-dependent) | Optional | `xxx...` |
+
+**Notes:**
+- Without `RATE_LIMIT_REDIS_URL`, the app logs a hard warning and falls back to per-instance in-memory counters.
+- In-memory rate limiting is acceptable for local development only; it is not reliable on serverless/multi-instance deployments.
 
 ---
 
@@ -178,6 +192,7 @@ npx prisma validate
 - [ ] All user queries include ownership filter
 - [ ] Admin routes check admin role
 - [ ] Rate limiting enabled on financial endpoints
+- [ ] `RATE_LIMIT_REDIS_URL` configured for reliable production rate limiting, or fail-open in-memory fallback explicitly accepted as a launch risk
 - [ ] HTTPS enforced
 
 ---

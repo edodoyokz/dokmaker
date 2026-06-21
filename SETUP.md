@@ -56,6 +56,9 @@ R2_ACCOUNT_ID="[account-id]"
 R2_ACCESS_KEY_ID="[access-key]"
 R2_SECRET_ACCESS_KEY="[secret-key]"
 R2_BUCKET_NAME="dokmaker-invoice-finals"
+# Recommended for production multi-instance/serverless rate limiting:
+RATE_LIMIT_REDIS_URL=""
+RATE_LIMIT_REDIS_TOKEN=""
 ```
 
 ### 4. Setup Database (2 min)
