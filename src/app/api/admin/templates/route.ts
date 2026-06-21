@@ -1,19 +1,23 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
+import { adminTemplatePayloadSchema } from "@/lib/validation/admin-template.schema";
 
 export async function POST(request: Request) {
   try {
     const admin = await requireAdmin();
     const body = await request.json();
-    const { name, description, htmlTemplate } = body;
 
-    if (!name || !htmlTemplate) {
+    const parseResult = adminTemplatePayloadSchema.safeParse(body);
+    if (!parseResult.success) {
+      const firstIssue = parseResult.error.issues[0];
       return NextResponse.json(
-        { error: "Nama dan HTML template wajib diisi" },
+        { error: firstIssue?.message || "Payload template tidak valid" },
         { status: 400 }
       );
     }
+
+    const { name, description, htmlTemplate } = parseResult.data;
 
     const template = await prisma.invoiceTemplate.create({
       data: {
