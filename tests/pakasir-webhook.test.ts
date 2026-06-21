@@ -36,6 +36,7 @@ import { creditWallet } from "@/modules/wallet/service";
 type TransactionClientMock = {
   paymentTransaction: {
     update: ReturnType<typeof vi.fn>;
+    updateMany: ReturnType<typeof vi.fn>;
   };
   paymentWebhookEvent: {
     create: ReturnType<typeof vi.fn>;
@@ -368,13 +369,14 @@ describe("handlePakasirWebhook", () => {
       status: "created",
     } satisfies PaymentRecord);
 
-    const updateMock = vi.fn().mockResolvedValue(undefined);
+    const updateManyMock = vi.fn().mockResolvedValue({ count: 1 });
     const createMock = vi.fn().mockResolvedValue(undefined);
     prismaMock.$transaction.mockImplementation(
       async (callback: (tx: TransactionClientMock) => unknown) =>
         callback({
           paymentTransaction: {
-            update: updateMock,
+            update: vi.fn(),
+            updateMany: updateManyMock,
           },
           paymentWebhookEvent: {
             create: createMock,
@@ -407,8 +409,8 @@ describe("handlePakasirWebhook", () => {
 
     expect(result).toEqual({ status: "credited" });
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    expect(updateMock).toHaveBeenCalledWith({
-      where: { id: "payment-2" },
+    expect(updateManyMock).toHaveBeenCalledWith({
+      where: { id: "payment-2", status: { not: "success" } },
       data: expect.objectContaining({
         status: "success",
         providerReference: "REF-123",
@@ -428,5 +430,61 @@ describe("handlePakasirWebhook", () => {
       "pakasir"
     );
     expect(createMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns already_processed when transactional claim loses the race (count 0)", async () => {
+    // Pre-check sees status 'created' so we enter the transaction.
+    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+      id: "payment-race",
+      userId: "user-race",
+      amount: 50000,
+      status: "created",
+    } satisfies PaymentRecord);
+
+    // Inside transaction, the conditional claim returns count 0, meaning
+    // a concurrent worker already flipped payment to success.
+    const updateManyMock = vi.fn().mockResolvedValue({ count: 0 });
+    const createMock = vi.fn().mockResolvedValue(undefined);
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: TransactionClientMock) => unknown) =>
+        callback({
+          paymentTransaction: {
+            update: vi.fn(),
+            updateMany: updateManyMock,
+          },
+          paymentWebhookEvent: {
+            create: createMock,
+          },
+        })
+    );
+
+    creditWalletMock.mockResolvedValue({ id: "ledger-existing" });
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          status: "completed",
+          project: "dokmaker-test",
+          order_id: "ORDER-race",
+          amount: 50000,
+          reference: "REF-RACE",
+        }),
+      })
+    );
+
+    const result = await handlePakasirWebhook({
+      project: "dokmaker-test",
+      order_id: "ORDER-race",
+      amount: 50000,
+      status: "completed",
+    });
+
+    expect(result).toEqual({ status: "already_processed" });
+    expect(updateManyMock).toHaveBeenCalledTimes(1);
+    // Loser of the race must NOT credit wallet or create webhook event.
+    expect(creditWalletMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
   });
 });

@@ -142,17 +142,31 @@ export async function handlePakasirWebhook(body: {
   // Import wallet service
   const { creditWallet } = await import("@/modules/wallet/service");
 
-  // Credit wallet in transaction
+  // Credit wallet in transaction with an atomic conditional claim on payment status.
+  // The pre-transaction read above is only a fast-path filter; the authoritative
+  // duplicate-webhook guard is this `updateMany` which only succeeds when the
+  // row is not yet 'success'. A concurrent webhook that loses the race will see
+  // count === 0 and return idempotently without crediting.
+  let credited = false;
+
   await prisma.$transaction(async (tx) => {
-    // Update payment status
-    await tx.paymentTransaction.update({
-      where: { id: payment.id },
+    const claim = await tx.paymentTransaction.updateMany({
+      where: {
+        id: payment.id,
+        status: { not: "success" },
+      },
       data: {
         status: "success",
         paidAt: new Date(),
         providerReference: detail.reference || null,
       },
     });
+
+    if (claim.count !== 1) {
+      // Another worker already processed this payment. Roll back nothing and
+      // return idempotently. Wallet credit and webhook event must NOT happen.
+      return;
+    }
 
     // Credit wallet
     await creditWallet(
@@ -179,7 +193,9 @@ export async function handlePakasirWebhook(body: {
         processedAt: new Date(),
       },
     });
+
+    credited = true;
   });
 
-  return { status: "credited" };
+  return { status: credited ? "credited" : "already_processed" };
 }
