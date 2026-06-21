@@ -16,9 +16,9 @@
 
 | Item | Value |
 |------|-------|
-| Git Commit SHA | `a83bf87` (main, audit remediation) |
+| Git Commit SHA | `909c70f` (main, post-migration-sync) |
 | Vercel Deployment ID | TBD |
-| Database Migration Status | TBD (requires DATABASE_URL) |
+| Database Migration Status | **UP TO DATE** (3 migrations applied, 0 drift) |
 | Pakasir Project Mode | sandbox / production (TBD) |
 
 ---
@@ -49,7 +49,7 @@ npm run typecheck:      PASS
 npm test:               PASS (19 files / 157 tests)
 npm run build:          PASS
 npx prisma validate:    PASS (with env set)
-npx prisma migrate status: BLOCKED — requires DATABASE_URL
+npx prisma migrate status: PASS — Database schema is up to date!
 npm audit --audit-level=high: PASS (no high/critical; 2 moderate PostCSS advisories via Next)
 ```
 
@@ -111,7 +111,7 @@ At launch, re-run the above and fill results for the deployed commit.
 |-------|----------|------------|
 | Pakasir API key sent in Transaction Detail query string | Medium | Documented risk; do not log full URLs; add redaction (Task 9) |
 | In-memory rate limiter not production-grade for serverless | Medium | Gated/Redis-backed limiter planned (Task 7) |
-| `prisma migrate status` not run locally | Medium | Run at deploy time with configured DATABASE_URL |
+| `prisma migrate status` drift between repo and remote DB | Medium | RESOLVED 2026-06-21: history synced, schema up to date |
 | PostCSS moderate advisory via `next` | Low | Upgrade Next when patch version available |
 | `generation_failed` version requires manual recovery (post-debit) | Low | Future admin recovery action |
 
@@ -153,6 +153,7 @@ These are the financial-safety invariants confirmed by automated tests:
 - [x] Pakasir Transaction Detail API verified for status, project, order_id, amount (Task 1)
 - [x] Duplicate Pakasir webhook does not double-credit wallet via atomic conditional claim (Task 2)
 - [x] Concurrent race-loser webhook returns `already_processed` without crediting (Task 2)
+- [x] DB-level unique index on `payment_webhook_events(provider, provider_event_id)` is now reflected in Prisma schema (resolved drift 2026-06-21)
 - [x] Download PDF generation failure resets version to unpaid, no debit (Task 3)
 - [x] Download storage failure resets version to unpaid, no debit (Task 3)
 - [x] Download retry after transient failure charges exactly once (Task 3)
