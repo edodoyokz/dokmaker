@@ -117,3 +117,24 @@ describe("generateInvoicePdf", () => {
     expect(pdfBuffer.subarray(0, 4).toString("utf-8")).toBe("%PDF");
   });
 });
+
+describe("generateInvoicePdf (real engine, not mocked)", () => {
+  // Proves the final download is a genuine PDF file (not HTML/text/JSON).
+  // Uses the real runtime Puppeteer loader (@sparticuz/chromium + puppeteer-core),
+  // the same path the download route uses in production.
+  it("produces a real PDF file for the GoCar receipt", async () => {
+    const gocarContent = getDefaultGoCarReceiptContent() as unknown as InvoiceContent;
+    const pdf = await generateInvoicePdf(gocarContent, {
+      template: {
+        htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
+        documentType: "gocar_receipt",
+      },
+    });
+
+    // Real PDF magic header — proves the output is a genuine PDF, not HTML.
+    expect(pdf.subarray(0, 4).toString("latin1")).toBe("%PDF");
+    // Trailing %%EOF marker present in every valid PDF.
+    expect(pdf.subarray(pdf.length - 8).toString("latin1")).toContain("%%EOF");
+    expect(pdf.length).toBeGreaterThan(5000);
+  }, 30000);
+});

@@ -147,7 +147,10 @@ async function main() {
   // Create GoCar invoice template
   const gocarTemplate = await prisma.invoiceTemplate.upsert({
     where: { id: "template-gocar-1" },
-    update: { documentType: "gocar_receipt" },
+    update: {
+      documentType: "gocar_receipt",
+      htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
+    },
     create: {
       id: "template-gocar-1",
       name: "GoCar Receipt",

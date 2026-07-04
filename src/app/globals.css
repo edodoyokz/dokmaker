@@ -128,3 +128,37 @@
     @apply font-sans;
   }
 }
+
+/* Preview watermark & meta — deterrence overlay for draft previews.
+   Emitted only in preview mode (render-template.ts); final PDFs omit both.
+   Not screenshot-proof by design (see AGENTS.md §Preview limitation). */
+.dokmaker-preview-watermark {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+  color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='340' height='220'%3E%3Ctext x='170' y='110' font-family='Arial,Helvetica,sans-serif' font-size='32' font-weight='700' fill='%23dc2626' fill-opacity='0.13' letter-spacing='4' transform='rotate(-30 170 110)' text-anchor='middle'%3EPREVIEW%3C/text%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+.dokmaker-preview-meta {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 51;
+  max-width: 60%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(220, 38, 38, 0.92);
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 10px;
+  line-height: 1.45;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.dokmaker-preview-meta p {
+  margin: 0;
+}

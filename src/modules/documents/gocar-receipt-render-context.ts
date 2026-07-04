@@ -9,6 +9,11 @@ export function buildGoCarReceiptRenderContext(
     content.payment.appFee -
     content.payment.appFeeDiscount;
 
+  // App-fee subtotal for the Faktur page ("Total biaya jasa aplikasi").
+  // Distinct from paymentTotal (the grand total) — see reference receipt page 2.
+  const appFeeTotal =
+    content.payment.appFee - content.payment.appFeeDiscount;
+
   return {
     "service.name": escapeHtml(content.service.name),
     "service.orderDate": escapeHtml(content.service.orderDate),
@@ -18,6 +23,7 @@ export function buildGoCarReceiptRenderContext(
     "payment.tripFee": formatRupiah(content.payment.tripFee),
     "payment.appFee": formatRupiah(content.payment.appFee),
     "payment.appFeeDiscount": formatRupiah(content.payment.appFeeDiscount),
+    "payment.appFeeTotal": formatRupiah(appFeeTotal),
     "payment.total": formatRupiah(paymentTotal),
     "payment.method": escapeHtml(content.payment.method),
     "trip.driverName": escapeHtml(content.trip.driverName),

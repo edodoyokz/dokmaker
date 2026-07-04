@@ -9,31 +9,34 @@
  * shared preview watermark/meta injection in render-template.ts.
  */
 export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
+  /* Negate the generator wrapper body padding so the green header is full-bleed
+     and the receipt fits one A4 page (20mm page margins already provide spacing). */
+  body { padding: 0; }
   .gocar-doc { font-family: Helvetica, Arial, sans-serif; color: #1f2933; background: #fff; }
-  .gocar-page { width: 100%; max-width: 760px; margin: 0 auto; min-height: 1040px; background: #fff; }
+  .gocar-page { width: 100%; max-width: 760px; margin: 0 auto; background: #fff; }
   .gocar-header { display: flex; justify-content: space-between; align-items: center; background: #00aa6c; color: #fff; padding: 22px 32px; }
   .gocar-brand { font-size: 30px; font-weight: 800; letter-spacing: -1px; }
   .gocar-order { text-align: right; font-size: 13px; line-height: 1.45; }
-  .gocar-body { padding: 34px 44px; }
+  .gocar-body { padding: 24px 44px; }
   .gocar-greeting { font-size: 15px; margin-bottom: 4px; }
-  .gocar-tagline { font-size: 13px; color: #6b7280; margin-bottom: 24px; }
-  .gocar-total-section { text-align: left; margin: 24px 0; }
+  .gocar-tagline { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+  .gocar-total-section { text-align: left; margin: 14px 0; }
   .gocar-total-label { font-size: 11px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; margin-bottom: 2px; }
-  .gocar-total-amount { color: #00aa6c; font-size: 32px; font-weight: 800; }
-  .gocar-box { border: 1px solid #e5e7eb; border-radius: 10px; padding: 18px 20px; margin: 18px 0; }
-  .gocar-box-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; margin-bottom: 10px; }
-  .gocar-row { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; font-size: 13px; }
-  .gocar-row.total { border-top: 1px solid #e5e7eb; margin-top: 8px; padding-top: 14px; font-weight: 800; }
+  .gocar-total-amount { color: #00aa6c; font-size: 30px; font-weight: 800; }
+  .gocar-box { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 20px; margin: 12px 0; }
+  .gocar-box-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #6b7280; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .gocar-row { display: flex; justify-content: space-between; gap: 16px; padding: 5px 0; font-size: 13px; }
+  .gocar-row.total { border-top: 1px solid #e5e7eb; margin-top: 6px; padding-top: 10px; font-weight: 800; }
   .gocar-muted { color: #6b7280; }
-  .gocar-section-title { font-size: 18px; font-weight: 800; margin: 28px 0 12px; }
+  .gocar-section-title { font-size: 18px; font-weight: 800; margin: 18px 0 10px; }
   .gocar-trip-driver { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-  .gocar-trip-vehicle { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+  .gocar-trip-vehicle { font-size: 13px; color: #6b7280; margin-bottom: 10px; }
   .gocar-trip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; font-size: 13px; }
   .gocar-trip-grid .gocar-muted { font-size: 11px; display: block; }
-  .gocar-trip-location { margin-top: 18px; font-size: 13px; }
+  .gocar-trip-location { margin-top: 12px; font-size: 13px; }
   .gocar-trip-location .gocar-muted { font-size: 11px; display: block; }
-  .gocar-trip-divider { border: none; border-top: 1px solid #e5e7eb; margin: 14px 0; }
-  .gocar-footer { border-top: 1px solid #e5e7eb; margin-top: 32px; padding-top: 18px; font-size: 11px; color: #6b7280; line-height: 1.55; }
+  .gocar-trip-divider { border: none; border-top: 1px solid #e5e7eb; margin: 10px 0; }
+  .gocar-footer { border-top: 1px solid #e5e7eb; margin-top: 18px; padding-top: 14px; font-size: 11px; color: #6b7280; line-height: 1.55; }
   .gocar-footer-links { display: flex; gap: 24px; margin-bottom: 12px; font-size: 13px; }
   .gocar-footer-links a { color: #00aa6c; text-decoration: none; }
   .gocar-footer-asuransi { margin: 14px 0; }
@@ -164,7 +167,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
         </div>
         <div class="gocar-row total">
           <span>Total biaya jasa aplikasi</span>
-          <span>{{payment.total}}</span>
+          <span>{{payment.appFeeTotal}}</span>
         </div>
       </div>
 

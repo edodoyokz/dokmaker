@@ -84,6 +84,16 @@ describe("GoCar receipt rendering", () => {
     expect(html).toContain("Total biaya jasa aplikasi");
     expect(html).toContain("NPWP: 0745704361064000");
 
+    // The Faktur "Total biaya jasa aplikasi" must be the app-fee subtotal
+    // (Rp7.500 = appFee - discount), NOT the grand total (Rp50.000).
+    // Reference receipt page 2 shows Rp7.500 here.
+    const fakturTotalMatch = html.match(
+      /Total biaya jasa aplikasi<\/span>\s*<span>([^<]+)<\/span>/
+    );
+    expect(fakturTotalMatch).not.toBeNull();
+    expect(fakturTotalMatch![1]).toBe("Rp7.500");
+    expect(fakturTotalMatch![1]).not.toBe("Rp50.000");
+
     // Two-page structure
     expect(html).toContain("gocar-page-break");
   });
