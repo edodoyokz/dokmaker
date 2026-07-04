@@ -1,7 +1,6 @@
 "use client";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,12 +40,10 @@ export function UserNav({ user }: UserNavProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-        </Button>
+      <DropdownMenuTrigger className="relative flex h-10 w-10 items-center justify-center rounded-full hover:bg-zinc-800">
+        <Avatar className="h-10 w-10">
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end">
         <div className="flex items-center justify-start gap-2 p-2">

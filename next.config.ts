@@ -1,12 +1,16 @@
 import type { NextConfig } from "next";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+
 const cspValue = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  "connect-src 'self'",
+  // Allow Supabase Auth + REST API connections from the browser client.
+  // supabaseUrl is empty during build; the fallback handles dev/staging.
+  `connect-src 'self' ${supabaseUrl} https://*.supabase.co`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

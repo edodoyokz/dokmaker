@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/modules/auth/session";
 import { createInvoice } from "@/modules/invoices/service";
+import { safeApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
@@ -21,8 +23,13 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    logger.error(
+      "invoice",
+      "Create invoice failed",
+      error instanceof Error ? { message: error.message } : undefined
+    );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: safeApiError(error) },
       { status: 500 }
     );
   }

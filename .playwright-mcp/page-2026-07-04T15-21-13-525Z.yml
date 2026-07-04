@@ -1,0 +1,74 @@
+- generic [active] [ref=f13e1]:
+  - generic [ref=f13e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=f13e7]:
+      - img [ref=f13e8]
+    - generic [ref=f13e11]:
+      - button "Open issues overlay" [ref=f13e12]:
+        - generic [ref=f13e13]:
+          - generic [ref=f13e14]: "3"
+          - generic [ref=f13e15]: "4"
+        - generic [ref=f13e16]:
+          - text: Issue
+          - generic [ref=f13e17]: s
+      - button "Collapse issues badge" [ref=f13e18]:
+        - img [ref=f13e19]
+  - generic [ref=f13e21]:
+    - banner [ref=f13e22]:
+      - generic [ref=f13e23]:
+        - generic [ref=f13e24]:
+          - link "DokMaker" [ref=f13e25] [cursor=pointer]:
+            - /url: /app
+            - img [ref=f13e27]
+            - generic [ref=f13e30]: DokMaker
+          - navigation [ref=f13e31]:
+            - link "Dashboard" [ref=f13e32] [cursor=pointer]:
+              - /url: /app
+            - link "Template" [ref=f13e33] [cursor=pointer]:
+              - /url: /app/templates
+            - link "Invoice" [ref=f13e34] [cursor=pointer]:
+              - /url: /app/invoices
+            - link "Dompet" [ref=f13e35] [cursor=pointer]:
+              - /url: /app/wallet
+        - button "TU" [ref=f13e36]:
+          - generic [ref=f13e38]: TU
+    - main [ref=f13e39]:
+      - generic [ref=f13e40]:
+        - generic [ref=f13e41]:
+          - generic [ref=f13e42]:
+            - heading "Dompet Digital" [level=1] [ref=f13e43]:
+              - text: Dompet Digital
+              - img [ref=f13e44]
+            - paragraph [ref=f13e47]: Pantau saldo dan riwayat pengeluaran cetak invoice Anda.
+          - link "Top Up Saldo" [ref=f13e48] [cursor=pointer]:
+            - /url: /app/wallet/topup
+            - img
+            - text: Top Up Saldo
+        - generic [ref=f13e49]:
+          - generic [ref=f13e50]:
+            - generic [ref=f13e51]:
+              - text: Saldo Tersedia
+              - generic [ref=f13e52]: Rp 50.000
+            - img [ref=f13e53]
+          - generic [ref=f13e56]:
+            - paragraph [ref=f13e57]:
+              - text: Setiap unduhan versi invoice final berharga
+              - strong [ref=f13e58]: Rp10.000
+              - text: . Anda dapat mengunduh ulang versi yang sama secara gratis kapan pun dibutuhkan.
+            - generic [ref=f13e59]: "Currency: IDR"
+        - generic [ref=f13e60]:
+          - generic [ref=f13e61]:
+            - img [ref=f13e62]
+            - generic [ref=f13e66]: Riwayat Transaksi
+          - generic [ref=f13e69]:
+            - generic [ref=f13e70]:
+              - img [ref=f13e72]
+              - generic [ref=f13e75]:
+                - paragraph [ref=f13e76]: Top Up Saldo
+                - paragraph [ref=f13e77]: "Top up via Pakasir: TOPUP-1783178392241-6e9752de"
+                - paragraph [ref=f13e78]: 4 Jul 2026, 22.20
+            - generic [ref=f13e79]:
+              - paragraph [ref=f13e80]: + Rp 50.000
+              - generic [ref=f13e82]:
+                - img [ref=f13e83]
+                - text: Sukses
+  - alert [ref=f13e86]

@@ -1,0 +1,46 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e31] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=f8e32]:
+      - img [ref=f8e33]
+    - generic [ref=f8e46]:
+      - button "Open issues overlay" [ref=f8e47]:
+        - generic [ref=f8e48]:
+          - generic [ref=f8e49]: "1"
+          - generic [ref=f8e50]: "2"
+        - generic [ref=f8e51]:
+          - text: Issue
+          - generic [ref=f8e52]: s
+      - button "Collapse issues badge" [ref=f8e53]:
+        - img [ref=f8e54]
+  - alert [ref=f8e36]
+  - generic [ref=f8e56]:
+    - banner [ref=f8e57]:
+      - generic [ref=f8e58]:
+        - generic [ref=f8e59]:
+          - link "DokMaker" [ref=f8e60] [cursor=pointer]:
+            - /url: /app
+            - img [ref=f8e62]
+            - generic [ref=f8e65]: DokMaker
+          - navigation [ref=f8e66]:
+            - link "Dashboard" [ref=f8e67] [cursor=pointer]:
+              - /url: /app
+            - link "Template" [ref=f8e68] [cursor=pointer]:
+              - /url: /app/templates
+            - link "Invoice" [ref=f8e69] [cursor=pointer]:
+              - /url: /app/invoices
+            - link "Dompet" [ref=f8e70] [cursor=pointer]:
+              - /url: /app/wallet
+        - button "TU" [ref=f8e71]:
+          - button "TU" [ref=f8e72]:
+            - generic [ref=f8e74]: TU
+    - main [ref=f8e75]:
+      - generic [ref=f8e209]:
+        - link "← Kembali ke Template" [ref=f8e211] [cursor=pointer]:
+          - /url: /app/templates
+        - generic [ref=f8e212]:
+          - generic [ref=f8e214]: Preview Template
+          - heading "GoCar Receipt" [level=1] [ref=f8e215]
+          - paragraph [ref=f8e216]: Template bukti pembayaran perjalanan GoCar Prioritas / GoCar Receipt.
+          - paragraph [ref=f8e217]: "Harga: Rp10.000 per invoice"
+          - link "Gunakan Template Ini" [ref=f8e218] [cursor=pointer]:
+            - /url: /app/invoices/new?templateId=template-gocar-1

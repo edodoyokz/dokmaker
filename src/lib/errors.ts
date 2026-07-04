@@ -32,6 +32,8 @@ export const SAFE_API_MESSAGES = [
   "Amount wajib diisi",
   "Missing required fields",
   "Idempotency key required",
+  "Template ID dan content wajib diisi",
+  "Content wajib diisi",
 ] as const;
 
 const DEFAULT_FALLBACK = "Internal server error";

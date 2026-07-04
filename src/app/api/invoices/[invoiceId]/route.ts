@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/modules/auth/session";
 import { editInvoice } from "@/modules/invoices/service";
+import { safeApiError } from "@/lib/errors";
+import { logger } from "@/lib/logger";
 
 export async function PATCH(
   request: Request,
@@ -25,8 +27,13 @@ export async function PATCH(
     if (error instanceof Error && error.message === "Unauthorized") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    logger.error(
+      "invoice",
+      "Edit invoice failed",
+      error instanceof Error ? { message: error.message } : undefined
+    );
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      { error: safeApiError(error) },
       { status: 500 }
     );
   }

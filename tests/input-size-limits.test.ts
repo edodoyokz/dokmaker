@@ -7,7 +7,10 @@ import {
   gocarReceiptContentSchema,
   getDefaultGoCarReceiptContent,
 } from "@/modules/documents/gocar-receipt-content.schema";
-import { adminTemplatePayloadSchema } from "@/lib/validation/admin-template.schema";
+import {
+  adminTemplatePayloadSchema,
+  adminTemplateUpdateSchema,
+} from "@/lib/validation/admin-template.schema";
 
 function makeValidInvoiceContent(): InvoiceContent {
   return {
@@ -145,6 +148,60 @@ describe("admin template payload size limits", () => {
       htmlTemplate: "x".repeat(499980),
     };
     const result = adminTemplatePayloadSchema.safeParse(payload);
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("admin template update schema", () => {
+  it("accepts partial update with only name", () => {
+    const result = adminTemplateUpdateSchema.safeParse({ name: "New Name" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts partial update with only status", () => {
+    const result = adminTemplateUpdateSchema.safeParse({ status: "active" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts full update with all fields", () => {
+    const result = adminTemplateUpdateSchema.safeParse({
+      name: "Updated Template",
+      description: "Updated description",
+      htmlTemplate: "<div>updated</div>",
+      price: 15000,
+      status: "inactive",
+      documentType: "invoice",
+      sortOrder: 5,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty object with no fields", () => {
+    const result = adminTemplateUpdateSchema.safeParse({});
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid status value", () => {
+    const result = adminTemplateUpdateSchema.safeParse({ status: "deleted" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects negative price", () => {
+    const result = adminTemplateUpdateSchema.safeParse({ price: -1000 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects htmlTemplate exceeding 500000 characters", () => {
+    const result = adminTemplateUpdateSchema.safeParse({
+      htmlTemplate: "x".repeat(500001),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts null description to clear field", () => {
+    const result = adminTemplateUpdateSchema.safeParse({
+      description: null,
+    });
     expect(result.success).toBe(true);
   });
 });

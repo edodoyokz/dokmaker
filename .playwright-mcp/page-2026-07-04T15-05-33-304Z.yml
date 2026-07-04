@@ -1,0 +1,30 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e3]:
+    - generic [ref=f7e4]:
+      - img [ref=f7e6]
+      - heading "Selamat datang kembali" [level=2] [ref=f7e9]
+      - paragraph [ref=f7e10]: Masuk ke akun DokMaker Anda
+    - generic [ref=f7e12]:
+      - generic [ref=f7e13]:
+        - generic [ref=f7e14]: Alamat Email
+        - generic [ref=f7e15]:
+          - generic:
+            - img
+          - textbox "Alamat Email" [ref=f7e16]:
+            - /placeholder: name@example.com
+      - generic [ref=f7e17]:
+        - generic [ref=f7e19]: Password
+        - generic [ref=f7e20]:
+          - generic:
+            - img
+          - textbox "Password" [ref=f7e21]:
+            - /placeholder: ••••••••
+      - button "Masuk" [ref=f7e22]:
+        - text: Masuk
+        - img [ref=f7e23]
+    - paragraph [ref=f7e25]:
+      - text: Belum memiliki akun?
+      - link "Daftar Sekarang" [ref=f7e26] [cursor=pointer]:
+        - /url: /register
+  - button "Open Next.js Dev Tools" [ref=f7e32] [cursor=pointer]:
+    - img [ref=f7e33]

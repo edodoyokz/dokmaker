@@ -1,0 +1,60 @@
+- generic [active] [ref=f14e1]:
+  - generic [ref=f14e2]:
+    - banner [ref=f14e3]:
+      - generic [ref=f14e4]:
+        - generic [ref=f14e5]:
+          - link "DokMaker" [ref=f14e6] [cursor=pointer]:
+            - /url: /app
+            - img [ref=f14e8]
+            - generic [ref=f14e11]: DokMaker
+          - navigation [ref=f14e12]:
+            - link "Dashboard" [ref=f14e13] [cursor=pointer]:
+              - /url: /app
+            - link "Template" [ref=f14e14] [cursor=pointer]:
+              - /url: /app/templates
+            - link "Invoice" [ref=f14e15] [cursor=pointer]:
+              - /url: /app/invoices
+            - link "Dompet" [ref=f14e16] [cursor=pointer]:
+              - /url: /app/wallet
+        - button "TU" [ref=f14e17]:
+          - generic [ref=f14e19]: TU
+    - main [ref=f14e20]:
+      - generic [ref=f14e21]:
+        - link "Kembali ke Daftar Invoice" [ref=f14e23] [cursor=pointer]:
+          - /url: /app/invoices
+          - img [ref=f14e24]
+          - text: Kembali ke Daftar Invoice
+        - generic [ref=f14e26]:
+          - heading "Workspace Invoice" [level=1] [ref=f14e27]:
+            - text: Workspace Invoice
+            - img [ref=f14e28]
+          - paragraph [ref=f14e31]: Lakukan pratinjau watermark draft di bawah ini sebelum mencetak file PDF final Anda.
+        - generic [ref=f14e32]:
+          - generic [ref=f14e34]:
+            - generic [ref=f14e36]: Document Draft Preview
+            - generic [ref=f14e39]: GoCar Template Placeholder
+          - generic [ref=f14e41]:
+            - heading "Detail Status Cetak" [level=2] [ref=f14e43]
+            - generic [ref=f14e44]:
+              - generic [ref=f14e46]: Nomor Invoice
+              - generic [ref=f14e47]:
+                - generic [ref=f14e48]: Status Invoice
+                - generic [ref=f14e50]: Belum Bayar
+              - generic [ref=f14e51]:
+                - generic [ref=f14e52]: Harga Cetak
+                - generic [ref=f14e53]: Rp10.000
+              - generic [ref=f14e54]:
+                - generic [ref=f14e55]:
+                  - img [ref=f14e56]
+                  - generic [ref=f14e59]: Saldo Dompet
+                - generic [ref=f14e60]: Rp 50.000
+              - generic [ref=f14e61]:
+                - button "Beli & Download PDF (Rp10.000)" [ref=f14e62]:
+                  - img [ref=f14e63]
+                  - text: Beli & Download PDF (Rp10.000)
+                - link "Edit Draf Invoice" [ref=f14e65] [cursor=pointer]:
+                  - /url: /app/invoices/cmr6i5thm00038pwx9nl60xhb/edit
+                  - img [ref=f14e66]
+                  - text: Edit Draf Invoice
+  - button "Open Next.js Dev Tools" [ref=f14e73] [cursor=pointer]:
+    - img [ref=f14e74]
