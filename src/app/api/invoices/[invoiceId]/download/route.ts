@@ -9,6 +9,12 @@ import {
 import { safeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
+// PDF rendering via headless Chromium can take several seconds under load and
+// in serverless cold starts. Give the route headroom on Vercel (Pro allows up
+// to 300s) and force dynamic so the binary response is never statically cached.
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ invoiceId: string }> }
@@ -18,7 +24,7 @@ export async function GET(
 
     // Rate limit check
     const rateLimitKey = getRateLimitKey(request, user.id, "download");
-    const rateLimitResponse = checkRateLimit(
+    const rateLimitResponse = await checkRateLimit(
       rateLimitKey,
       RATE_LIMITS.DOWNLOAD
     );

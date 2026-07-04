@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/modules/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { adminTemplatePayloadSchema } from "@/lib/validation/admin-template.schema";
+import { writeAuditLog } from "@/modules/audit";
 
 export async function POST(request: Request) {
   try {
@@ -30,14 +31,12 @@ export async function POST(request: Request) {
     });
 
     // Audit log
-    await prisma.adminAuditLog.create({
-      data: {
-        adminUserId: admin.id,
-        action: "create_template",
-        targetType: "invoice_template",
-        targetId: template.id,
-        detail: { name },
-      },
+    await writeAuditLog(prisma, {
+      adminUserId: admin.id,
+      action: "create_template",
+      targetType: "invoice_template",
+      targetId: template.id,
+      detail: { name },
     });
 
     return NextResponse.json(template, { status: 201 });

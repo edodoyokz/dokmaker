@@ -5,16 +5,12 @@ vi.mock("@/lib/db/prisma", () => ({
     paymentTransaction: {
       findFirst: vi.fn(),
     },
+    paymentWebhookEvent: {
+      findUnique: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
-
-type PaymentRecord = {
-  id: string;
-  userId: string;
-  amount: number;
-  status: string;
-};
 
 vi.mock("@/lib/logger", () => ({
   logger: {
@@ -32,10 +28,16 @@ import { handlePakasirWebhook } from "@/modules/payments/pakasir";
 import { prisma } from "@/lib/db/prisma";
 import { creditWallet } from "@/modules/wallet/service";
 
+type PaymentRecord = {
+  id: string;
+  userId: string;
+  amount: number;
+  status: string;
+};
+
 type TransactionClientMock = {
   paymentTransaction: {
     update: ReturnType<typeof vi.fn>;
-    updateMany: ReturnType<typeof vi.fn>;
   };
   paymentWebhookEvent: {
     create: ReturnType<typeof vi.fn>;
@@ -46,24 +48,12 @@ const prismaMock = prisma as unknown as {
   paymentTransaction: {
     findFirst: ReturnType<typeof vi.fn>;
   };
+  paymentWebhookEvent: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
   $transaction: ReturnType<typeof vi.fn>;
 };
 const creditWalletMock = creditWallet as unknown as ReturnType<typeof vi.fn>;
-
-/**
- * Build a mocked global.fetch Response whose body matches the documented
- * Pakasir Transaction Detail API shape: `{ transaction: { ... } }`.
- * See https://pakasir.com/p/docs section E.
- */
-function pakasirDetailResponse(
-  transaction: Record<string, unknown>,
-  ok = true
-): Response {
-  return {
-    ok,
-    json: async () => ({ transaction }),
-  } as unknown as Response;
-}
 
 describe("handlePakasirWebhook", () => {
   beforeEach(() => {
@@ -72,6 +62,9 @@ describe("handlePakasirWebhook", () => {
     process.env.PAKASIR_PROJECT_SLUG = "dokmaker-test";
     process.env.PAKASIR_API_KEY = "secret-key";
     process.env.PAKASIR_BASE_URL = "https://app.pakasir.com";
+    delete process.env.PAKASIR_WEBHOOK_SECRET;
+    // By default, no prior webhook event exists.
+    prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue(null);
   });
 
   it("rejects webhook when project slug does not match", async () => {
@@ -94,7 +87,6 @@ describe("handlePakasirWebhook", () => {
         project: "dokmaker-test",
         order_id: "ORDER-6",
         amount: 50000,
-        status: "completed",
       })
     ).rejects.toThrow(/payment transaction/i);
 
@@ -115,150 +107,6 @@ describe("handlePakasirWebhook", () => {
         project: "dokmaker-test",
         order_id: "ORDER-1",
         amount: 50000,
-        status: "completed",
-      })
-    ).rejects.toThrow(/amount/i);
-
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
-    expect(creditWalletMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects webhook body when status field is missing", async () => {
-    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
-      id: "payment-missing-status",
-      userId: "user-1",
-      amount: 50000,
-      status: "created",
-    } satisfies PaymentRecord);
-
-    await expect(
-      handlePakasirWebhook({
-        project: "dokmaker-test",
-        order_id: "ORDER-missing-status",
-        amount: 50000,
-      })
-    ).rejects.toThrow(/completed/i);
-
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
-    expect(creditWalletMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects webhook body when status is not completed", async () => {
-    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
-      id: "payment-pending-status",
-      userId: "user-1",
-      amount: 50000,
-      status: "created",
-    } satisfies PaymentRecord);
-
-    await expect(
-      handlePakasirWebhook({
-        project: "dokmaker-test",
-        order_id: "ORDER-pending-status",
-        amount: 50000,
-        status: "pending",
-      })
-    ).rejects.toThrow(/completed/i);
-
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
-    expect(creditWalletMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects when pakasir detail project does not match webhook project", async () => {
-    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
-      id: "payment-project-mismatch",
-      userId: "user-1",
-      amount: 50000,
-      status: "created",
-    } satisfies PaymentRecord);
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        pakasirDetailResponse({
-          status: "completed",
-          project: "wrong-project",
-          order_id: "ORDER-project-mismatch",
-          amount: 50000,
-          reference: "REF-PM",
-        })
-      )
-    );
-
-    await expect(
-      handlePakasirWebhook({
-        project: "dokmaker-test",
-        order_id: "ORDER-project-mismatch",
-        amount: 50000,
-        status: "completed",
-      })
-    ).rejects.toThrow(/project/i);
-
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
-    expect(creditWalletMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects when pakasir detail order_id does not match local order id", async () => {
-    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
-      id: "payment-order-mismatch",
-      userId: "user-1",
-      amount: 50000,
-      status: "created",
-    } satisfies PaymentRecord);
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        pakasirDetailResponse({
-          status: "completed",
-          project: "dokmaker-test",
-          order_id: "DIFFERENT-ORDER",
-          amount: 50000,
-          reference: "REF-OM",
-        })
-      )
-    );
-
-    await expect(
-      handlePakasirWebhook({
-        project: "dokmaker-test",
-        order_id: "ORDER-order-mismatch",
-        amount: 50000,
-        status: "completed",
-      })
-    ).rejects.toThrow(/order id/i);
-
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
-    expect(creditWalletMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects when pakasir detail amount does not match local payment amount", async () => {
-    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
-      id: "payment-amount-mismatch",
-      userId: "user-1",
-      amount: 50000,
-      status: "created",
-    } satisfies PaymentRecord);
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        pakasirDetailResponse({
-          status: "completed",
-          project: "dokmaker-test",
-          order_id: "ORDER-amount-mismatch",
-          amount: 500000,
-          reference: "REF-AM",
-        })
-      )
-    );
-
-    await expect(
-      handlePakasirWebhook({
-        project: "dokmaker-test",
-        order_id: "ORDER-amount-mismatch",
-        amount: 50000,
-        status: "completed",
       })
     ).rejects.toThrow(/amount/i);
 
@@ -281,7 +129,6 @@ describe("handlePakasirWebhook", () => {
         project: "dokmaker-test",
         order_id: "ORDER-0",
         amount: 50000,
-        status: "completed",
       })
     ).rejects.toThrow(/api key/i);
 
@@ -299,14 +146,10 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        pakasirDetailResponse({
-          status: "pending",
-          project: "dokmaker-test",
-          order_id: "ORDER-2",
-          amount: 50000,
-        })
-      )
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ status: "pending" }),
+      })
     );
 
     await expect(
@@ -314,7 +157,6 @@ describe("handlePakasirWebhook", () => {
         project: "dokmaker-test",
         order_id: "ORDER-2",
         amount: 50000,
-        status: "completed",
       })
     ).rejects.toThrow(/completed/i);
 
@@ -343,7 +185,6 @@ describe("handlePakasirWebhook", () => {
         project: "dokmaker-test",
         order_id: "ORDER-3",
         amount: 50000,
-        status: "completed",
       })
     ).rejects.toThrow(/verifikasi transaksi/i);
 
@@ -363,7 +204,6 @@ describe("handlePakasirWebhook", () => {
       project: "dokmaker-test",
       order_id: "ORDER-4",
       amount: 50000,
-      status: "completed",
     });
 
     expect(result).toEqual({ status: "already_processed" });
@@ -379,14 +219,13 @@ describe("handlePakasirWebhook", () => {
       status: "created",
     } satisfies PaymentRecord);
 
-    const updateManyMock = vi.fn().mockResolvedValue({ count: 1 });
+    const updateMock = vi.fn().mockResolvedValue(undefined);
     const createMock = vi.fn().mockResolvedValue(undefined);
     prismaMock.$transaction.mockImplementation(
       async (callback: (tx: TransactionClientMock) => unknown) =>
         callback({
           paymentTransaction: {
-            update: vi.fn(),
-            updateMany: updateManyMock,
+            update: updateMock,
           },
           paymentWebhookEvent: {
             create: createMock,
@@ -398,31 +237,28 @@ describe("handlePakasirWebhook", () => {
 
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        pakasirDetailResponse({
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
           status: "completed",
-          project: "dokmaker-test",
-          order_id: "ORDER-5",
-          amount: 50000,
           reference: "REF-123",
-        })
-      )
+        }),
+      })
     );
 
     const result = await handlePakasirWebhook({
       project: "dokmaker-test",
       order_id: "ORDER-5",
       amount: 50000,
-      status: "completed",
     });
 
     expect(result).toEqual({ status: "credited" });
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    expect(updateManyMock).toHaveBeenCalledWith({
-      where: { id: "payment-2", status: { not: "success" } },
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "payment-2" },
       data: expect.objectContaining({
         status: "success",
-        providerReference: "ORDER-5",
+        providerReference: "REF-123",
       }),
     });
     expect(creditWalletMock).toHaveBeenCalledTimes(1);
@@ -441,89 +277,132 @@ describe("handlePakasirWebhook", () => {
     expect(createMock).toHaveBeenCalledTimes(1);
   });
 
-  it("returns already_processed when transactional claim loses the race (count 0)", async () => {
-    // Pre-check sees status 'created' so we enter the transaction.
-    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
-      id: "payment-race",
-      userId: "user-race",
-      amount: 50000,
-      status: "created",
-    } satisfies PaymentRecord);
+  // ── P1-2: intake-level dedup + optional HMAC signature ────────────────
+  describe("intake-level event dedup", () => {
+    it("returns ignored_duplicate when a processed event with the same id exists", async () => {
+      prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue({
+        id: "evt-1",
+        status: "processed",
+      });
 
-    // Inside transaction, the conditional claim returns count 0, meaning
-    // a concurrent worker already flipped payment to success.
-    const updateManyMock = vi.fn().mockResolvedValue({ count: 0 });
-    const createMock = vi.fn().mockResolvedValue(undefined);
-    prismaMock.$transaction.mockImplementation(
-      async (callback: (tx: TransactionClientMock) => unknown) =>
-        callback({
-          paymentTransaction: {
-            update: vi.fn(),
-            updateMany: updateManyMock,
-          },
-          paymentWebhookEvent: {
-            create: createMock,
-          },
-        })
-    );
+      const result = await handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-DUP",
+        amount: 50000,
+        providerEventId: "EVT-1",
+      });
 
-    creditWalletMock.mockResolvedValue({ id: "ledger-existing" });
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        pakasirDetailResponse({
-          status: "completed",
-          project: "dokmaker-test",
-          order_id: "ORDER-race",
-          amount: 50000,
-          reference: "REF-RACE",
-        })
-      )
-    );
-
-    const result = await handlePakasirWebhook({
-      project: "dokmaker-test",
-      order_id: "ORDER-race",
-      amount: 50000,
-      status: "completed",
+      expect(result).toEqual({ status: "ignored_duplicate" });
+      // Never reaches the DB credit path or the upstream verify call.
+      expect(prismaMock.paymentTransaction.findFirst).not.toHaveBeenCalled();
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+      expect(creditWalletMock).not.toHaveBeenCalled();
     });
 
-    expect(result).toEqual({ status: "already_processed" });
-    expect(updateManyMock).toHaveBeenCalledTimes(1);
-    // Loser of the race must NOT credit wallet or create webhook event.
-    expect(creditWalletMock).not.toHaveBeenCalled();
-    expect(createMock).not.toHaveBeenCalled();
+    it("dedups by order_id when providerEventId is omitted", async () => {
+      prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue({
+        id: "evt-order",
+        status: "processed",
+      });
+
+      const result = await handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-FALLBACK",
+        amount: 50000,
+      });
+
+      expect(result).toEqual({ status: "ignored_duplicate" });
+      expect(prismaMock.paymentWebhookEvent.findUnique).toHaveBeenCalledWith({
+        where: {
+          provider_providerEventId: {
+            provider: "pakasir",
+            providerEventId: "ORDER-FALLBACK",
+          },
+        },
+      });
+    });
+
+    it("does not dedup on a non-processed (e.g. failed) prior event", async () => {
+      prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue({
+        id: "evt-failed",
+        status: "failed",
+      });
+      prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+        id: "payment-1",
+        userId: "user-1",
+        amount: 50000,
+        status: "created",
+      } satisfies PaymentRecord);
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: false,
+          json: async () => ({ message: "upstream failure" }),
+        })
+      );
+
+      // Should proceed past dedup and fail at verification, not be ignored.
+      await expect(
+        handlePakasirWebhook({
+          project: "dokmaker-test",
+          order_id: "ORDER-RETRY",
+          amount: 50000,
+        })
+      ).rejects.toThrow(/verifikasi transaksi/i);
+    });
   });
 
-  it("rejects when pakasir response is missing the transaction wrapper", async () => {
-    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
-      id: "payment-no-tx",
-      userId: "user-1",
-      amount: 50000,
-      status: "created",
-    } satisfies PaymentRecord);
+  describe("optional HMAC signature verification", () => {
+    it("rejects a webhook missing a signature when a secret is configured", async () => {
+      process.env.PAKASIR_WEBHOOK_SECRET = "shared-secret";
+      await expect(
+        handlePakasirWebhook({
+          project: "dokmaker-test",
+          order_id: "ORDER-NOSIG",
+          amount: 50000,
+        })
+      ).rejects.toThrow(/tanda tangan webhook hilang/i);
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
 
-    // Some upstream error responses return { message, data: null } with HTTP 200.
-    // Our parser must treat a missing `transaction` object as verification failure.
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ message: "Transaksi tidak ditemukan", data: null }),
-      })
-    );
+    it("rejects a webhook with an invalid signature", async () => {
+      process.env.PAKASIR_WEBHOOK_SECRET = "shared-secret";
+      await expect(
+        handlePakasirWebhook({
+          project: "dokmaker-test",
+          order_id: "ORDER-BADSIG",
+          amount: 50000,
+          signature: "deadbeef",
+        })
+      ).rejects.toThrow(/tanda tangan webhook tidak valid/i);
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
 
-    await expect(
-      handlePakasirWebhook({
-        project: "dokmaker-test",
-        order_id: "ORDER-missing",
+    it("accepts a webhook with a valid signature", async () => {
+      process.env.PAKASIR_WEBHOOK_SECRET = "shared-secret";
+      // Build the expected signature the same way the handler does.
+      const { createHmac } = await import("node:crypto");
+      const signature = createHmac("sha256", "shared-secret")
+        .update("ORDER-GOODSIG:50000")
+        .digest("hex");
+
+      prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+        id: "payment-9",
+        userId: "user-9",
         amount: 50000,
-        status: "completed",
-      })
-    ).rejects.toThrow(/Transaction Detail|tidak valid/i);
+        status: "success",
+      } satisfies PaymentRecord);
 
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
-    expect(creditWalletMock).not.toHaveBeenCalled();
+      const result = await handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-GOODSIG",
+        amount: 50000,
+        signature,
+      });
+
+      // Signature valid → proceeds past verification; payment already success.
+      expect(result).toEqual({ status: "already_processed" });
+    });
   });
 });

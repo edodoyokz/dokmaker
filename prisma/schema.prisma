@@ -172,9 +172,8 @@ model PaymentWebhookEvent {
 
   paymentTransaction PaymentTransaction?  @relation(fields: [paymentTransactionId], references: [id])
 
-  @@index([provider, providerEventId])
-  @@index([paymentTransactionId])
   @@unique([provider, providerEventId])
+  @@index([paymentTransactionId])
   @@map("payment_webhook_events")
 }
 

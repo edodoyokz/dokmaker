@@ -21,11 +21,13 @@ const PRECACHE_URLS = [
 ];
 
 // Patterns that MUST bypass the SW (never intercept, never cache).
-const NETWORK_ONLY_PATTERNS = [
+const PRIVATE_PATTERNS = [
   /^\/api\//,
   /^\/app\//,
   /^\/admin\//,
   /^\/auth\//,
+  /^\/login/,
+  /^\/register/,
 ];
 
 self.addEventListener("install", (event) => {
@@ -47,10 +49,10 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-function isNetworkOnly(url) {
+function isPrivatePath(url) {
   // Only consider same-origin paths for the pattern check.
   if (url.origin !== self.location.origin) return true;
-  return NETWORK_ONLY_PATTERNS.some((pattern) => pattern.test(url.pathname));
+  return PRIVATE_PATTERNS.some((pattern) => pattern.test(url.pathname));
 }
 
 self.addEventListener("fetch", (event) => {
@@ -68,7 +70,8 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Sensitive paths: NEVER intercept. Let the browser hit the network directly.
-  if (isNetworkOnly(url)) {
+  const isPrivate = isPrivatePath(url);
+  if (isPrivate) {
     return;
   }
 

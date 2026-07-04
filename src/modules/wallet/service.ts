@@ -116,35 +116,26 @@ export async function debitWallet(
     return existing; // Already processed
   }
 
-  // Get wallet id first, then perform an atomic conditional debit.
+  // Get wallet with lock
   const wallet = await tx.wallet.findUnique({
     where: { userId },
-    select: { id: true },
   });
 
   if (!wallet) {
     throw new Error("Wallet tidak ditemukan");
   }
 
-  // Atomic balance guard: only decrement when the wallet still has enough balance.
-  // This prevents concurrent debits from overspending the same wallet.
-  const debitResult = await tx.wallet.updateMany({
-    where: {
-      id: wallet.id,
-      currentBalance: { gte: amount },
-    },
-    data: {
-      currentBalance: {
-        decrement: amount,
-      },
-    },
-  });
-
-  if (debitResult.count !== 1) {
-    throw new Error("Saldo tidak mencukupi");
+  if (amount <= 0) {
+    throw new Error("Jumlah debit harus lebih dari 0");
   }
 
-  // Create ledger entry in the same transaction after the guarded debit.
+  // Create ledger entry and update balance atomically.
+  //
+  // The balance check + decrement MUST be a single conditional UPDATE so that
+  // two concurrent debits for DIFFERENT idempotency keys (e.g. two distinct
+  // invoice versions at once) cannot both pass a pre-read balance check and
+  // overdraw the wallet. updateMany is atomic at the row level in Postgres and
+  // returns count=0 when the WHERE clause (balance >= amount) no longer holds.
   const entry = await tx.walletLedgerEntry.create({
     data: {
       walletId: wallet.id,
@@ -161,6 +152,22 @@ export async function debitWallet(
       createdByActorId: actorId,
     },
   });
+
+  const result = await tx.wallet.updateMany({
+    where: { id: wallet.id, currentBalance: { gte: amount } },
+    data: {
+      currentBalance: {
+        decrement: amount,
+      },
+    },
+  });
+
+  if (result.count === 0) {
+    // Balance was insufficient at commit time. The ledger entry above was
+    // created inside this transaction, which will be rolled back by the caller's
+    // $transaction wrapper when we throw — leaving no partial mutation.
+    throw new Error("Saldo tidak mencukupi");
+  }
 
   return entry;
 }

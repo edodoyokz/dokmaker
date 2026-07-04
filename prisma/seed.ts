@@ -47,13 +47,17 @@ async function main() {
   // Create active invoice template
   const activeTemplate = await prisma.invoiceTemplate.upsert({
     where: { id: "template-active-1" },
-    update: { documentType: "invoice" },
+    update: {
+      documentType: "invoice",
+      thumbnailUrl: "/templates/profesional-invoice.png",
+    },
     create: {
       id: "template-active-1",
       name: "Invoice Profesional",
       documentType: "invoice",
       description:
         "Template invoice profesional untuk freelancer dan bisnis kecil.",
+      thumbnailUrl: "/templates/profesional-invoice.png",
       htmlTemplate: `<style>
   .tpl-professional { font-family: Georgia, 'Times New Roman', serif; color: #1a1a1a; max-width: 100%; }
   .tpl-professional .tp-header { display: flex; justify-content: space-between; margin-bottom: 32px; border-bottom: 3px solid #1e3a5f; padding-bottom: 16px; }
@@ -150,6 +154,7 @@ async function main() {
     update: {
       documentType: "gocar_receipt",
       htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
+      thumbnailUrl: "/templates/gocar-receipt.png",
     },
     create: {
       id: "template-gocar-1",
@@ -157,6 +162,7 @@ async function main() {
       documentType: "gocar_receipt",
       description:
         "Template bukti pembayaran perjalanan GoCar Prioritas / GoCar Receipt.",
+      thumbnailUrl: "/templates/gocar-receipt.png",
       htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
       price: 10000,
       status: "active",

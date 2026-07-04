@@ -1,72 +1,54 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rate-limit";
 
-vi.mock("@/lib/logger", () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-  },
-}));
-
-import { checkRateLimit, isProductionWithoutDistributedStore } from "@/lib/rate-limit";
-import { logger } from "@/lib/logger";
-
-describe("rate-limit", () => {
+/**
+ * Rate limiting uses an in-memory fallback when UPSTASH_* env vars are absent
+ * (the case in CI/tests). These tests exercise that fallback's accounting.
+ * The distributed Upstash path shares the same public contract and is verified
+ * in the smoke checklist against staging.
+ */
+describe("rate limiting (in-memory fallback)", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.unstubAllEnvs();
+    // Exhaust a unique key per test by deriving from the test name; we simply
+    // call with a fresh key each time to avoid cross-test bleed.
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
+  it("allows requests under the limit and returns null", async () => {
+    const key = `allow:${Date.now()}:${Math.random()}`;
+    const cfg = { limit: 3, windowSeconds: 60 };
+    expect(await checkRateLimit(key, cfg)).toBeNull();
+    expect(await checkRateLimit(key, cfg)).toBeNull();
+    expect(await checkRateLimit(key, cfg)).toBeNull();
   });
 
-  it("does not emit production warning in development", () => {
-    vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("RATE_LIMIT_REDIS_URL", "");
-    expect(isProductionWithoutDistributedStore()).toBe(false);
-
-    const result = checkRateLimit("dev-key", { limit: 1, windowSeconds: 60 });
-    expect(result).toBeNull();
-    expect(logger.error).not.toHaveBeenCalled();
-  });
-
-  it("emits a hard warning exactly once in production without Redis", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("RATE_LIMIT_REDIS_URL", "");
-    expect(isProductionWithoutDistributedStore()).toBe(true);
-
-    // First call emits the warning.
-    checkRateLimit("prod-key-1", { limit: 100, windowSeconds: 60 });
-    expect(logger.error).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(
-      "auth",
-      expect.stringContaining("RATE_LIMIT_REDIS_URL")
-    );
-
-    // Subsequent calls do not re-emit the warning.
-    checkRateLimit("prod-key-2", { limit: 100, windowSeconds: 60 });
-    expect(logger.error).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not emit warning in production when Redis URL is configured", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("RATE_LIMIT_REDIS_URL", "redis://localhost:6379");
-    expect(isProductionWithoutDistributedStore()).toBe(false);
-
-    checkRateLimit("prod-redis-key", { limit: 1, windowSeconds: 60 });
-    expect(logger.error).not.toHaveBeenCalled();
-  });
-
-  it("still applies per-instance limit in production without Redis", () => {
-    vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("RATE_LIMIT_REDIS_URL", "");
-    const config = { limit: 2, windowSeconds: 60 };
-
-    expect(checkRateLimit("limited-key", config)).toBeNull();
-    expect(checkRateLimit("limited-key", config)).toBeNull();
-    const blocked = checkRateLimit("limited-key", config);
+  it("returns a 429 response once the limit is exceeded", async () => {
+    const key = `deny:${Date.now()}:${Math.random()}`;
+    const cfg = { limit: 2, windowSeconds: 60 };
+    await checkRateLimit(key, cfg);
+    await checkRateLimit(key, cfg);
+    const blocked = await checkRateLimit(key, cfg);
     expect(blocked).not.toBeNull();
-    expect(blocked?.status).toBe(429);
+    expect(blocked!.status).toBe(429);
+    const retryAfter = blocked!.headers.get("Retry-After");
+    expect(retryAfter).toBeTruthy();
+    expect(Number(retryAfter)).toBeGreaterThan(0);
+  });
+
+  it("isolates buckets by key", async () => {
+    const cfg = { limit: 1, windowSeconds: 60 };
+    const a = `a:${Date.now()}`;
+    const b = `b:${Date.now()}`;
+    expect(await checkRateLimit(a, cfg)).toBeNull();
+    expect(await checkRateLimit(b, cfg)).toBeNull(); // separate bucket
+    expect(await checkRateLimit(a, cfg)).not.toBeNull(); // a exhausted
+  });
+
+  it("getRateLimitKey combines action, userId, and client ip", () => {
+    const request = new Request("https://x.test/y", {
+      headers: { "x-forwarded-for": "1.2.3.4, 5.6.7.8" },
+    });
+    expect(getRateLimitKey(request, "user-1", "download")).toBe(
+      "download:user-1:1.2.3.4"
+    );
   });
 });

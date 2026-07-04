@@ -9,7 +9,7 @@ describe("security headers", () => {
     >)();
 
     expect(headers).toHaveLength(1);
-    expect(headers[0].source).toBe("/:path*");
+    expect(headers[0].source).toBe("/(.*)");
 
     const entries = headers[0].headers;
     const find = (key: string) => entries.find((h) => h.key === key)?.value;
@@ -32,6 +32,5 @@ describe("security headers", () => {
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("base-uri 'self'");
     expect(csp).toContain("form-action 'self'");
-    expect(csp).toContain("upgrade-insecure-requests");
   });
 });

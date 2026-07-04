@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
-import { logger } from "@/lib/logger";
-
-// In-memory store for rate limiting.
-// Suitable for local development and single-instance deployments only.
-// In production on serverless / multi-instance (e.g. Vercel), counters are
-// per-instance and reset on cold starts, so rate limiting is NOT reliable.
-// Configure RATE_LIMIT_REDIS_URL in production to switch to a distributed
-// limiter (not yet implemented; see docs/production/env-checklist.md).
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 interface RateLimitConfig {
   /** Maximum requests per window */
@@ -16,77 +9,102 @@ interface RateLimitConfig {
   windowSeconds: number;
 }
 
-let productionWarningEmitted = false;
-
 /**
- * Returns true when production rate limiting is expected to be backed by a
- * distributed store but is not configured. Exposed for tests.
+ * When Upstash env vars are set we use a distributed Redis-backed limiter so
+ * every serverless instance shares one counter (the in-memory Map approach used
+ * previously is per-process and therefore ~N× looser on multi-instance deploys).
+ * When they are absent (local dev / tests) we fall back to an in-memory store.
  */
-export function isProductionWithoutDistributedStore(): boolean {
-  return (
-    process.env.NODE_ENV === "production" &&
-    !process.env.RATE_LIMIT_REDIS_URL
-  );
+const hasUpstash =
+  !!process.env.UPSTASH_REDIS_REST_URL &&
+  !!process.env.UPSTASH_REDIS_REST_TOKEN;
+
+const redis = hasUpstash
+  ? new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL as string,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN as string,
+    })
+  : null;
+
+// Cache one Ratelimit per action prefix so we don't reconstruct on each call.
+const limiters = new Map<string, Ratelimit>();
+
+function getLimiter(action: string, cfg: RateLimitConfig): Ratelimit {
+  let limiter = limiters.get(action);
+  if (!limiter) {
+    if (!redis) {
+      throw new Error("Upstash Redis not configured");
+    }
+    limiter = new Ratelimit({
+      redis,
+      // Ratelimit slidingWindow takes a humanized duration string.
+      limiter: Ratelimit.slidingWindow(cfg.limit, `${cfg.windowSeconds} s`),
+      prefix: `dokmaker:${action}`,
+      analytics: false,
+    });
+    limiters.set(action, limiter);
+  }
+  return limiter;
 }
 
-function emitProductionWarningOnce(): void {
-  if (productionWarningEmitted) return;
-  productionWarningEmitted = true;
-  logger.error(
-    "auth",
-    "Production rate limiting is running on an in-memory store. " +
-      "Configure RATE_LIMIT_REDIS_URL (Redis/Upstash/Vercel KV) for reliable " +
-      "multi-instance rate limiting. Until then, rate limits reset per " +
-      "instance/cold start and may be bypassed by distributed traffic."
+// ── In-memory fallback (dev / tests without Upstash) ────────────────────────
+const memStore = new Map<string, { count: number; resetTime: number }>();
+
+function memCheck(
+  key: string,
+  limit: number,
+  windowMs: number
+): NextResponse | null {
+  const now = Date.now();
+  const record = memStore.get(key);
+  if (!record || now > record.resetTime) {
+    memStore.set(key, { count: 1, resetTime: now + windowMs });
+    return null;
+  }
+  if (record.count >= limit) {
+    return tooManyRequests(record.resetTime - now);
+  }
+  record.count++;
+  return null;
+}
+
+function tooManyRequests(retryAfterMs: number): NextResponse {
+  const retryAfter = Math.ceil(retryAfterMs / 1000);
+  return NextResponse.json(
+    {
+      error: "Terlalu banyak permintaan. Silakan coba lagi nanti.",
+      retryAfter,
+    },
+    {
+      status: 429,
+      headers: { "Retry-After": String(retryAfter) },
+    }
   );
 }
 
 /**
  * Check rate limit for a given key.
- * Returns null if allowed, or a 429 response if exceeded.
+ * Returns null if allowed, or a 429 NextResponse if exceeded.
  *
- * In production without a distributed store, we still apply per-instance
- * limiting as defense-in-depth but emit a hard warning so operators know
- * the limit is not globally reliable.
+ * Now async because the distributed (Upstash) path performs a network round
+ * trip. Callers must `await` the result.
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   config: RateLimitConfig
-): NextResponse | null {
-  if (isProductionWithoutDistributedStore()) {
-    emitProductionWarningOnce();
+): Promise<NextResponse | null> {
+  if (!hasUpstash) {
+    return memCheck(key, config.limit, config.windowSeconds * 1000);
   }
 
-  const now = Date.now();
-  const windowMs = config.windowSeconds * 1000;
-
-  const record = rateLimitStore.get(key);
-
-  if (!record || now > record.resetTime) {
-    // New window or expired
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-    return null;
-  }
-
-  if (record.count >= config.limit) {
-    // Rate limit exceeded
-    return NextResponse.json(
-      {
-        error: "Terlalu banyak permintaan. Silakan coba lagi nanti.",
-        retryAfter: Math.ceil((record.resetTime - now) / 1000),
-      },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(Math.ceil((record.resetTime - now) / 1000)),
-        },
-      }
-    );
-  }
-
-  // Increment counter
-  record.count++;
-  return null;
+  // key shape: "<action>:<userId>:<ip>" (see getRateLimitKey) — use the leading
+  // segment as the limiter prefix so each action gets its own bucket sizing.
+  const action = key.split(":", 1)[0] || "default";
+  const limiter = getLimiter(action, config);
+  const { success, reset } = await limiter.limit(key);
+  if (success) return null;
+  const retryAfterMs = Math.max(0, reset - Date.now());
+  return tooManyRequests(retryAfterMs);
 }
 
 /**
