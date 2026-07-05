@@ -36,6 +36,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // @sparticuz/chromium ships a 64MB brotli-compressed binary in bin/ that
+  // must resolve at runtime. If bundled/relocated by webpack, the path breaks.
+  // puppeteer-core is also runtime-only. See:
+  // https://github.com/Sparticuz/chromium#bundler-configuration
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   async headers() {
     return [
       {
