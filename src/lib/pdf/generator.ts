@@ -71,14 +71,11 @@ async function resolveChromiumExecutablePath(
     const chromiumBr = await pdfStorage.get(`${R2_CHROMIUM_PREFIX}/chromium.br`);
     writeFileSync(brPath, chromiumBr);
 
-    // al2023.tar.br (~1MB) — shared libraries for Amazon Linux 2023 (Vercel's runtime).
-    try {
-      const al2023Br = await pdfStorage.get(
-        `${R2_CHROMIUM_PREFIX}/al2023.tar.br`
-      );
-      writeFileSync(`${CHROMIUM_TMP_DIR}/al2023.tar.br`, al2023Br);
-    } catch {
-      // Optional — only needed on AL2023-based runtimes.
+    // These sidecar archives are opened by @sparticuz/chromium when resolving
+    // executablePath(input). Keep them beside chromium.br in the input dir.
+    for (const fileName of ["al2023.tar.br", "fonts.tar.br"]) {
+      const bytes = await pdfStorage.get(`${R2_CHROMIUM_PREFIX}/${fileName}`);
+      writeFileSync(`${CHROMIUM_TMP_DIR}/${fileName}`, bytes);
     }
   }
 
