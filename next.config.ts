@@ -36,20 +36,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // @sparticuz/chromium ships a 64MB brotli-compressed binary in bin/ that
-  // must resolve at runtime. If bundled/relocated by webpack, the path breaks.
-  // puppeteer-core is also runtime-only. See:
-  // https://github.com/Sparticuz/chromium#bundler-configuration
+  // @sparticuz/chromium and puppeteer-core must not be bundled by webpack;
+  // resolve them from node_modules at runtime. The chromium binary itself
+  // is downloaded from R2 on cold start (see src/lib/pdf/generator.ts).
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
-  // Force the Vercel nft file tracer to include the chromium binaries in the
-  // serverless function output. Without this, the 64MB chromium.br is stripped
-  // from the deployment and /var/task/node_modules/@sparticuz/chromium/bin is
-  // missing at runtime.
-  outputFileTracingIncludes: {
-    "/api/invoices/[invoiceId]/download": [
-      "./node_modules/@sparticuz/chromium/bin/**/*",
-    ],
-  },
   async headers() {
     return [
       {

@@ -4,6 +4,8 @@ import {
   isSupportedDocumentType,
 } from "@/modules/documents/document-type-registry";
 import type { DocumentType } from "@/modules/documents/types";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import { pdfStorage } from "@/modules/downloads/pdf-storage";
 
 export type InvoiceRenderTemplate = {
   htmlTemplate: string;
@@ -39,6 +41,50 @@ interface GenerateInvoicePdfOptions {
 
 let cachedPuppeteerModule: PuppeteerModuleLike | null = null;
 
+// On Vercel serverless, @sparticuz/chromium's 64MB brotli binary exceeds the
+// 50MB function zip limit and is stripped from the deployment. We upload it
+// to R2 once (scripts/upload-chromium-to-r2.mjs) and download to /tmp on the
+// first cold start of each Lambda container. Subsequent warm invocations reuse
+// the cached binary.
+const CHROMIUM_TMP_DIR = "/tmp/chromium-bin";
+const R2_CHROMIUM_PREFIX = "chromium-bin";
+
+interface ChromiumLike {
+  args: string[];
+  executablePath(input?: string): Promise<string>;
+}
+
+async function resolveChromiumExecutablePath(
+  chromium: ChromiumLike
+): Promise<string> {
+  // Local dev / container: binary is bundled in node_modules, use it directly.
+  if (!process.env.VERCEL) {
+    return chromium.executablePath();
+  }
+
+  // Vercel: binary stripped from deployment — download from R2 on first use.
+  const brPath = `${CHROMIUM_TMP_DIR}/chromium.br`;
+  if (!existsSync(brPath)) {
+    mkdirSync(CHROMIUM_TMP_DIR, { recursive: true });
+
+    // chromium.br (~62MB) — the browser binary itself.
+    const chromiumBr = await pdfStorage.get(`${R2_CHROMIUM_PREFIX}/chromium.br`);
+    writeFileSync(brPath, chromiumBr);
+
+    // al2023.tar.br (~1MB) — shared libraries for Amazon Linux 2023 (Vercel's runtime).
+    try {
+      const al2023Br = await pdfStorage.get(
+        `${R2_CHROMIUM_PREFIX}/al2023.tar.br`
+      );
+      writeFileSync(`${CHROMIUM_TMP_DIR}/al2023.tar.br`, al2023Br);
+    } catch {
+      // Optional — only needed on AL2023-based runtimes.
+    }
+  }
+
+  return chromium.executablePath(CHROMIUM_TMP_DIR);
+}
+
 async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
   if (cachedPuppeteerModule) {
     return cachedPuppeteerModule;
@@ -56,7 +102,7 @@ async function loadRuntimePuppeteer(): Promise<PuppeteerModuleLike> {
           const browser = await puppeteerModule.default.launch({
             args: chromium.args,
             defaultViewport: { width: 1920, height: 1080 },
-            executablePath: await chromium.executablePath(),
+            executablePath: await resolveChromiumExecutablePath(chromium),
             headless: true,
           });
           return browser as BrowserLike;
