@@ -17,13 +17,14 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Validate required fields
+    // Validate required fields (body.status is optional — Pakasir may not include it;
+    // the actual status is verified via the Pakasir Transaction Detail API inside
+    // handlePakasirWebhook).
     if (
       !body.project ||
       !body.order_id ||
       body.amount === undefined ||
-      body.amount === null ||
-      !body.status
+      body.amount === null
     ) {
       return NextResponse.json(
         { error: "Missing required fields" },
