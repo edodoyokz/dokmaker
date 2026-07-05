@@ -9,10 +9,6 @@
  * shared preview watermark/meta injection in render-template.ts.
  */
 export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
-  /* Import Google Fonts for exact matching of Gojek sans-serif look.
-     Roboto is Gojek's official brand font (matches Asphalt design system). */
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
   /* Negate the generator wrapper body padding so the green header is full-bleed
      and the receipt fits one A4 page (20mm page margins already provide spacing). */
   body {
@@ -21,8 +17,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
   }
 
   .gocar-doc {
-    /* Gojek brand uses Roboto. Plus Jakarta Sans as fallback for Indonesian-localized weights. */
-    font-family: 'Roboto', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
     color: #000000;            /* Reference uses pure black body text, not gray. */
     background: #ffffff;
     line-height: 1.45;
@@ -547,7 +542,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
             <circle cx="12" cy="12" r="8" stroke="#00a859" stroke-width="4"/>
             <circle cx="12" cy="8" r="2.5" fill="#00a859"/>
           </svg>
-          <span style="font-family: 'Roboto', 'Plus Jakarta Sans', Arial, sans-serif; font-size: 22px; font-weight: 900; color: #000000; letter-spacing: -1px;">gojek</span>
+          <span style="font-family: Arial, Helvetica, sans-serif; font-size: 22px; font-weight: 900; color: #000000; letter-spacing: -1px;">gojek</span>
         </div>
         <div style="font-size: 9.5px; color: #666666; line-height: 1.45; font-weight: 400; max-width: 360px; margin: 0 auto;">
           {{issuer.address}}
