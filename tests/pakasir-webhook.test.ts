@@ -148,7 +148,15 @@ describe("handlePakasirWebhook", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ status: "pending" }),
+        json: async () => ({
+          transaction: {
+            amount: 50000,
+            order_id: "ORDER-2",
+            project: "dokmaker-test",
+            status: "pending",
+            payment_method: "qris",
+          },
+        }),
       })
     );
 
@@ -239,9 +247,16 @@ describe("handlePakasirWebhook", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
+        // Official Pakasir Transaction Detail response shape per docs
         json: async () => ({
-          status: "completed",
-          reference: "REF-123",
+          transaction: {
+            amount: 50000,
+            order_id: "ORDER-5",
+            project: "dokmaker-test",
+            status: "completed",
+            payment_method: "qris",
+            completed_at: "2026-07-05T08:07:02.819+07:00",
+          },
         }),
       })
     );
@@ -258,7 +273,7 @@ describe("handlePakasirWebhook", () => {
       where: { id: "payment-2" },
       data: expect.objectContaining({
         status: "success",
-        providerReference: "REF-123",
+        providerReference: "ORDER-5",
       }),
     });
     expect(creditWalletMock).toHaveBeenCalledTimes(1);

@@ -15,8 +15,11 @@ export interface PakasirWebhookBody {
   project: string;
   order_id: string;
   amount: number;
+  status?: string;          // "completed" / "pending" — present in sandbox webhooks
+  is_sandbox?: boolean;     // true for sandbox; skip Transaction Detail API verification
   providerEventId?: string;
   signature?: string;
+  [key: string]: unknown;   // permit extra fields without validation failure
 }
 
 /**
@@ -96,9 +99,9 @@ export async function createTopUpPayment(
  * Verifies and credits wallet if valid.
  */
 export async function handlePakasirWebhook(body: PakasirWebhookBody) {
-  const { project, order_id, amount, providerEventId, signature } = body;
+  const { project, order_id, amount, status: bodyStatus, is_sandbox, providerEventId, signature } = body;
 
-  logger.webhook("Pakasir webhook received", { project, order_id, amount });
+  logger.webhook("Pakasir webhook received", { project, order_id, amount, is_sandbox });
 
   // ── Defense in depth: optional HMAC signature ──────────────────────────
   // If a shared secret is configured, require and verify the signature so a
@@ -163,25 +166,40 @@ export async function handlePakasirWebhook(body: PakasirWebhookBody) {
     throw new Error("Amount tidak sesuai");
   }
 
-  // Verify with Pakasir Transaction Detail API
-  const apiKey = process.env.PAKASIR_API_KEY;
-  if (!apiKey) {
-    throw new Error("Pakasir API key not configured");
-  }
+  // ── Verify payment status ───────────────────────────────────────────
+  // Per Pakasir docs (https://pakasir.com/p/docs), the webhook body always
+  // carries a top-level `status`. For sandbox projects the webhook is
+  // authoritative; for production Pakasir recommends cross-checking with the
+  // Transaction Detail API for a more valid status.
+  let providerReference: string | null = null;
 
-  const detailResponse = await fetch(
-    `${process.env.PAKASIR_BASE_URL || "https://app.pakasir.com"}/api/transactiondetail?project=${project}&order_id=${order_id}&api_key=${apiKey}`
-  );
+  if (is_sandbox) {
+    if (bodyStatus !== "completed") {
+      throw new Error("Sandbox webhook: status belum completed");
+    }
+    providerReference = order_id;
+  } else {
+    const apiKey = process.env.PAKASIR_API_KEY;
+    if (!apiKey) {
+      throw new Error("Pakasir API key not configured");
+    }
 
-  if (!detailResponse.ok) {
-    throw new Error("Gagal verifikasi transaksi dengan Pakasir");
-  }
+    // Docs: GET /api/transactiondetail?project={slug}&amount={amount}&order_id={order_id}&api_key={api_key}
+    const detailResponse = await fetch(
+      `${process.env.PAKASIR_BASE_URL || "https://app.pakasir.com"}/api/transactiondetail?project=${project}&amount=${amount}&order_id=${order_id}&api_key=${apiKey}`
+    );
 
-  const detail = await detailResponse.json();
+    if (!detailResponse.ok) {
+      throw new Error("Gagal verifikasi transaksi dengan Pakasir");
+    }
 
-  // Check if Pakasir confirms payment
-  if (detail.status !== "completed") {
-    throw new Error("Transaksi belum completed di Pakasir");
+    const detail = await detailResponse.json();
+    // Response shape: { transaction: { status, order_id, ... } }
+    const txn = detail.transaction ?? detail;
+    if (txn.status !== "completed") {
+      throw new Error("Transaksi belum completed di Pakasir");
+    }
+    providerReference = order_id;
   }
 
   // Import wallet service
@@ -195,7 +213,7 @@ export async function handlePakasirWebhook(body: PakasirWebhookBody) {
       data: {
         status: "success",
         paidAt: new Date(),
-        providerReference: detail.reference || null,
+        providerReference,
       },
     });
 
