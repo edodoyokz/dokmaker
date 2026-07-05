@@ -54,11 +54,14 @@ export async function GET(
     logger.error(
       "download",
       "Final PDF download failed",
-      error instanceof Error ? { message: error.message } : undefined,
+      error instanceof Error ? { message: error.message, stack: error.stack } : undefined,
       undefined
     );
+    // Debug: return actual error message to identify the failure point.
+    // Restore safeApiError(error) once the root cause is fixed.
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: safeApiError(error) },
+      { error: message },
       { status: 500 }
     );
   }
