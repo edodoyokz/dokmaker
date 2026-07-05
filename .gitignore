@@ -58,3 +58,6 @@ next-env.d.ts
 /stream_*.txt
 /query_db.ts
 .playwright-mcp/
+
+# third-party APK/XAPK references (large, non-source assets)
+/apk/
