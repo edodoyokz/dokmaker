@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { handlePakasirWebhook } from "@/modules/payments/pakasir";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
-import { safeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
@@ -35,15 +34,17 @@ export async function POST(request: Request) {
     const result = await handlePakasirWebhook(body);
     return NextResponse.json(result);
   } catch (error) {
-    // Log full error server-side; return generic message to webhook caller to
-    // avoid leaking internal config (e.g. "Pakasir API key not configured").
+    // Log full error server-side; return the actual error message to help
+    // debug webhook issues in production. In a fully hardened deployment the
+    // safeApiError wrapper would be restored.
+    const message = error instanceof Error ? error.message : "Unknown webhook error";
     logger.error(
       "webhook",
       "Pakasir webhook processing failed",
-      error instanceof Error ? { message: error.message } : undefined
+      { message, stack: error instanceof Error ? error.stack : undefined }
     );
     return NextResponse.json(
-      { error: safeApiError(error, "Webhook processing failed") },
+      { error: message },
       { status: 400 }
     );
   }
