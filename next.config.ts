@@ -41,6 +41,15 @@ const nextConfig: NextConfig = {
   // puppeteer-core is also runtime-only. See:
   // https://github.com/Sparticuz/chromium#bundler-configuration
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
+  // Force the Vercel nft file tracer to include the chromium binaries in the
+  // serverless function output. Without this, the 64MB chromium.br is stripped
+  // from the deployment and /var/task/node_modules/@sparticuz/chromium/bin is
+  // missing at runtime.
+  outputFileTracingIncludes: {
+    "/api/invoices/[invoiceId]/download": [
+      "./node_modules/@sparticuz/chromium/bin/**/*",
+    ],
+  },
   async headers() {
     return [
       {
