@@ -27,7 +27,7 @@ interface BrowserLike {
 }
 
 interface PuppeteerLike {
-  launch(options: { headless: boolean }): Promise<BrowserLike>;
+  launch(options: Record<string, unknown>): Promise<BrowserLike>;
 }
 
 interface PuppeteerModuleLike {
@@ -149,13 +149,11 @@ export function generateInvoiceHtml(
     return `<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-  </style>
+      <meta charset="utf-8">
 </head>
 <body>
 ${bodyHtml}
+
 </body>
 </html>
 `.trim();

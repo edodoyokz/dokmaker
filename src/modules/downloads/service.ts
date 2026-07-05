@@ -5,10 +5,17 @@ import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
 import { PROCESSING_PAYMENT_TIMEOUT_MS } from "./constants";
 import { pdfStorage, buildInvoiceFinalPdfStorageKey } from "./pdf-storage";
+import { GOCAR_RECEIPT_HTML_TEMPLATE } from "@/modules/documents/gocar-receipt-template";
 /**
  * Process final PDF download.
  * Handles paid/unpaid version logic and wallet debit.
  */
+function getFinalHtmlTemplate(invoice: { documentType: string; template: { htmlTemplate: string } }) {
+  return invoice.documentType === "gocar_receipt"
+    ? GOCAR_RECEIPT_HTML_TEMPLATE
+    : invoice.template.htmlTemplate;
+}
+
 export async function processDownload(
   userId: string,
   invoiceId: string
@@ -82,7 +89,7 @@ export async function processDownload(
       );
       pdf = await generateInvoicePdf(content, {
         template: {
-          htmlTemplate: invoice.template.htmlTemplate,
+          htmlTemplate: getFinalHtmlTemplate(invoice),
           documentType: invoice.documentType,
         },
       });
@@ -153,7 +160,7 @@ export async function processDownload(
       // Generate PDF before charging. If generation fails, no wallet debit is created.
       pdf = await generateInvoicePdf(content, {
         template: {
-          htmlTemplate: invoice.template.htmlTemplate,
+          htmlTemplate: getFinalHtmlTemplate(invoice),
           documentType: invoice.documentType,
         },
       });

@@ -71,7 +71,7 @@ describe("generateInvoiceHtml", () => {
     expect(html).toContain("RB-4153088-49607870");
     expect(html).toContain("Faktur");
     expect(html).toContain("Makasih udah pesan GoCar");
-        expect(html).toContain("gocar-page-break");
+    expect(html).toContain("gocar-page-break");
   });
 
   it("produces different html for different templates with the same content", () => {
@@ -115,6 +115,33 @@ describe("generateInvoicePdf", () => {
     });
 
     expect(pdfBuffer.subarray(0, 4).toString("utf-8")).toBe("%PDF");
+  });
+
+  it("does not add the generic invoice body padding around custom templates", async () => {
+    let renderedHtml = "";
+
+    await generateInvoicePdf(sampleContent, {
+      template: {
+        htmlTemplate: `<section class="edge-template">{{invoice.number}}</section>`,
+        documentType: "invoice",
+      },
+      loadPuppeteer: async () => ({
+        default: {
+          launch: async () => ({
+            newPage: async () => ({
+              setContent: async (html) => {
+                renderedHtml = html;
+              },
+              pdf: async () => Buffer.from("%PDF-1.7\nmock pdf", "utf-8"),
+            }),
+            close: async () => undefined,
+          }),
+        },
+      }),
+    });
+
+    expect(renderedHtml).toContain('class="edge-template"');
+    expect(renderedHtml).not.toContain("body { font-family: Arial, sans-serif; padding: 40px;");
   });
 });
 
