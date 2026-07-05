@@ -13,6 +13,7 @@
  *   - chromium.br      (~62MB) — the Chromium browser binary
  *   - al2023.tar.br     (~1MB)  — shared libs for Amazon Linux 2023 (Vercel runtime)
  *   - fonts.tar.br    (~180KB)  — runtime font archive expected by @sparticuz/chromium
+ *   - swiftshader.tar.br (~3.5MB) — SwiftShader archive expected by @sparticuz/chromium
  *
  * Only needs to be re-run when upgrading @sparticuz/chromium.
  */
@@ -35,10 +36,13 @@ if (!bucket || !accountId || !accessKeyId || !secretAccessKey) {
 const chromiumBinDir = "node_modules/@sparticuz/chromium/bin";
 const r2Prefix = "chromium-bin";
 
-// Only upload files needed at runtime on Vercel (AL2023-based Lambda).
-// @sparticuz/chromium always expects fonts.tar.br to exist beside chromium.br.
-// swiftshader.tar.br is only needed for WebGL/graphics, which our PDFs do not use.
-const filesToUpload = ["chromium.br", "al2023.tar.br", "fonts.tar.br"];
+// Upload every archive @sparticuz/chromium may open from its input bin dir.
+const filesToUpload = [
+  "chromium.br",
+  "al2023.tar.br",
+  "fonts.tar.br",
+  "swiftshader.tar.br",
+];
 
 const client = new S3Client({
   region: "auto",

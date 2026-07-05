@@ -73,7 +73,7 @@ async function resolveChromiumExecutablePath(
 
     // These sidecar archives are opened by @sparticuz/chromium when resolving
     // executablePath(input). Keep them beside chromium.br in the input dir.
-    for (const fileName of ["al2023.tar.br", "fonts.tar.br"]) {
+    for (const fileName of ["al2023.tar.br", "fonts.tar.br", "swiftshader.tar.br"]) {
       const bytes = await pdfStorage.get(`${R2_CHROMIUM_PREFIX}/${fileName}`);
       writeFileSync(`${CHROMIUM_TMP_DIR}/${fileName}`, bytes);
     }
