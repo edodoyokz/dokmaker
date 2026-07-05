@@ -55,6 +55,7 @@ next-env.d.ts
 /*.pdf
 /*.png
 /*.py
+/*.html
 /stream_*.txt
 /query_db.ts
 .playwright-mcp/
