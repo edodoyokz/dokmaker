@@ -36,6 +36,7 @@ enum InvoiceVersionStatus {
 enum WalletLedgerEntryType {
   topup_credit
   download_debit
+  ai_generation_debit
   refund_credit
   manual_adjustment_credit
   manual_adjustment_debit
@@ -82,6 +83,8 @@ model User {
   downloadLogs       DownloadLog[]
   adminAuditLogs     AdminAuditLog[] @relation("AdminActor")
   walletLedgerEntries WalletLedgerEntry[]
+  aiGenerationSessions AiGenerationSession[]
+  aiGenerationOutputs  AiGenerationOutput[]
 
   @@unique([authProvider, authProviderUserId])
   @@map("users")
@@ -265,6 +268,78 @@ model DownloadLog {
   @@index([userId])
   @@index([invoiceVersionId])
   @@map("download_logs")
+}
+
+// ─── AI Invoice Generation ────────────────────────────────────────────────────
+
+enum AiGenerationSessionStatus {
+  uploaded
+  analyzed
+  ready_to_generate
+  generating
+  completed
+  failed
+}
+
+enum AiGenerationOutputStatus {
+  pending
+  generating
+  success
+  failed
+  refunded
+}
+
+model AiGenerationSession {
+  id                         String                    @id @default(cuid())
+  userId                     String                    @map("user_id")
+  status                     AiGenerationSessionStatus @default(uploaded)
+  referenceImageStorageKey    String                    @map("reference_image_storage_key")
+  referenceImageMimeType      String                    @map("reference_image_mime_type")
+  referenceImageSizeBytes     Int                       @map("reference_image_size_bytes")
+  analysisJson                Json?                     @map("analysis_json")
+  analysisSummary             String?                   @map("analysis_summary")
+  latestUserInstruction       String?                   @map("latest_user_instruction")
+  disclaimerAcceptedAt        DateTime?                 @map("disclaimer_accepted_at")
+  createdAt                   DateTime                  @default(now()) @map("created_at")
+  updatedAt                   DateTime                  @updatedAt @map("updated_at")
+
+  user                        User                      @relation(fields: [userId], references: [id])
+  outputs                     AiGenerationOutput[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("ai_generation_sessions")
+}
+
+model AiGenerationOutput {
+  id                    String                   @id @default(cuid())
+  sessionId             String                   @map("session_id")
+  userId                String                   @map("user_id")
+  status                AiGenerationOutputStatus @default(pending)
+  instructionSnapshot   String                   @map("instruction_snapshot")
+  analysisSnapshot      Json?                    @map("analysis_snapshot")
+  promptSnapshot        String                   @map("prompt_snapshot")
+  outputImageStorageKey String?                  @map("output_image_storage_key")
+  outputImageMimeType   String?                  @map("output_image_mime_type")
+  chargedAmount         Int                      @map("charged_amount")
+  currency              String                   @default("IDR")
+  walletLedgerEntryId   String?                  @map("wallet_ledger_entry_id")
+  refundLedgerEntryId   String?                  @map("refund_ledger_entry_id")
+  idempotencyKey        String                   @unique @map("idempotency_key")
+  provider              String                   @default("pollinations")
+  providerRequestId     String?                  @map("provider_request_id")
+  providerMetadata      Json?                    @map("provider_metadata")
+  errorMessage          String?                  @map("error_message")
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
+
+  session               AiGenerationSession      @relation(fields: [sessionId], references: [id])
+  user                  User                      @relation(fields: [userId], references: [id])
+
+  @@index([sessionId])
+  @@index([userId])
+  @@index([status])
+  @@map("ai_generation_outputs")
 }
 
 // ─── Admin Audit Logs ────────────────────────────────────────────────────────

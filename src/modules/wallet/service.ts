@@ -99,7 +99,7 @@ export async function debitWallet(
   tx: Prisma.TransactionClient,
   userId: string,
   amount: number,
-  entryType: "download_debit" | "manual_adjustment_debit",
+  entryType: "download_debit" | "ai_generation_debit" | "manual_adjustment_debit",
   idempotencyKey: string,
   referenceType?: string,
   referenceId?: string,
