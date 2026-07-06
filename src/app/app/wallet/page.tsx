@@ -52,6 +52,8 @@ export default async function WalletPage() {
         return "Top Up Saldo";
       case "download_debit":
         return "Download Invoice Final";
+      case "ai_generation_debit":
+        return "Generate Invoice AI";
       case "admin_credit":
         return "Penyesuaian Admin (+)";
       case "admin_debit":

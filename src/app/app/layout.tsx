@@ -4,13 +4,14 @@ import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import { UserNav } from "@/components/user-nav";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { 
-  FileText, 
-  Layers, 
-  Plus, 
-  Wallet, 
-  Home, 
-  LayoutDashboard 
+import {
+  FileText,
+  Layers,
+  Plus,
+  Wallet,
+  Home,
+  LayoutDashboard,
+  Sparkles,
 } from "lucide-react";
 
 export default async function AppLayout({
@@ -46,6 +47,7 @@ export default async function AppLayout({
   const navigation = [
     { name: "Dashboard", href: "/app", icon: LayoutDashboard },
     { name: "Template", href: "/app/templates", icon: Layers },
+    { name: "AI Generator", href: "/app/ai-invoice-generator", icon: Sparkles },
     { name: "Invoice", href: "/app/invoices", icon: FileText },
     { name: "Dompet", href: "/app/wallet", icon: Wallet },
   ];
@@ -143,7 +145,15 @@ function MobileBottomNav() {
           <FileText className="h-5 w-5" />
           <span>Invoice</span>
         </Link>
-        
+
+        <Link
+          href="/app/ai-invoice-generator"
+          className="flex flex-col items-center gap-1 text-[10px] font-semibold text-zinc-400 hover:text-indigo-400 transition-colors"
+        >
+          <Sparkles className="h-5 w-5" />
+          <span>AI</span>
+        </Link>
+
         <Link
           href="/app/wallet"
           className="flex flex-col items-center gap-1 text-[10px] font-semibold text-zinc-400 hover:text-indigo-400 transition-colors"

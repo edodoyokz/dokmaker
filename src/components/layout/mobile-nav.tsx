@@ -12,13 +12,14 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  Layers, 
-  FileText, 
-  Wallet, 
-  ShieldAlert, 
-  LogOut 
+import {
+  LayoutDashboard,
+  Layers,
+  FileText,
+  Wallet,
+  ShieldAlert,
+  LogOut,
+  Sparkles,
 } from "lucide-react";
 
 interface MobileNavProps {
@@ -43,6 +44,7 @@ export function MobileNav({ user }: MobileNavProps) {
   const navigation = [
     { name: "Dashboard", href: "/app", icon: LayoutDashboard },
     { name: "Template", href: "/app/templates", icon: Layers },
+    { name: "AI Generator", href: "/app/ai-invoice-generator", icon: Sparkles },
     { name: "Invoice", href: "/app/invoices", icon: FileText },
     { name: "Dompet", href: "/app/wallet", icon: Wallet },
   ];
