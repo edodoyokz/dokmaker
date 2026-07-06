@@ -52,7 +52,7 @@ vi.mock("@/modules/ai-invoice/pollinations", () => ({
 import { prisma } from "@/lib/db/prisma";
 import { debitWallet, creditWallet } from "@/modules/wallet/service";
 import { aiImageStorage } from "@/modules/ai-invoice/storage";
-import { analyzeReferenceImage, generateInvoiceImage } from "@/modules/ai-invoice/pollinations";
+import { generateInvoiceImage } from "@/modules/ai-invoice/pollinations";
 
 const prismaMock = prisma as unknown as {
   aiGenerationSession: Record<string, ReturnType<typeof vi.fn>>;
@@ -62,7 +62,6 @@ const prismaMock = prisma as unknown as {
 const debitWalletMock = debitWallet as unknown as ReturnType<typeof vi.fn>;
 const creditWalletMock = creditWallet as unknown as ReturnType<typeof vi.fn>;
 const storageMock = aiImageStorage as unknown as { put: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
-const analyzeMock = analyzeReferenceImage as unknown as ReturnType<typeof vi.fn>;
 const generateMock = generateInvoiceImage as unknown as ReturnType<typeof vi.fn>;
 
 describe("AI invoice service", () => {
