@@ -34,6 +34,17 @@ export const SAFE_API_MESSAGES = [
   "Idempotency key required",
   "Template ID dan content wajib diisi",
   "Content wajib diisi",
+  // Domain - AI invoice
+  "File harus berupa gambar JPG, PNG, atau WebP",
+  "Ukuran gambar maksimal 5MB",
+  "Sesi AI tidak ditemukan",
+  "Limit analisa gratis habis",
+  "Instruksi perubahan wajib diisi",
+  "Instruksi perubahan terlalu panjang",
+  "Disclaimer wajib disetujui",
+  "Analisa gambar wajib dilakukan terlebih dahulu",
+  "Generate AI gagal",
+  "Hasil AI tidak ditemukan",
 ] as const;
 
 const DEFAULT_FALLBACK = "Internal server error";
