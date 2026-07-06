@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { creditWallet, debitWallet } from "@/modules/wallet/service";
 import {
@@ -92,7 +93,7 @@ export async function analyzeAiInvoiceSession(userId: string, sessionId: string)
     where: { id: session.id },
     data: {
       status: "analyzed",
-      analysisJson: analysis,
+      analysisJson: analysis as unknown as Prisma.InputJsonValue,
       analysisSummary: analysis.summary,
     },
     include: { outputs: { orderBy: { createdAt: "desc" } } },
@@ -174,7 +175,7 @@ export async function generateAiInvoiceOutput(
         outputImageStorageKey: key,
         outputImageMimeType: generated.mimeType,
         providerRequestId: generated.providerRequestId,
-        providerMetadata: generated.metadata,
+        providerMetadata: generated.metadata as Prisma.InputJsonValue,
         session: { update: { status: "completed" } },
       },
     });
