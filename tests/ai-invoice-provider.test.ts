@@ -59,32 +59,36 @@ describe("Pollinations client", () => {
     );
   });
 
-  it("posts multipart with reference image when provided (img2img)", async () => {
+  it("posts multipart to /v1/images/edits when reference image provided (img2img)", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      arrayBuffer: async () => new Uint8Array([1, 2, 3]).buffer,
-      headers: new Headers({ "content-type": "image/jpeg" }),
+      json: async () => ({
+        data: [{ b64_json: Buffer.from([1, 2, 3]).toString("base64") }],
+      }),
+      headers: new Headers({ "x-request-id": "req-1" }),
     });
     global.fetch = fetchMock;
     const { generateInvoiceImage } = await import("@/modules/ai-invoice/pollinations");
 
     const result = await generateInvoiceImage({
-      prompt: "invoice prompt",
+      prompt: "ubah warna jadi biru",
       referenceImage: { body: Buffer.from([10, 20]), mimeType: "image/png" },
     });
 
-    expect(result.mimeType).toBe("image/jpeg");
+    expect(result.mimeType).toBe("image/png");
     expect([...result.image]).toEqual([1, 2, 3]);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toContain("https://gen.pollinations.ai/image/");
+    expect(url).toBe("https://gen.pollinations.ai/v1/images/edits");
     expect(init).toMatchObject({ method: "POST" });
     expect(init.headers).toMatchObject({ Authorization: "Bearer sk_test" });
     expect(init.body).toBeInstanceOf(FormData);
     const form = init.body as FormData;
     expect(form.has("image")).toBe(true);
+    expect(form.get("prompt")).toBe("ubah warna jadi biru");
+    expect(form.get("model")).toBe("gptimage-large");
   });
 
-  it("falls back to GET when no reference image (text2image)", async () => {
+  it("falls back to GET /image/{prompt} when no reference image (text2image)", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       arrayBuffer: async () => new Uint8Array([4, 5]).buffer,
@@ -96,7 +100,8 @@ describe("Pollinations client", () => {
     const result = await generateInvoiceImage({ prompt: "invoice prompt" });
 
     expect(result.mimeType).toBe("image/png");
-    const [_url, init] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain("https://gen.pollinations.ai/image/");
     expect(init.method).toBeUndefined();
     expect(init.body).toBeUndefined();
   });

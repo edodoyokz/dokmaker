@@ -113,16 +113,9 @@ export async function generateInvoiceImage(input: {
   referenceImage?: { body: Buffer; mimeType: string };
 }): Promise<GeneratedAiImage> {
   const config = providerConfig();
-  const url = new URL(`${config.baseUrl}/image/${encodeURIComponent(input.prompt)}`);
-  url.searchParams.set("model", config.imageModel);
-  url.searchParams.set("private", "true");
-  url.searchParams.set("nologo", "true");
-  url.searchParams.set("width", "1024");
-  url.searchParams.set("height", "1448");
 
-  // img2img: POST multipart with the reference image so the model edits the
-  // actual document instead of generating from a text-only prompt.
-  let init: RequestInit;
+  // img2img: POST /v1/images/edits (OpenAI-compatible) with multipart upload.
+  // The model edits the actual reference image instead of generating from text.
   if (input.referenceImage) {
     const form = new FormData();
     form.append(
@@ -130,18 +123,73 @@ export async function generateInvoiceImage(input: {
       new Blob([new Uint8Array(input.referenceImage.body)], { type: input.referenceImage.mimeType }),
       `reference.${extensionForMime(input.referenceImage.mimeType)}`
     );
-    init = {
+    form.append("prompt", input.prompt);
+    form.append("model", config.imageModel);
+    form.append("size", "1024x1448");
+    form.append("response_format", "b64_json");
+
+    const response = await fetch(`${config.baseUrl}/v1/images/edits`, {
       method: "POST",
       headers: { Authorization: `Bearer ${config.apiKey}` },
       body: form,
-    };
-  } else {
-    init = { headers: { Authorization: `Bearer ${config.apiKey}` } };
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.error("[ai-invoice] Pollinations /v1/images/edits failed", {
+        status: response.status,
+        body: body.slice(0, 500),
+        model: config.imageModel,
+      });
+      throw new Error("Generate AI gagal");
+    }
+
+    const json = (await response.json()) as { data?: { b64_json?: string; url?: string }[] };
+    const item = json.data?.[0];
+    if (item?.b64_json) {
+      return {
+        image: Buffer.from(item.b64_json, "base64"),
+        mimeType: "image/png",
+        providerRequestId: response.headers.get("x-request-id") || undefined,
+        metadata: { model: config.imageModel, mode: "img2img", contentType: "image/png" },
+      };
+    }
+    if (item?.url) {
+      const imgRes = await fetch(item.url);
+      if (!imgRes.ok) throw new Error("Generate AI gagal");
+      const contentType = (imgRes.headers.get("content-type") || "image/png").split(";")[0].trim();
+      const bytes = Buffer.from(await imgRes.arrayBuffer());
+      return {
+        image: bytes,
+        mimeType: contentType,
+        providerRequestId: response.headers.get("x-request-id") || undefined,
+        metadata: { model: config.imageModel, mode: "img2img", contentType },
+      };
+    }
+    throw new Error("Generate AI gagal");
   }
 
-  const response = await fetch(url.toString(), init);
+  // Fallback: text-to-image via GET /image/{prompt}.
+  const url = new URL(`${config.baseUrl}/image/${encodeURIComponent(input.prompt)}`);
+  url.searchParams.set("model", config.imageModel);
+  url.searchParams.set("private", "true");
+  url.searchParams.set("nologo", "true");
+  url.searchParams.set("width", "1024");
+  url.searchParams.set("height", "1448");
 
-  if (!response.ok) throw new Error("Generate AI gagal");
+  const response = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${config.apiKey}` },
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    console.error("[ai-invoice] Pollinations GET /image failed", {
+      status: response.status,
+      body: body.slice(0, 500),
+      model: config.imageModel,
+    });
+    throw new Error("Generate AI gagal");
+  }
   const contentType = (response.headers.get("content-type") || "image/jpeg").split(";")[0].trim();
   if (!contentType.startsWith("image/")) throw new Error("Generate AI gagal");
   const bytes = Buffer.from(await response.arrayBuffer());
@@ -149,6 +197,6 @@ export async function generateInvoiceImage(input: {
     image: bytes,
     mimeType: contentType,
     providerRequestId: response.headers.get("x-request-id") || undefined,
-    metadata: { model: config.imageModel, contentType, mode: input.referenceImage ? "img2img" : "text2image" },
+    metadata: { model: config.imageModel, mode: "text2image", contentType },
   };
 }

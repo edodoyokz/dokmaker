@@ -214,7 +214,8 @@ export async function generateAiInvoiceOutput(
         session: { update: { status: "completed" } },
       },
     });
-  } catch {
+  } catch (cause) {
+    console.error("[ai-invoice] generation failed for output", output.id, cause);
     try {
       await prisma.$transaction(async (tx) => {
         const refund = await creditWallet(
