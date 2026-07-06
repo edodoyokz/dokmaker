@@ -171,7 +171,17 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
       {successOutput && (
         <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 space-y-3">
           <h2 className="text-sm font-semibold text-emerald-200">Hasil siap diunduh</h2>
-          <a href={`/api/ai-invoice/outputs/${successOutput.id}/download`} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white">
+          {/* ponytail: no watermark — paid output, user owns this version. Add deterrence if abuse appears. */}
+          <img
+            src={`/api/ai-invoice/outputs/${successOutput.id}/download`}
+            alt="Preview hasil AI"
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950"
+          />
+          <a
+            href={`/api/ai-invoice/outputs/${successOutput.id}/download`}
+            download={`ai-invoice-${successOutput.id}`}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white"
+          >
             <Download className="h-4 w-4" /> Download Gambar AI
           </a>
         </section>

@@ -10,7 +10,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return new Response(new Uint8Array(image.body), {
       headers: {
         "Content-Type": image.contentType,
-        "Content-Disposition": `attachment; filename="ai-invoice-${id}.${image.contentType.includes("png") ? "png" : "jpg"}"`,
+        "Content-Disposition": `inline; filename="ai-invoice-${id}.${image.contentType.includes("png") ? "png" : "jpg"}"`,
         "Cache-Control": "private, no-store",
       },
     });
