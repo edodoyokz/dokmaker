@@ -18,6 +18,7 @@ interface PageLike {
     format: string;
     printBackground: boolean;
     margin: { top: string; right: string; bottom: string; left: string };
+    preferCSSPageSize?: boolean;
   }): Promise<Uint8Array | Buffer>;
 }
 
@@ -303,7 +304,8 @@ export async function generateInvoicePdf(
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
-      margin: { top: "20mm", right: "20mm", bottom: "20mm", left: "20mm" },
+      preferCSSPageSize: true,
+      margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" },
     });
     return Buffer.from(pdfBuffer);
   } catch (error) {
