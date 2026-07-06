@@ -84,7 +84,7 @@ Suggested fields:
 - `wallet_ledger_entry_id`
 - `refund_ledger_entry_id`
 - `idempotency_key`
-- `provider`
+- `provider` — `pollinations`
 - `provider_request_id`
 - `provider_metadata`
 - `error_message`
@@ -115,11 +115,30 @@ Use existing `refund_credit` for automatic refund after provider failure.
 - Reference images and generated images are stored privately.
 - Do not expose permanent public URLs.
 - Download uses authenticated backend streaming or short-lived signed URLs.
-- Provider API keys are server-only and never logged.
+- Pollinations API key is server-only and never logged.
+
+## AI provider
+
+Use Pollinations.ai for v1.
+
+Server-side env/config:
+- `POLLINATIONS_API_KEY` — secret key, server-only.
+- `POLLINATIONS_BASE_URL` — default `https://gen.pollinations.ai`.
+- `AI_INVOICE_ANALYSIS_MODEL` — default vision-capable text model, e.g. `qwen-vision` or another model confirmed by `/text/models`.
+- `AI_INVOICE_IMAGE_MODEL` — default image model, selected from `/image/models`.
+- `AI_INVOICE_GENERATION_PRICE_IDR` — server-side Rupiah price per generation/revision.
+
+Integration notes:
+- Use Pollinations OpenAI-compatible chat completions for vision analysis: `POST /v1/chat/completions`.
+- Use Pollinations image generation for final images: `GET /image/{prompt}` or the OpenAI-compatible image generation endpoint if reference-image support is needed.
+- Send `Authorization: Bearer <POLLINATIONS_API_KEY>` from the server only.
+- Prefer `private=true`/equivalent option for generated media when supported.
+- Fetch generated media server-side and store it in DokMaker private storage before showing download links.
+- Do not expose Pollinations media URLs as permanent user-facing final URLs.
 
 ## AI behavior
 
-- Vision model analyzes the uploaded image into structured JSON and a short summary.
+- Vision analysis produces structured JSON and a short summary from the uploaded reference image.
 - Generation prompt is built from the reference analysis, reference image, user instructions, and disclaimer acceptance.
 - One paid generation creates one output image.
 - Revisions create new paid output records.
