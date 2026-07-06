@@ -8,7 +8,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const user = await requireUser();
     const { id } = await params;
     const body = await request.json();
+    const fieldEdits = Array.isArray(body.fieldEdits)
+      ? body.fieldEdits
+          .map((e: { label?: unknown; from?: unknown; to?: unknown }) => ({
+            label: String(e.label ?? ""),
+            from: String(e.from ?? ""),
+            to: String(e.to ?? ""),
+          }))
+          .filter((e: { label: string; to: string }) => e.label && e.to)
+      : [];
     const output = await generateAiInvoiceOutput(user.id, id, {
+      fieldEdits,
       instruction: String(body.instruction || ""),
       disclaimerAccepted: body.disclaimerAccepted === true,
       idempotencyKey: String(body.idempotencyKey || ""),

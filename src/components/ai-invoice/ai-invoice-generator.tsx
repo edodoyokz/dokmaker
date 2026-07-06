@@ -4,11 +4,21 @@ import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Sparkles, Upload, Wand2, Download, AlertCircle } from "lucide-react";
 
+type AnalysisField = { label: string; value: string };
+type Analysis = {
+  summary?: string;
+  documentType?: string;
+  colors?: string[];
+  sections?: string[];
+  detectedText?: string[];
+  fields?: AnalysisField[];
+};
 type Output = { id: string; status: string; outputImageStorageKey?: string | null };
 type Session = {
   id: string;
   status: string;
   analysisSummary?: string | null;
+  analysisJson?: Analysis | null;
   outputs: Output[];
 };
 
@@ -22,15 +32,33 @@ async function readJson(res: Response) {
   return data;
 }
 
+// Stable JSON-serializable signature of the intended change request.
+// If the user edits a field or the instruction, a new idempotency key is
+// generated; a retry after a lost server response reuses the key and the
+// server returns the existing output instead of debiting a second time.
+function signatureOf(fieldEdits: { label: string; from: string; to: string }[], instruction: string): string {
+  return JSON.stringify({ f: fieldEdits.map((e) => [e.label, e.from, e.to]), i: instruction.trim() });
+}
+
 export function AiInvoiceGenerator({ price }: { price: number }) {
   const inputId = useId();
   const [file, setFile] = useState<File | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [instruction, setInstruction] = useState("");
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const pendingGeneration = useRef<{ key: string; instruction: string } | null>(null);
+  const pendingGeneration = useRef<{ key: string; sig: string } | null>(null);
+
+  function applyAnalysis(s: Session) {
+    const fields = s.analysisJson?.fields ?? [];
+    if (fields.length) {
+      const next: Record<string, string> = {};
+      for (const f of fields) next[f.label] = f.value;
+      setFieldValues(next);
+    }
+  }
 
   async function upload() {
     if (!file) return setError("Pilih gambar referensi dulu");
@@ -54,7 +82,9 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
     setError(null);
     try {
       const res = await fetch(`/api/ai-invoice/sessions/${session.id}/analyze`, { method: "POST" });
-      setSession(await readJson(res));
+      const fresh = await readJson(res);
+      setSession(fresh);
+      applyAnalysis(fresh);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analisa gagal");
     } finally {
@@ -66,24 +96,21 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
     if (!session) return;
     setLoading("generate");
     setError(null);
-    // Reuse the idempotency key for the same instruction until a generation succeeds,
-    // so a retry after a lost server response does not create a second charge.
-    if (!pendingGeneration.current || pendingGeneration.current.instruction !== instruction) {
-      pendingGeneration.current = { key: crypto.randomUUID(), instruction };
+    const fieldEdits = (session.analysisJson?.fields ?? [])
+      .filter((f) => fieldValues[f.label] !== f.value)
+      .map((f) => ({ label: f.label, from: f.value, to: fieldValues[f.label] ?? "" }));
+    const sig = signatureOf(fieldEdits, instruction);
+    if (!pendingGeneration.current || pendingGeneration.current.sig !== sig) {
+      pendingGeneration.current = { key: crypto.randomUUID(), sig };
     }
     const idempotencyKey = pendingGeneration.current.key;
     try {
       const res = await fetch(`/api/ai-invoice/sessions/${session.id}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          instruction,
-          disclaimerAccepted: accepted,
-          idempotencyKey,
-        }),
+        body: JSON.stringify({ fieldEdits, instruction, disclaimerAccepted: accepted, idempotencyKey }),
       });
       await readJson(res);
-      // Generation succeeded — clear the pending key so the next generate is a new intent.
       pendingGeneration.current = null;
       const fresh = await fetch(`/api/ai-invoice/sessions/${session.id}`);
       setSession(await readJson(fresh));
@@ -100,6 +127,7 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
   }
 
   const successOutput = session?.outputs?.find((output) => output.status === "success");
+  const analysisFields = session?.analysisJson?.fields ?? [];
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-12">
@@ -130,7 +158,12 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-4">
           <h2 className="text-sm font-semibold text-zinc-200">2. Analisa AI gratis terbatas</h2>
           {session.analysisSummary ? (
-            <p className="rounded-xl bg-zinc-950 p-3 text-sm text-zinc-300">{session.analysisSummary}</p>
+            <div className="space-y-2">
+              <p className="rounded-xl bg-zinc-950 p-3 text-sm text-zinc-300">{session.analysisSummary}</p>
+              <button onClick={analyze} disabled={!!loading} className="inline-flex items-center gap-2 rounded-lg bg-zinc-800 px-3 py-2 text-xs font-semibold text-zinc-200 disabled:opacity-50">
+                <Wand2 className="h-3.5 w-3.5" /> Analisa ulang
+              </button>
+            </div>
           ) : (
             <button onClick={analyze} disabled={!!loading} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
               <Wand2 className="h-4 w-4" /> {loading === "analyze" ? "Menganalisa..." : "Analisa Gratis"}
@@ -141,14 +174,34 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
 
       {session?.analysisSummary && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 space-y-4">
-          <h2 className="text-sm font-semibold text-zinc-200">3. Instruksi perubahan</h2>
-          <textarea
-            value={instruction}
-            onChange={(event) => setInstruction(event.target.value)}
-            rows={5}
-            placeholder="Contoh: ganti warna jadi biru, nama perusahaan jadi PT Contoh, item jasa desain 1 x Rp500.000"
-            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-sm text-zinc-200 outline-none focus:border-indigo-500"
-          />
+          <h2 className="text-sm font-semibold text-zinc-200">3. Ubah field yang ingin diganti</h2>
+          {analysisFields.length > 0 ? (
+            <div className="space-y-3">
+              {analysisFields.map((field) => (
+                <label key={field.label} className="block space-y-1">
+                  <span className="text-xs font-medium text-zinc-400">{field.label}</span>
+                  <input
+                    value={fieldValues[field.label] ?? ""}
+                    onChange={(event) => setFieldValues((prev) => ({ ...prev, [field.label]: event.target.value }))}
+                    className="block w-full rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-sm text-zinc-200 outline-none focus:border-indigo-500"
+                  />
+                </label>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-500">Tidak ada field terdeteksi. Gunakan instruksi tambahan di bawah.</p>
+          )}
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-400">Instruksi tambahan (opsional)</span>
+            <textarea
+              value={instruction}
+              onChange={(event) => setInstruction(event.target.value)}
+              rows={3}
+              maxLength={2000}
+              placeholder="Contoh: ganti warna jadi biru, hapus kolom pajak, tambah item jasa desain 1 x Rp500.000"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-sm text-zinc-200 outline-none focus:border-indigo-500"
+            />
+          </label>
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200">
             <label className="flex items-start gap-2">
               <input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} className="mt-1" />

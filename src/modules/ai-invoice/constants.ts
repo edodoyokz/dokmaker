@@ -9,7 +9,7 @@ export const AI_INVOICE_FREE_ANALYSES_PER_DAY = 3;
 export const AI_INVOICE_DEFAULT_GENERATION_PRICE_IDR = 10_000;
 export const POLLINATIONS_DEFAULT_BASE_URL = "https://gen.pollinations.ai";
 export const AI_INVOICE_DEFAULT_ANALYSIS_MODEL = "qwen-vision";
-export const AI_INVOICE_DEFAULT_IMAGE_MODEL = "flux";
+export const AI_INVOICE_DEFAULT_IMAGE_MODEL = "gptimage-large";
 
 export function getAiInvoiceGenerationPrice(): number {
   const raw = process.env.AI_INVOICE_GENERATION_PRICE_IDR;

@@ -64,6 +64,26 @@ const creditWalletMock = creditWallet as unknown as ReturnType<typeof vi.fn>;
 const storageMock = aiImageStorage as unknown as { put: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
 const generateMock = generateInvoiceImage as unknown as ReturnType<typeof vi.fn>;
 
+const ANALYSIS = {
+  summary: "layout invoice",
+  documentType: "invoice",
+  colors: ["blue", "white"],
+  sections: ["header", "items", "total"],
+  detectedText: ["INVOICE"],
+  fields: [
+    { label: "Perusahaan", value: "PT Contoh" },
+    { label: "Total", value: "Rp500.000" },
+  ],
+};
+
+const SESSION = {
+  id: "session-1",
+  userId: "user-1",
+  referenceImageStorageKey: "ai-invoice/reference/user-1/session-1.png",
+  analysisJson: ANALYSIS,
+  analysisSummary: "layout invoice",
+};
+
 describe("AI invoice service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -72,6 +92,7 @@ describe("AI invoice service", () => {
       aiGenerationOutput: prismaMock.aiGenerationOutput,
       aiGenerationSession: prismaMock.aiGenerationSession,
     }));
+    storageMock.get.mockResolvedValue({ body: Buffer.from("ref"), contentType: "image/png" });
   });
 
   it("rejects non-image upload", async () => {
@@ -86,18 +107,30 @@ describe("AI invoice service", () => {
     ).rejects.toThrow("File harus berupa gambar JPG, PNG, atau WebP");
   });
 
+  it("rejects when no field edit and no instruction", async () => {
+    prismaMock.aiGenerationSession.findFirst.mockResolvedValue(SESSION);
+    prismaMock.aiGenerationOutput.findFirst.mockResolvedValue(null);
+    const { generateAiInvoiceOutput } = await import("@/modules/ai-invoice/service");
+
+    await expect(
+      generateAiInvoiceOutput("user-1", "session-1", {
+        fieldEdits: [],
+        instruction: "",
+        disclaimerAccepted: true,
+        idempotencyKey: "idem-empty",
+      })
+    ).rejects.toThrow("Pilih minimal satu field untuk diubah atau tulis instruksi");
+    expect(debitWalletMock).not.toHaveBeenCalled();
+  });
+
   it("does not debit twice for same idempotency key", async () => {
-    prismaMock.aiGenerationSession.findFirst.mockResolvedValue({
-      id: "session-1",
-      userId: "user-1",
-      analysisJson: { summary: "x" },
-      analysisSummary: "x",
-    });
+    prismaMock.aiGenerationSession.findFirst.mockResolvedValue(SESSION);
     prismaMock.aiGenerationOutput.findFirst.mockResolvedValue({ id: "output-existing", status: "success", userId: "user-1" });
     const { generateAiInvoiceOutput } = await import("@/modules/ai-invoice/service");
 
     const result = await generateAiInvoiceOutput("user-1", "session-1", {
-      instruction: "ubah warna biru",
+      fieldEdits: [{ label: "Perusahaan", from: "PT Contoh", to: "PT Baru" }],
+      instruction: "",
       disclaimerAccepted: true,
       idempotencyKey: "idem-1",
     });
@@ -110,12 +143,7 @@ describe("AI invoice service", () => {
   });
 
   it("refunds once when provider fails after debit", async () => {
-    prismaMock.aiGenerationSession.findFirst.mockResolvedValue({
-      id: "session-1",
-      userId: "user-1",
-      analysisJson: { summary: "layout" },
-      analysisSummary: "layout",
-    });
+    prismaMock.aiGenerationSession.findFirst.mockResolvedValue(SESSION);
     prismaMock.aiGenerationOutput.findFirst.mockResolvedValue(null);
     prismaMock.aiGenerationOutput.create.mockResolvedValue({ id: "output-1" });
     debitWalletMock.mockResolvedValue({ id: "ledger-debit-1" });
@@ -126,7 +154,8 @@ describe("AI invoice service", () => {
 
     await expect(
       generateAiInvoiceOutput("user-1", "session-1", {
-        instruction: "ubah nama",
+        fieldEdits: [{ label: "Perusahaan", from: "PT Contoh", to: "PT Baru" }],
+        instruction: "",
         disclaimerAccepted: true,
         idempotencyKey: "idem-fail",
       })
@@ -158,21 +187,16 @@ describe("AI invoice service", () => {
     );
   });
 
-  it("debits, stores, and marks success when provider returns an image", async () => {
-    prismaMock.aiGenerationSession.findFirst.mockResolvedValue({
-      id: "session-1",
-      userId: "user-1",
-      analysisJson: { summary: "layout invoice" },
-      analysisSummary: "layout invoice",
-    });
-    prismaMock.aiGenerationOutput.findFirst.mockResolvedValue(null); // no existing output (Change 1 lookup)
+  it("debits, passes reference image to provider, stores, and marks success", async () => {
+    prismaMock.aiGenerationSession.findFirst.mockResolvedValue(SESSION);
+    prismaMock.aiGenerationOutput.findFirst.mockResolvedValue(null);
     prismaMock.aiGenerationOutput.create.mockResolvedValue({ id: "output-ok" });
     debitWalletMock.mockResolvedValue({ id: "ledger-debit-ok" });
     generateMock.mockResolvedValue({
       image: Buffer.from([10, 20, 30]),
       mimeType: "image/jpeg",
       providerRequestId: "req-1",
-      metadata: { model: "flux" },
+      metadata: { model: "gptimage-large", mode: "img2img" },
     });
     prismaMock.aiGenerationOutput.update.mockResolvedValue({
       id: "output-ok",
@@ -183,7 +207,8 @@ describe("AI invoice service", () => {
     const { generateAiInvoiceOutput } = await import("@/modules/ai-invoice/service");
 
     const result = await generateAiInvoiceOutput("user-1", "session-1", {
-      instruction: "ubah warna jadi biru",
+      fieldEdits: [{ label: "Perusahaan", from: "PT Contoh", to: "PT Baru" }],
+      instruction: "warna jadi biru",
       disclaimerAccepted: true,
       idempotencyKey: "idem-success",
     });
@@ -200,6 +225,13 @@ describe("AI invoice service", () => {
       expect.any(String),
       "user",
       "user-1"
+    );
+    // Reference image fetched from private storage and passed to the provider.
+    expect(storageMock.get).toHaveBeenCalledWith("ai-invoice/reference/user-1/session-1.png");
+    expect(generateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        referenceImage: { body: expect.any(Buffer), mimeType: "image/png" },
+      })
     );
     expect(storageMock.put).toHaveBeenCalledWith(
       "ai-invoice/output/user-1/session-1/output-1.jpg",

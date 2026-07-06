@@ -7,12 +7,18 @@ import {
   AI_INVOICE_MAX_IMAGE_BYTES,
   getAiInvoiceGenerationPrice,
 } from "./constants";
-import { analyzeReferenceImage, generateInvoiceImage } from "./pollinations";
+import { analyzeReferenceImage, generateInvoiceImage, type AiInvoiceAnalysis } from "./pollinations";
 import {
   aiImageStorage,
   buildAiOutputImageStorageKey,
   buildAiReferenceImageStorageKey,
 } from "./storage";
+
+export interface AiInvoiceFieldEdit {
+  label: string;
+  from: string;
+  to: string;
+}
 
 function extensionForMime(mimeType: string): string {
   if (mimeType === "image/png") return "png";
@@ -20,21 +26,45 @@ function extensionForMime(mimeType: string): string {
   return "jpg";
 }
 
-function assertInstruction(input: string): string {
-  const trimmed = input.trim();
-  if (trimmed.length < 3) throw new Error("Instruksi perubahan wajib diisi");
-  if (trimmed.length > 2000) throw new Error("Instruksi perubahan terlalu panjang");
-  return trimmed;
+function assertChanges(input: { fieldEdits: AiInvoiceFieldEdit[]; instruction: string }): {
+  fieldEdits: AiInvoiceFieldEdit[];
+  instruction: string;
+} {
+  const instruction = input.instruction.trim();
+  if (instruction.length > 2000) throw new Error("Instruksi perubahan terlalu panjang");
+  const fieldEdits = input.fieldEdits.filter((e) => e.label && e.to && e.to !== e.from);
+  if (!fieldEdits.length && !instruction) {
+    throw new Error("Pilih minimal satu field untuk diubah atau tulis instruksi");
+  }
+  return { fieldEdits, instruction };
 }
 
-function buildPrompt(input: { analysisSummary: string; instruction: string }): string {
-  return [
-    "Create a clean invoice document image based on this reference analysis.",
-    "Keep the layout close to the reference, apply the user's requested changes, and produce a professional invoice-like image.",
-    `Reference analysis: ${input.analysisSummary}`,
-    `User changes: ${input.instruction}`,
-    "Do not add watermark. Use sharp readable text. Mobile preview friendly portrait document.",
-  ].join("\n");
+function buildPrompt(input: {
+  analysis: AiInvoiceAnalysis;
+  fieldEdits: AiInvoiceFieldEdit[];
+  instruction: string;
+}): string {
+  const lines: string[] = [
+    "Edit the provided reference invoice image. Keep the layout, colors, and every unchanged field identical to the reference.",
+    `Document type: ${input.analysis.documentType}`,
+  ];
+  if (input.analysis.colors.length) {
+    lines.push(`Dominant colors: ${input.analysis.colors.join(", ")}`);
+  }
+  if (input.analysis.sections.length) {
+    lines.push(`Layout sections: ${input.analysis.sections.join(", ")}`);
+  }
+  if (input.fieldEdits.length) {
+    lines.push("Field changes (apply exactly, keep formatting):");
+    for (const edit of input.fieldEdits) {
+      lines.push(`- ${edit.label}: "${edit.from}" → "${edit.to}"`);
+    }
+  }
+  if (input.instruction) {
+    lines.push(`Additional instructions: ${input.instruction}`);
+  }
+  lines.push("Do not add watermark. Use sharp readable text. Keep the portrait invoice orientation.");
+  return lines.join("\n");
 }
 
 export async function createAiInvoiceSession(userId: string, file: File) {
@@ -103,21 +133,22 @@ export async function analyzeAiInvoiceSession(userId: string, sessionId: string)
 export async function generateAiInvoiceOutput(
   userId: string,
   sessionId: string,
-  input: { instruction: string; disclaimerAccepted: boolean; idempotencyKey: string }
+  input: { fieldEdits: AiInvoiceFieldEdit[]; instruction: string; disclaimerAccepted: boolean; idempotencyKey: string }
 ) {
   if (!input.idempotencyKey) throw new Error("Idempotency key required");
   if (!input.disclaimerAccepted) throw new Error("Disclaimer wajib disetujui");
-  const instruction = assertInstruction(input.instruction);
+  const { fieldEdits, instruction } = assertChanges(input);
 
   const existing = await prisma.aiGenerationOutput.findFirst({ where: { idempotencyKey: input.idempotencyKey, userId } });
   if (existing) return existing;
 
   const session = await prisma.aiGenerationSession.findFirst({ where: { id: sessionId, userId } });
   if (!session) throw new Error("Sesi AI tidak ditemukan");
-  if (!session.analysisSummary) throw new Error("Analisa gambar wajib dilakukan terlebih dahulu");
+  if (!session.analysisJson) throw new Error("Analisa gambar wajib dilakukan terlebih dahulu");
 
+  const analysis = session.analysisJson as unknown as AiInvoiceAnalysis;
   const price = getAiInvoiceGenerationPrice();
-  const prompt = buildPrompt({ analysisSummary: session.analysisSummary, instruction });
+  const prompt = buildPrompt({ analysis, fieldEdits, instruction });
 
   const output = await prisma.$transaction(async (tx) => {
     const created = await tx.aiGenerationOutput.create({
@@ -160,7 +191,11 @@ export async function generateAiInvoiceOutput(
   });
 
   try {
-    const generated = await generateInvoiceImage({ prompt });
+    const reference = await aiImageStorage.get(session.referenceImageStorageKey);
+    const generated = await generateInvoiceImage({
+      prompt,
+      referenceImage: { body: reference.body, mimeType: reference.contentType },
+    });
     const key = buildAiOutputImageStorageKey({
       userId,
       sessionId: session.id,

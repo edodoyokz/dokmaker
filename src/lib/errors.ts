@@ -41,6 +41,7 @@ export const SAFE_API_MESSAGES = [
   "Limit analisa gratis habis",
   "Instruksi perubahan wajib diisi",
   "Instruksi perubahan terlalu panjang",
+  "Pilih minimal satu field untuk diubah atau tulis instruksi",
   "Disclaimer wajib disetujui",
   "Analisa gambar wajib dilakukan terlebih dahulu",
   "Generate AI gagal",
