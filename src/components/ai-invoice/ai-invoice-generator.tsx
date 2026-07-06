@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Sparkles, Upload, Wand2, Download, AlertCircle } from "lucide-react";
+import { Sparkles, Upload, Wand2, Download, AlertCircle, RefreshCw } from "lucide-react";
 
 type AnalysisField = { label: string; value: string };
 type Analysis = {
@@ -237,6 +237,10 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
           >
             <Download className="h-4 w-4" /> Download Gambar AI
           </a>
+          <p className="text-center text-xs text-zinc-400">Hasil kurang tepat? Generate ulang untuk variasi gambar berbeda (dikenakan biaya).</p>
+          <button onClick={generate} disabled={!!loading} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-600/20 px-4 py-3 text-sm font-semibold text-indigo-200 disabled:opacity-50">
+            <RefreshCw className={`h-4 w-4 ${loading === "generate" ? "animate-spin" : ""}`} /> {loading === "generate" ? "Generating..." : `Generate Ulang ${formatCurrency(price)}`}
+          </button>
         </section>
       )}
     </div>
