@@ -133,7 +133,7 @@ export async function analyzeAiInvoiceSession(userId: string, sessionId: string)
 export async function generateAiInvoiceOutput(
   userId: string,
   sessionId: string,
-  input: { fieldEdits: AiInvoiceFieldEdit[]; instruction: string; disclaimerAccepted: boolean; idempotencyKey: string }
+  input: { fieldEdits: AiInvoiceFieldEdit[]; instruction: string; disclaimerAccepted: boolean; idempotencyKey: string; model?: string }
 ) {
   if (!input.idempotencyKey) throw new Error("Idempotency key required");
   if (!input.disclaimerAccepted) throw new Error("Disclaimer wajib disetujui");
@@ -195,6 +195,7 @@ export async function generateAiInvoiceOutput(
     const generated = await generateInvoiceImage({
       prompt,
       referenceImage: { body: reference.body, mimeType: reference.contentType },
+      model: input.model,
     });
     const key = buildAiOutputImageStorageKey({
       userId,

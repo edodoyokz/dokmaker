@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Sparkles, Upload, Wand2, Download, AlertCircle, RefreshCw } from "lucide-react";
+import { AI_INVOICE_IMAGE_MODELS } from "@/modules/ai-invoice/constants";
 
 type AnalysisField = { label: string; value: string };
 type Analysis = {
@@ -36,8 +37,8 @@ async function readJson(res: Response) {
 // If the user edits a field or the instruction, a new idempotency key is
 // generated; a retry after a lost server response reuses the key and the
 // server returns the existing output instead of debiting a second time.
-function signatureOf(fieldEdits: { label: string; from: string; to: string }[], instruction: string): string {
-  return JSON.stringify({ f: fieldEdits.map((e) => [e.label, e.from, e.to]), i: instruction.trim() });
+function signatureOf(fieldEdits: { label: string; from: string; to: string }[], instruction: string, model: string): string {
+  return JSON.stringify({ f: fieldEdits.map((e) => [e.label, e.from, e.to]), i: instruction.trim(), m: model });
 }
 
 export function AiInvoiceGenerator({ price }: { price: number }) {
@@ -47,6 +48,7 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
   const [instruction, setInstruction] = useState("");
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [accepted, setAccepted] = useState(false);
+  const [model, setModel] = useState<string>(AI_INVOICE_IMAGE_MODELS[0]);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pendingGeneration = useRef<{ key: string; sig: string } | null>(null);
@@ -99,7 +101,7 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
     const fieldEdits = (session.analysisJson?.fields ?? [])
       .filter((f) => fieldValues[f.label] !== f.value)
       .map((f) => ({ label: f.label, from: f.value, to: fieldValues[f.label] ?? "" }));
-    const sig = signatureOf(fieldEdits, instruction);
+    const sig = signatureOf(fieldEdits, instruction, model);
     if (!pendingGeneration.current || pendingGeneration.current.sig !== sig) {
       pendingGeneration.current = { key: crypto.randomUUID(), sig };
     }
@@ -108,7 +110,7 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
       const res = await fetch(`/api/ai-invoice/sessions/${session.id}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fieldEdits, instruction, disclaimerAccepted: accepted, idempotencyKey }),
+        body: JSON.stringify({ fieldEdits, instruction, disclaimerAccepted: accepted, idempotencyKey, model }),
       });
       await readJson(res);
       pendingGeneration.current = null;
@@ -202,7 +204,19 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-sm text-zinc-200 outline-none focus:border-indigo-500"
             />
           </label>
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200">
+          <label className="block space-y-1">
+        <span className="text-xs font-medium text-zinc-400">Model AI</span>
+        <select
+          value={model}
+          onChange={(event) => setModel(event.target.value)}
+          className="block w-full rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-sm text-zinc-200 outline-none focus:border-indigo-500"
+        >
+          {AI_INVOICE_IMAGE_MODELS.map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        </label>
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200">
             <label className="flex items-start gap-2">
               <input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} className="mt-1" />
               <span>Hasil dibuat oleh AI berdasarkan referensi dan instruksi pengguna. Pengguna bertanggung jawab penuh atas hak penggunaan, isi, klaim, dan konsekuensi hukum. DokMaker dapat menolak penggunaan yang melanggar hukum atau merugikan pihak lain.</span>

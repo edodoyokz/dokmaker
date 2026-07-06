@@ -111,8 +111,10 @@ function extensionForMime(mimeType: string): string {
 export async function generateInvoiceImage(input: {
   prompt: string;
   referenceImage?: { body: Buffer; mimeType: string };
+  model?: string;
 }): Promise<GeneratedAiImage> {
   const config = providerConfig();
+  const model = input.model || config.imageModel;
 
   // img2img: POST /v1/images/edits (OpenAI-compatible) with multipart upload.
   // The model edits the actual reference image instead of generating from text.
@@ -124,7 +126,7 @@ export async function generateInvoiceImage(input: {
       `reference.${extensionForMime(input.referenceImage.mimeType)}`
     );
     form.append("prompt", input.prompt);
-    form.append("model", config.imageModel);
+    form.append("model", model);
     form.append("size", "1024x1448");
     form.append("response_format", "b64_json");
 
@@ -151,7 +153,7 @@ export async function generateInvoiceImage(input: {
         image: Buffer.from(item.b64_json, "base64"),
         mimeType: "image/png",
         providerRequestId: response.headers.get("x-request-id") || undefined,
-        metadata: { model: config.imageModel, mode: "img2img", contentType: "image/png" },
+        metadata: { model, mode: "img2img", contentType: "image/png" },
       };
     }
     if (item?.url) {
@@ -171,7 +173,7 @@ export async function generateInvoiceImage(input: {
 
   // Fallback: text-to-image via GET /image/{prompt}.
   const url = new URL(`${config.baseUrl}/image/${encodeURIComponent(input.prompt)}`);
-  url.searchParams.set("model", config.imageModel);
+  url.searchParams.set("model", model);
   url.searchParams.set("private", "true");
   url.searchParams.set("nologo", "true");
   url.searchParams.set("width", "1024");
@@ -197,6 +199,6 @@ export async function generateInvoiceImage(input: {
     image: bytes,
     mimeType: contentType,
     providerRequestId: response.headers.get("x-request-id") || undefined,
-    metadata: { model: config.imageModel, mode: "text2image", contentType },
+    metadata: { model, mode: "text2image", contentType },
   };
 }
