@@ -104,6 +104,9 @@ describe("AI invoice service", () => {
 
     expect(result.id).toBe("output-existing");
     expect(debitWalletMock).not.toHaveBeenCalled();
+    expect(prismaMock.aiGenerationOutput.findFirst).toHaveBeenCalledWith({
+      where: { idempotencyKey: "idem-1", userId: "user-1" },
+    });
   });
 
   it("refunds once when provider fails after debit", async () => {
@@ -212,5 +215,19 @@ describe("AI invoice service", () => {
       })
     );
     expect(result.status).toBe("success");
+  });
+
+  it("denies download of another user's output", async () => {
+    prismaMock.aiGenerationSession.findFirst.mockResolvedValue(null);
+    prismaMock.aiGenerationOutput.findFirst.mockResolvedValue(null);
+    const { getAiInvoiceOutputForDownload } = await import("@/modules/ai-invoice/service");
+
+    await expect(
+      getAiInvoiceOutputForDownload("user-2", "output-of-user-1")
+    ).rejects.toThrow("Hasil AI tidak ditemukan");
+
+    expect(prismaMock.aiGenerationOutput.findFirst).toHaveBeenCalledWith({
+      where: { id: "output-of-user-1", userId: "user-2", status: "success" },
+    });
   });
 });

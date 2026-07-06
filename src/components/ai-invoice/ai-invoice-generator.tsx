@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Sparkles, Upload, Wand2, Download, AlertCircle } from "lucide-react";
 
@@ -30,6 +30,7 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const pendingGeneration = useRef<{ key: string; instruction: string } | null>(null);
 
   async function upload() {
     if (!file) return setError("Pilih gambar referensi dulu");
@@ -65,6 +66,12 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
     if (!session) return;
     setLoading("generate");
     setError(null);
+    // Reuse the idempotency key for the same instruction until a generation succeeds,
+    // so a retry after a lost server response does not create a second charge.
+    if (!pendingGeneration.current || pendingGeneration.current.instruction !== instruction) {
+      pendingGeneration.current = { key: crypto.randomUUID(), instruction };
+    }
+    const idempotencyKey = pendingGeneration.current.key;
     try {
       const res = await fetch(`/api/ai-invoice/sessions/${session.id}/generate`, {
         method: "POST",
@@ -72,10 +79,12 @@ export function AiInvoiceGenerator({ price }: { price: number }) {
         body: JSON.stringify({
           instruction,
           disclaimerAccepted: accepted,
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey,
         }),
       });
       await readJson(res);
+      // Generation succeeded — clear the pending key so the next generate is a new intent.
+      pendingGeneration.current = null;
       const fresh = await fetch(`/api/ai-invoice/sessions/${session.id}`);
       setSession(await readJson(fresh));
     } catch (err) {

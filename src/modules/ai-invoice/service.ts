@@ -180,25 +180,33 @@ export async function generateAiInvoiceOutput(
       },
     });
   } catch {
-    await prisma.$transaction(async (tx) => {
-      const refund = await creditWallet(
-        tx,
-        userId,
-        price,
-        "refund_credit",
-        `ai-generation-refund:${output.id}`,
-        "ai_generation_output",
-        output.id,
-        "Refund generate gambar invoice AI gagal",
-        "system",
-        undefined
-      );
-      await tx.aiGenerationOutput.update({
-        where: { id: output.id },
-        data: { status: "refunded", refundLedgerEntryId: refund.id, errorMessage: "Generate AI gagal" },
+    try {
+      await prisma.$transaction(async (tx) => {
+        const refund = await creditWallet(
+          tx,
+          userId,
+          price,
+          "refund_credit",
+          `ai-generation-refund:${output.id}`,
+          "ai_generation_output",
+          output.id,
+          "Refund generate gambar invoice AI gagal",
+          "system",
+          undefined
+        );
+        await tx.aiGenerationOutput.update({
+          where: { id: output.id },
+          data: { status: "refunded", refundLedgerEntryId: refund.id, errorMessage: "Generate AI gagal" },
+        });
+        await tx.aiGenerationSession.update({ where: { id: session.id }, data: { status: "failed" } });
       });
-      await tx.aiGenerationSession.update({ where: { id: session.id }, data: { status: "failed" } });
-    });
+    } catch (refundError) {
+      // ponytail: refund itself failed — the debit is orphaned and the output stays "generating".
+      // Ceiling: add an admin reconciliation query/cron for outputs in status="generating" older
+      // than N minutes with a debited wallet_ledger_entry, and refund them manually. Upgrade path
+      // before scaling this feature to production traffic.
+      console.error("AI invoice refund failed for output", output.id, refundError);
+    }
     throw new Error("Generate AI gagal");
   }
 }

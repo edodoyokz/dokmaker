@@ -30,7 +30,12 @@ function providerConfig() {
 }
 
 function asAnalysis(content: string): AiInvoiceAnalysis {
-  const parsed = JSON.parse(content) as Partial<AiInvoiceAnalysis>;
+  let parsed: Partial<AiInvoiceAnalysis>;
+  try {
+    parsed = JSON.parse(content) as Partial<AiInvoiceAnalysis>;
+  } catch {
+    throw new Error("Analisa AI gagal");
+  }
   return {
     summary: String(parsed.summary || "Analisa gambar invoice selesai"),
     colors: Array.isArray(parsed.colors) ? parsed.colors.map(String) : [],
@@ -92,7 +97,7 @@ export async function generateInvoiceImage(input: { prompt: string }): Promise<G
   });
 
   if (!response.ok) throw new Error("Generate AI gagal");
-  const contentType = response.headers.get("content-type") || "image/jpeg";
+  const contentType = (response.headers.get("content-type") || "image/jpeg").split(";")[0].trim();
   if (!contentType.startsWith("image/")) throw new Error("Generate AI gagal");
   const bytes = Buffer.from(await response.arrayBuffer());
   return {
