@@ -125,26 +125,28 @@ export default function PreviewClient({
       <div className="grid gap-6 lg:grid-cols-12 items-start">
         {/* Left Side: Watermarked Document View */}
         <div className="lg:col-span-8 space-y-4">
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-4 md:p-6 overflow-x-auto shadow-2xl relative">
+          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-2 shadow-2xl relative sm:p-4 md:p-6">
             <div className="absolute top-2 left-2 z-10">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900/80 border border-zinc-800 text-[9px] font-semibold text-zinc-400 backdrop-blur-sm">
                 Document Draft Preview
               </span>
             </div>
             
-            <div className="min-w-[600px] border border-zinc-900 rounded-lg overflow-hidden bg-white">
-              <TemplatePreview
-                htmlTemplate={htmlTemplate}
-                documentType={documentType}
-                content={content}
-                previewMeta={previewMeta}
-              />
+            <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-zinc-900 bg-white [-webkit-overflow-scrolling:touch]">
+              <div className="w-[794px] max-w-none">
+                <TemplatePreview
+                  htmlTemplate={htmlTemplate}
+                  documentType={documentType}
+                  content={content}
+                  previewMeta={previewMeta}
+                />
+              </div>
             </div>
           </div>
         </div>
 
         {/* Right Side: Control & Checkout Widget */}
-        <div className="lg:col-span-4 space-y-4">
+        <div className="space-y-4 lg:sticky lg:top-24 lg:col-span-4">
           {/* Status Details */}
           <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
             <div className="px-5 py-4 border-b border-zinc-800/60 bg-zinc-900/10">
