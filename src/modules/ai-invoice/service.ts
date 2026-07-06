@@ -109,7 +109,7 @@ export async function generateAiInvoiceOutput(
   if (!input.disclaimerAccepted) throw new Error("Disclaimer wajib disetujui");
   const instruction = assertInstruction(input.instruction);
 
-  const existing = await prisma.aiGenerationOutput.findUnique({ where: { idempotencyKey: input.idempotencyKey } });
+  const existing = await prisma.aiGenerationOutput.findFirst({ where: { idempotencyKey: input.idempotencyKey, userId } });
   if (existing) return existing;
 
   const session = await prisma.aiGenerationSession.findFirst({ where: { id: sessionId, userId } });

@@ -94,7 +94,7 @@ describe("AI invoice service", () => {
       analysisJson: { summary: "x" },
       analysisSummary: "x",
     });
-    prismaMock.aiGenerationOutput.findUnique.mockResolvedValue({ id: "output-existing", status: "success" });
+    prismaMock.aiGenerationOutput.findFirst.mockResolvedValue({ id: "output-existing", status: "success", userId: "user-1" });
     const { generateAiInvoiceOutput } = await import("@/modules/ai-invoice/service");
 
     const result = await generateAiInvoiceOutput("user-1", "session-1", {
@@ -114,7 +114,7 @@ describe("AI invoice service", () => {
       analysisJson: { summary: "layout" },
       analysisSummary: "layout",
     });
-    prismaMock.aiGenerationOutput.findUnique.mockResolvedValue(null);
+    prismaMock.aiGenerationOutput.findFirst.mockResolvedValue(null);
     prismaMock.aiGenerationOutput.create.mockResolvedValue({ id: "output-1" });
     debitWalletMock.mockResolvedValue({ id: "ledger-debit-1" });
     creditWalletMock.mockResolvedValue({ id: "ledger-refund-1" });
@@ -154,5 +154,64 @@ describe("AI invoice service", () => {
       "system",
       undefined
     );
+  });
+
+  it("debits, stores, and marks success when provider returns an image", async () => {
+    prismaMock.aiGenerationSession.findFirst.mockResolvedValue({
+      id: "session-1",
+      userId: "user-1",
+      analysisJson: { summary: "layout invoice" },
+      analysisSummary: "layout invoice",
+    });
+    prismaMock.aiGenerationOutput.findFirst.mockResolvedValue(null); // no existing output (Change 1 lookup)
+    prismaMock.aiGenerationOutput.create.mockResolvedValue({ id: "output-ok" });
+    debitWalletMock.mockResolvedValue({ id: "ledger-debit-ok" });
+    generateMock.mockResolvedValue({
+      image: Buffer.from([10, 20, 30]),
+      mimeType: "image/jpeg",
+      providerRequestId: "req-1",
+      metadata: { model: "flux" },
+    });
+    prismaMock.aiGenerationOutput.update.mockResolvedValue({
+      id: "output-ok",
+      status: "success",
+      outputImageStorageKey: "ai-invoice/output/user-1/session-1/output-1.jpg",
+    });
+
+    const { generateAiInvoiceOutput } = await import("@/modules/ai-invoice/service");
+
+    const result = await generateAiInvoiceOutput("user-1", "session-1", {
+      instruction: "ubah warna jadi biru",
+      disclaimerAccepted: true,
+      idempotencyKey: "idem-success",
+    });
+
+    expect(debitWalletMock).toHaveBeenCalledTimes(1);
+    expect(debitWalletMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      10000,
+      "ai_generation_debit",
+      "idem-success",
+      "ai_generation_output",
+      "output-ok",
+      expect.any(String),
+      "user",
+      "user-1"
+    );
+    expect(storageMock.put).toHaveBeenCalledWith(
+      "ai-invoice/output/user-1/session-1/output-1.jpg",
+      expect.any(Buffer),
+      "image/jpeg"
+    );
+    expect(prismaMock.aiGenerationOutput.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "success",
+          session: { update: { status: "completed" } },
+        }),
+      })
+    );
+    expect(result.status).toBe("success");
   });
 });
