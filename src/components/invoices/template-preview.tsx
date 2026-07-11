@@ -25,7 +25,6 @@ export default function TemplatePreview({
   previewMeta,
   invoiceId,
 }: Props) {
-  // Stamp path: rasterize watermarked PDF (no browser PDF chrome / download UI).
   if (documentType === "gocar_receipt" && invoiceId) {
     return (
       <PdfStampPreview
@@ -45,14 +44,29 @@ export default function TemplatePreview({
     previewMeta,
   });
 
+  // Fit A4 (794×1123) to container width via container query units — no h-scroll on 360px.
   return (
-    <div className="mx-auto w-full max-w-[794px] overflow-x-auto rounded-md border border-zinc-200 bg-white shadow-sm [-webkit-overflow-scrolling:touch]">
-      <iframe
-        title="Preview dokumen"
-        srcDoc={html}
-        sandbox=""
-        className="block h-[1123px] w-[794px] max-w-none border-0 bg-white"
-      />
+    <div
+      className="mx-auto w-full max-w-[794px] overflow-hidden rounded-md border border-zinc-200 bg-white shadow-sm"
+      style={{ containerType: "inline-size" }}
+    >
+      <div
+        className="relative w-full"
+        style={{ height: "calc(1123 * 100cqw / 794)" }}
+      >
+        <iframe
+          title="Preview dokumen"
+          srcDoc={html}
+          sandbox=""
+          className="absolute left-0 top-0 border-0 bg-white"
+          style={{
+            width: 794,
+            height: 1123,
+            transform: "scale(calc(100cqw / 794))",
+            transformOrigin: "top left",
+          }}
+        />
+      </div>
     </div>
   );
 }

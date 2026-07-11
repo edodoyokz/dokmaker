@@ -95,8 +95,17 @@ export async function createTopUpPayment(
     },
   });
 
-  // Build Pakasir payment URL
-  const redirectUrl = `${baseUrl}/pay/${projectSlug}/${amount}?order_id=${providerOrderId}`;
+  // Build Pakasir payment URL + return to wallet pending UX (balance still from webhook only).
+  const appBase =
+    process.env.APP_BASE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "";
+  const returnUrl = appBase
+    ? `${appBase.replace(/\/$/, "")}/app/wallet?topup=pending`
+    : "";
+  const redirectUrl =
+    `${baseUrl}/pay/${projectSlug}/${amount}?order_id=${providerOrderId}` +
+    (returnUrl ? `&redirect=${encodeURIComponent(returnUrl)}` : "");
 
   // Update payment with redirect URL
   await prisma.paymentTransaction.update({

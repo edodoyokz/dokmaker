@@ -79,7 +79,7 @@ export function InvoiceFormFields({
       {/* Sender Card */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <User className="h-4.5 w-4.5 text-indigo-400" />
+          <User className="h-4 w-4 text-indigo-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Informasi Pengirim
           </h2>
@@ -103,7 +103,7 @@ export function InvoiceFormFields({
       {/* Client Card */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <Users className="h-4.5 w-4.5 text-purple-400" />
+          <Users className="h-4 w-4 text-purple-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Informasi Klien
           </h2>
@@ -127,7 +127,7 @@ export function InvoiceFormFields({
       {/* Details Card */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <Calendar className="h-4.5 w-4.5 text-pink-400" />
+          <Calendar className="h-4 w-4 text-pink-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Detail Dokumen
           </h2>
@@ -166,7 +166,7 @@ export function InvoiceFormFields({
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <FileSpreadsheet className="h-4.5 w-4.5 text-emerald-400" />
+            <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
             <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
               Daftar Item & Jasa
             </h2>
@@ -208,7 +208,7 @@ export function InvoiceFormFields({
                     required
                     disabled={disabled}
                     placeholder="e.g. Jasa Pembuatan Website, Desain Logo"
-                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-850 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-800 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                   />
                 </div>
 
@@ -225,7 +225,7 @@ export function InvoiceFormFields({
                     min={1}
                     required
                     disabled={disabled}
-                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-850 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center transition-all"
+                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-800 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-center transition-all"
                   />
                 </div>
 
@@ -242,7 +242,7 @@ export function InvoiceFormFields({
                     min={0}
                     required
                     disabled={disabled}
-                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-850 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+                    className="block w-full rounded-xl sm:rounded-lg bg-zinc-950 border border-zinc-800 sm:border-zinc-800 px-3.5 sm:px-3 py-2.5 sm:py-2 text-sm text-zinc-200 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                   />
                 </div>
 
@@ -255,7 +255,7 @@ export function InvoiceFormFields({
                       className="p-2 sm:p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors shrink-0 disabled:opacity-50"
                       title="Hapus Item"
                     >
-                      <Trash2 className="h-4.5 w-4.5" />
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   )}
                 </div>
@@ -286,7 +286,7 @@ export function InvoiceFormFields({
       {/* Notes Card */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <FileText className="h-4.5 w-4.5 text-zinc-400" />
+          <FileText className="h-4 w-4 text-zinc-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Catatan Tambahan
           </h2>

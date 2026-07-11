@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { FINAL_DOWNLOAD_PRICE } from "@/modules/pricing/constants";
 import { getDocumentTypeDefinition } from "@/modules/documents/document-type-registry";
 
@@ -115,7 +116,10 @@ export default function PreviewClient({
         window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
       }
 
-      // Trust server as source of truth — no optimistic −Rp10.000.
+      toast.success(
+        isPaid ? "PDF final diunduh" : "Pembayaran berhasil — PDF final diunduh"
+      );
+      // Trust server as source of truth — no optimistic −Rp10.000 beyond first debit UI.
       if (status !== "paid") {
         setStatus("paid");
         setBalance((b) => Math.max(0, b - FINAL_DOWNLOAD_PRICE));
@@ -177,8 +181,8 @@ export default function PreviewClient({
   })();
 
   return (
-    // pb clears sticky buy bar (~7rem) + app bottom nav (4rem) on phones.
-    <div className="space-y-4 pb-44 sm:space-y-6 lg:pb-12">
+    // Bottom nav hidden on preview; only sticky buy bar needs clearance.
+    <div className="space-y-4 pb-36 sm:space-y-6 lg:pb-12">
       <div className="flex items-center justify-between gap-3">
         <Link
           href="/app/invoices"
@@ -255,8 +259,8 @@ export default function PreviewClient({
         </div>
       </div>
 
-      {/* Mobile sticky checkout — sits above app bottom nav (h-16), not under it. */}
-      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden">
+      {/* Mobile sticky checkout — full bottom (app nav hidden on this route). */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-lg flex-col gap-2">
           <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-400">
             <span className="inline-flex min-w-0 items-center gap-1 truncate">

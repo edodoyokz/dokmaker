@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { ArrowLeft, Save, Plus, Sparkles, AlertCircle } from "lucide-react";
 import type { DocumentType } from "@/modules/documents/types";
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
@@ -61,7 +62,15 @@ export function DocumentCreateForm({
         throw new Error(data.error || "Gagal membuat dokumen");
       }
 
-      router.push("/app/invoices");
+      const data = (await res.json()) as {
+        invoice?: { id?: string };
+        id?: string;
+      };
+      const invoiceId = data.invoice?.id || data.id;
+      if (!invoiceId) throw new Error("Respons server tidak valid");
+
+      toast.success("Draf disimpan — membuka pratinjau");
+      router.push(`/app/invoices/${invoiceId}/preview`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
       setLoading(false);
@@ -69,7 +78,7 @@ export function DocumentCreateForm({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+    <div className="mx-auto max-w-3xl space-y-6 pb-28 lg:pb-12">
       <div>
         <Link
           href="/app/templates"
@@ -81,7 +90,7 @@ export function DocumentCreateForm({
 
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-          {isInvoice ? "Buat Invoice Baru" : "Buat GoCar Receipt Baru"}
+          {isInvoice ? "Buat invoice" : "Buat GoCar receipt"}
           {isInvoice ? (
             <Plus className="h-5 w-5 text-indigo-400" />
           ) : (
@@ -110,20 +119,34 @@ export function DocumentCreateForm({
         )}
 
         {error && (
-          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-2.5">
-            <AlertCircle className="h-4.5 w-4.5 text-rose-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-rose-300 font-semibold">{error}</p>
+          <div className="flex items-start gap-2.5 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+            <p className="text-xs font-semibold text-rose-300">{error}</p>
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 hover:shadow-indigo-500/25 transition-all disabled:opacity-50"
-        >
-          <Save className="h-4.5 w-4.5" />
-          {loading ? "Menyimpan..." : "Simpan & Buat Draf"}
-        </button>
+        <div className="hidden lg:block">
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {loading ? "Menyimpan…" : "Simpan & pratinjau"}
+          </button>
+        </div>
+
+        {/* Mobile sticky save — bottom nav is hidden on this route. */}
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden">
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {loading ? "Menyimpan…" : "Simpan & pratinjau"}
+          </button>
+        </div>
       </form>
     </div>
   );

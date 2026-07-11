@@ -62,7 +62,7 @@ export default function TopUpPage() {
           Top Up Saldo <Wallet className="h-5 w-5 text-indigo-400" />
         </h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Pilih salah satu paket pengisian saldo platform untuk mencetak file PDF final Anda.
+          Pilih paket isi saldo untuk mencetak PDF final tanpa watermark.
         </p>
       </div>
 
@@ -102,11 +102,14 @@ export default function TopUpPage() {
                   </div>
 
                   <div>
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wide uppercase bg-zinc-850 text-zinc-400 border border-zinc-800">
-                      {isPremium ? "Cetak 10x Invoice" : "Cetak 5x Invoice"}
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wide uppercase bg-zinc-800 text-zinc-400 border border-zinc-800">
+                      {isPremium
+                        ? "±10 unduhan final"
+                        : "±5 unduhan final"}
                     </span>
-                    <p className="text-[10px] text-zinc-500 mt-2">
-                      {isPremium ? "Re-download gratis selamanya" : "Biaya flat Rp10.000 / versi"}
+                    <p className="mt-2 text-[10px] text-zinc-500">
+                      Setara unduhan PDF final @ Rp10.000 / versi (versi sama
+                      gratis diunduh ulang). Biaya AI terpisah bila dipakai.
                     </p>
                   </div>
 

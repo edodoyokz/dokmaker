@@ -39,7 +39,7 @@ export default async function TemplateDetailPage({
         <CardContent className="p-4 sm:p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8">
           
           {/* Left: Template Preview Image */}
-          <div className="w-full md:w-1/2 aspect-[4/3] bg-zinc-950/80 rounded-xl border border-zinc-850 overflow-hidden flex items-center justify-center relative shadow-lg">
+          <div className="w-full md:w-1/2 aspect-[4/3] bg-zinc-950/80 rounded-xl border border-zinc-800 overflow-hidden flex items-center justify-center relative shadow-lg">
             <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 to-transparent z-10 pointer-events-none" />
             
             {template.thumbnailUrl ? (
@@ -62,12 +62,12 @@ export default async function TemplateDetailPage({
                 <div className="h-2 w-3/4 rounded bg-zinc-800" />
                 <div className="border-t border-zinc-800/80 pt-2 space-y-1.5">
                   <div className="flex justify-between">
-                    <div className="h-2 w-16 rounded bg-zinc-850" />
-                    <div className="h-2 w-6 rounded bg-zinc-850" />
+                    <div className="h-2 w-16 rounded bg-zinc-800" />
+                    <div className="h-2 w-6 rounded bg-zinc-800" />
                   </div>
                   <div className="flex justify-between">
-                    <div className="h-2 w-12 rounded bg-zinc-850" />
-                    <div className="h-2 w-6 rounded bg-zinc-850" />
+                    <div className="h-2 w-12 rounded bg-zinc-800" />
+                    <div className="h-2 w-6 rounded bg-zinc-800" />
                   </div>
                 </div>
               </div>
@@ -115,7 +115,7 @@ export default async function TemplateDetailPage({
                 href={`/app/invoices/new?templateId=${template.id}`}
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 hover:shadow-indigo-500/25 transition-all text-center"
               >
-                <Plus className="h-4.5 w-4.5" /> Gunakan Template Ini
+                <Plus className="h-4 w-4" /> Gunakan Template Ini
               </Link>
               
               <Link

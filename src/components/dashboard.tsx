@@ -33,6 +33,7 @@ interface DashboardProps {
     id: string;
     invoiceNumber: string;
     clientName: string;
+    documentType?: string;
     status: string;
     createdAt: string;
   }>;
@@ -100,7 +101,7 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
             href="/app/invoices/new"
             className={cn(buttonVariants({ size: "sm" }), "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-indigo-500/20")}
           >
-            <Plus className="mr-2 h-4 w-4" /> Invoice Baru
+            <Plus className="mr-2 h-4 w-4" /> Dokumen baru
           </Link>
         </div>
       </div>
@@ -139,7 +140,7 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
         <div className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6 backdrop-blur-md flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Total Invoice Anda</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Dokumen terbaru</span>
               <div className="text-3xl font-extrabold tracking-tight text-zinc-100">
                 {recentInvoices.length}
               </div>
@@ -149,14 +150,14 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
 
           <div className="mt-8 flex justify-between items-end">
             <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Invoice MVP</p>
-              <p className="text-xs text-zinc-400">Rp10.000 / Final PDF</p>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">MVP</p>
+              <p className="text-xs text-zinc-400">Rp10.000 / PDF final</p>
             </div>
             <Link 
               href="/app/invoices" 
               className="px-4 py-2 rounded-xl border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 text-zinc-300 font-medium text-xs transition-all"
             >
-              Kelola Invoice
+              Kelola dokumen
             </Link>
           </div>
         </div>
@@ -182,7 +183,7 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
               className="group p-4 rounded-xl border border-zinc-800 bg-zinc-950 hover:border-purple-500/50 hover:bg-purple-950/10 text-center transition-all flex flex-col items-center gap-2"
             >
               <FilePlus2 className="h-5 w-5 text-purple-400 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium text-zinc-300 group-hover:text-purple-300 transition-colors">Buat Invoice</span>
+              <span className="text-xs font-medium text-zinc-300 group-hover:text-purple-300 transition-colors">Buat dokumen</span>
             </Link>
 
             <Link 
@@ -198,7 +199,7 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
               className="group p-4 rounded-xl border border-zinc-800 bg-zinc-950 hover:border-emerald-500/50 hover:bg-emerald-950/10 text-center transition-all flex flex-col items-center gap-2"
             >
               <FileText className="h-5 w-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-medium text-zinc-300 group-hover:text-emerald-300 transition-colors">Riwayat Invoice</span>
+              <span className="text-xs font-medium text-zinc-300 group-hover:text-emerald-300 transition-colors">Riwayat dokumen</span>
             </Link>
           </div>
         </CardContent>
@@ -210,7 +211,7 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
         <Card className="border-zinc-800/80 bg-zinc-900/30 backdrop-blur-md rounded-2xl shadow-md flex flex-col">
           <CardHeader className="py-4 border-b border-zinc-800/60 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2">
-              <FileText className="h-4 w-4 text-indigo-400" /> Invoice Terbaru
+              <FileText className="h-4 w-4 text-indigo-400" /> Dokumen terbaru
             </CardTitle>
             <Link href="/app/invoices" className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
               Lihat Semua
@@ -220,7 +221,7 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
             {recentInvoices.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center text-zinc-500">
                 <FileText className="h-8 w-8 text-zinc-700 mb-2" />
-                <p className="text-sm font-medium">Belum ada invoice dibuat</p>
+                <p className="text-sm font-medium">Belum ada dokumen</p>
                 <Link href="/app/templates" className="mt-3 text-xs text-indigo-400 hover:underline">
                   Pilih template untuk memulai
                 </Link>
@@ -240,7 +241,7 @@ export function Dashboard({ user, wallet, recentInvoices, recentTransactions }: 
                       {getStatusBadge(invoice.status)}
                       <Link
                         href={`/app/invoices/${invoice.id}/preview`}
-                        className="h-8 w-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-850 hover:border-zinc-700 transition-all shadow-sm"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 shadow-sm transition-all hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
                         title="Pratinjau"
                       >
                         <Eye className="h-4 w-4" />

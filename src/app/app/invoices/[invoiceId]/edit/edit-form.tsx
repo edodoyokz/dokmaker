@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Save, AlertCircle } from "lucide-react";
 import { InvoiceFormFields } from "@/components/documents/invoice-form-fields";
 import { GoCarReceiptFormFields } from "@/components/documents/gocar-receipt-form-fields";
@@ -120,6 +121,7 @@ export default function InvoiceEditForm({
         throw new Error(data.error || "Gagal menyimpan perubahan");
       }
 
+      toast.success("Perubahan disimpan");
       router.refresh();
       router.push(`/app/invoices/${invoiceId}/preview`);
     } catch (err) {
@@ -130,7 +132,7 @@ export default function InvoiceEditForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl space-y-6 pb-12">
+    <form onSubmit={handleSubmit} className="max-w-3xl space-y-6 pb-28 lg:pb-12">
       {isInvoice ? (
         <InvoiceFormFields
           content={draft as InvoiceContent}
@@ -146,20 +148,33 @@ export default function InvoiceEditForm({
       )}
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-2.5">
-          <AlertCircle className="h-4.5 w-4.5 text-rose-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-rose-300 font-semibold">{error}</p>
+        <div className="flex items-start gap-2.5 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+          <p className="text-xs font-semibold text-rose-300">{error}</p>
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 hover:shadow-indigo-500/25 transition-all disabled:opacity-50"
-      >
-        <Save className="h-4.5 w-4.5" />
-        {loading ? "Menyimpan Perubahan..." : "Simpan Perubahan & Lanjut ke Preview"}
-      </button>
+      <div className="hidden lg:block">
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" />
+          {loading ? "Menyimpan…" : "Simpan & pratinjau"}
+        </button>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden">
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+        >
+          <Save className="h-4 w-4" />
+          {loading ? "Menyimpan…" : "Simpan & pratinjau"}
+        </button>
+      </div>
     </form>
   );
 }

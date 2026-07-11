@@ -19,11 +19,11 @@ export default async function TemplatesPage() {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-          Pilih Template Invoice <Layers className="h-5 w-5 text-indigo-400" />
+        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-zinc-100">
+          Pilih template <Layers className="h-5 w-5 text-indigo-400" />
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
-          Gunakan salah satu template resmi kami untuk membuat invoice profesional Anda.
+        <p className="mt-1 text-sm text-zinc-400">
+          Template resmi platform — invoice, receipt, dan lainnya.
         </p>
       </div>
 
@@ -65,12 +65,12 @@ export default async function TemplatesPage() {
                     <div className="h-2 w-3/4 rounded bg-zinc-800" />
                     <div className="border-t border-zinc-800/80 pt-2 space-y-1.5">
                       <div className="flex justify-between">
-                        <div className="h-2 w-16 rounded bg-zinc-850" />
-                        <div className="h-2 w-6 rounded bg-zinc-850" />
+                        <div className="h-2 w-16 rounded bg-zinc-800" />
+                        <div className="h-2 w-6 rounded bg-zinc-800" />
                       </div>
                       <div className="flex justify-between">
-                        <div className="h-2 w-12 rounded bg-zinc-850" />
-                        <div className="h-2 w-6 rounded bg-zinc-850" />
+                        <div className="h-2 w-12 rounded bg-zinc-800" />
+                        <div className="h-2 w-6 rounded bg-zinc-800" />
                       </div>
                     </div>
                   </div>

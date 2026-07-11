@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileText, User, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
+import { mapAuthError } from "@/lib/auth-errors";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -31,7 +32,7 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(mapAuthError(error.message));
       setLoading(false);
       return;
     }
@@ -53,7 +54,7 @@ export default function RegisterPage() {
             <FileText className="h-5 w-5 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-zinc-100">Daftar Akun Baru</h2>
-          <p className="text-sm text-zinc-500">Mulai membuat invoice profesional Anda sekarang</p>
+          <p className="text-sm text-zinc-500">Mulai membuat dokumen profesional Anda sekarang</p>
         </div>
 
         {/* Form Card */}

@@ -41,12 +41,17 @@ describe("PdfStampPreview", () => {
 describe("PreviewClient UX", () => {
   it("is mobile-first with sticky CTA and honest draft copy", () => {
     expect(previewClient).toContain("FINAL_DOWNLOAD_PRICE");
-    // Above app bottom nav (h-16), not buried under it at bottom-0.
-    expect(previewClient).toContain("fixed inset-x-0 bottom-16");
+    // Bottom nav hidden on preview route — CTA owns full bottom edge.
+    expect(previewClient).toContain("fixed inset-x-0 bottom-0");
     expect(previewClient).toContain("draft berwatermark");
     expect(previewClient).toContain("bukan file final");
     expect(previewClient).not.toContain("text-zinc-350");
     expect(previewClient).not.toContain("balance - 10000");
     expect(previewClient).not.toContain("Workspace Invoice");
+  });
+
+  it("scales HTML invoice preview to container width", () => {
+    expect(templatePreview).toContain("containerType");
+    expect(templatePreview).toContain("100cqw");
   });
 });

@@ -45,7 +45,7 @@ export function MobileNav({ user }: MobileNavProps) {
     { name: "Dashboard", href: "/app", icon: LayoutDashboard },
     { name: "Template", href: "/app/templates", icon: Layers },
     { name: "AI Generator", href: "/app/ai-invoice-generator", icon: Sparkles },
-    { name: "Invoice", href: "/app/invoices", icon: FileText },
+    { name: "Dokumen", href: "/app/invoices", icon: FileText },
     { name: "Dompet", href: "/app/wallet", icon: Wallet },
   ];
 
@@ -93,7 +93,7 @@ export function MobileNav({ user }: MobileNavProps) {
               <span className="text-sm font-semibold text-zinc-200 truncate">
                 {user.fullName || "User"}
               </span>
-              <span className="text-xs text-zinc-550 truncate">
+              <span className="text-xs text-zinc-500 truncate">
                 {user.email}
               </span>
             </div>
@@ -115,7 +115,7 @@ export function MobileNav({ user }: MobileNavProps) {
                       : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50 border border-transparent"
                   )}
                 >
-                  <Icon className="h-4.5 w-4.5" />
+                  <Icon className="h-4 w-4" />
                   {item.name}
                 </Link>
               );
@@ -126,7 +126,7 @@ export function MobileNav({ user }: MobileNavProps) {
                 href="/admin"
                 className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-purple-450 hover:text-purple-300 hover:bg-purple-950/10 border border-transparent hover:border-purple-500/20 transition-all"
               >
-                <ShieldAlert className="h-4.5 w-4.5" />
+                <ShieldAlert className="h-4 w-4" />
                 Admin Panel
               </Link>
             )}

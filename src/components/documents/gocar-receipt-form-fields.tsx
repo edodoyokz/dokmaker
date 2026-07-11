@@ -79,7 +79,7 @@ export function GoCarReceiptFormFields({
       {/* Order Info */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <Car className="h-4.5 w-4.5 text-emerald-400" />
+          <Car className="h-4 w-4 text-emerald-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Informasi Pesanan
           </h2>
@@ -130,7 +130,7 @@ export function GoCarReceiptFormFields({
       {/* Customer */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <User className="h-4.5 w-4.5 text-indigo-400" />
+          <User className="h-4 w-4 text-indigo-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Customer
           </h2>
@@ -154,7 +154,7 @@ export function GoCarReceiptFormFields({
       {/* Payment */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <CreditCard className="h-4.5 w-4.5 text-purple-400" />
+          <CreditCard className="h-4 w-4 text-purple-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Rincian Pembayaran
           </h2>
@@ -238,7 +238,7 @@ export function GoCarReceiptFormFields({
       {/* Trip */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <Route className="h-4.5 w-4.5 text-pink-400" />
+          <Route className="h-4 w-4 text-pink-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Detail Perjalanan
           </h2>
@@ -310,7 +310,7 @@ export function GoCarReceiptFormFields({
       {/* Pickup */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <MapPin className="h-4.5 w-4.5 text-blue-400" />
+          <MapPin className="h-4 w-4 text-blue-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Titik Jemput
           </h2>
@@ -347,7 +347,7 @@ export function GoCarReceiptFormFields({
       {/* Dropoff */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <MapPin className="h-4.5 w-4.5 text-rose-400" />
+          <MapPin className="h-4 w-4 text-rose-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Titik Tujuan
           </h2>
@@ -384,7 +384,7 @@ export function GoCarReceiptFormFields({
       {/* Issuer */}
       <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
-          <Building className="h-4.5 w-4.5 text-zinc-400" />
+          <Building className="h-4 w-4 text-zinc-400" />
           <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
             Penerbit Faktur
           </h2>

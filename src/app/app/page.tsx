@@ -1,6 +1,7 @@
 import { requireUser } from "@/modules/auth";
 import { prisma } from "@/lib/db/prisma";
 import { Dashboard } from "@/components/dashboard";
+import { documentPartyName } from "@/modules/documents/display-name";
 
 export default async function AppPage() {
   const authUser = await requireUser();
@@ -47,11 +48,12 @@ export default async function AppPage() {
         currentBalance: user.wallet.currentBalance,
       }}
       recentInvoices={invoices.map((inv) => {
-        const content = inv.versions[0]?.contentSnapshot as Record<string, unknown>;
+        const content = inv.versions[0]?.contentSnapshot;
         return {
           id: inv.id,
-          invoiceNumber: inv.invoiceNumber,
-          clientName: (content?.client as Record<string, unknown>)?.name as string || "-",
+          invoiceNumber: inv.invoiceNumber || inv.title || "Dokumen",
+          clientName: documentPartyName(content),
+          documentType: inv.documentType,
           status: inv.status,
           createdAt: inv.createdAt.toISOString(),
         };

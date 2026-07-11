@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileText, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
+import { mapAuthError } from "@/lib/auth-errors";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(mapAuthError(error.message));
       setLoading(false);
       return;
     }
@@ -74,10 +75,16 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label htmlFor="password" className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
                   Password
                 </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300"
+                >
+                  Lupa password?
+                </Link>
               </div>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">

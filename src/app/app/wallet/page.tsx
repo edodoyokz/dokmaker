@@ -1,6 +1,7 @@
 import { requireUser } from "@/modules/auth";
 import { prisma } from "@/lib/db/prisma";
 import Link from "next/link";
+import { TopupPendingBanner } from "@/components/wallet/topup-pending-banner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -15,8 +16,14 @@ import {
   History 
 } from "lucide-react";
 
-export default async function WalletPage() {
+export default async function WalletPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ topup?: string }>;
+}) {
   const authUser = await requireUser();
+  const params = (await searchParams) || {};
+  const topupPending = params.topup === "pending";
 
   const user = await prisma.user.findUnique({
     where: { id: authUser.id },
@@ -51,7 +58,7 @@ export default async function WalletPage() {
       case "topup_credit":
         return "Top Up Saldo";
       case "download_debit":
-        return "Download Invoice Final";
+        return "Unduh PDF final";
       case "ai_generation_debit":
         return "Generate Invoice AI";
       case "admin_credit":
@@ -94,14 +101,16 @@ export default async function WalletPage() {
 
   return (
     <div className="space-y-6 pb-8">
+      {topupPending && <TopupPendingBanner />}
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
             Dompet Digital <Wallet className="h-5 w-5 text-indigo-400" />
           </h1>
           <p className="text-sm text-zinc-400 mt-1">
-            Pantau saldo dan riwayat pengeluaran cetak invoice Anda.
+            Pantau saldo dan riwayat cetak dokumen Anda.
           </p>
         </div>
         <Link 
