@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 
 type Props = {
@@ -21,12 +21,15 @@ export default function PdfStampPreview({ invoiceId, reloadKey = 0 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    setPages([]);
+  useEffect(() => {
+    let cancelled = false;
 
-    try {
+    async function load() {
+      setLoading(true);
+      setError(null);
+      setPages([]);
+
+      try {
       const res = await fetch(`/api/invoices/${invoiceId}/preview`, {
         cache: "no-store",
         credentials: "same-origin",
@@ -67,17 +70,21 @@ export default function PdfStampPreview({ invoiceId, reloadKey = 0 }: Props) {
         });
       }
 
-      setPages(next);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal memuat pratinjau");
-    } finally {
-      setLoading(false);
+        if (!cancelled) setPages(next);
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : "Gagal memuat pratinjau");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-  }, [invoiceId]);
 
-  useEffect(() => {
     void load();
-  }, [load, reloadKey, tick]);
+    return () => {
+      cancelled = true;
+    };
+  }, [invoiceId, reloadKey, tick]);
 
   if (loading) {
     return (

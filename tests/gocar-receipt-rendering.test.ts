@@ -37,7 +37,7 @@ describe("GoCar receipt rendering", () => {
 
     expect(html).toContain("GoCar");
     expect(html).toContain("RB-4153088-49607870");
-    expect(html).toContain("Hai Bernadus Putra,");
+    expect(html).toContain("Hai Nama Pelanggan,");
     expect(html).toContain("Rp50.000");
     expect(html).toContain("UDIN SAPRUDIN");
     expect(html).toContain("B2036UZX • Toyota Calya");
@@ -75,7 +75,7 @@ describe("GoCar receipt rendering", () => {
     expect(html).toContain("Makasih udah pesan GoCar");
     expect(html).toContain("Rincian pembayaran");
     expect(html).toContain("Detail perjalanan");
-    expect(html).toContain("Hai Bernadus Putra,");
+    expect(html).toContain("Hai Nama Pelanggan,");
     expect(html).toContain("UDIN SAPRUDIN");
     expect(html).toContain("B2036UZX");
 
@@ -115,6 +115,15 @@ describe("GoCar receipt rendering", () => {
       "Pasaraya Blok M GD B, 7th Floor, Kebayoran Baru, DKI Jakarta Indonesia 12160"
     );
     expect(html).toContain("Jl. Medan Merdeka Timur. No.1");
+  });
+
+  it("wraps long OSM addresses inside each timeline item", () => {
+    expect(GOCAR_RECEIPT_HTML_TEMPLATE).toMatch(
+      /\.gocar-trip-right\s*\{[^}]*min-width:\s*0;/
+    );
+    expect(GOCAR_RECEIPT_HTML_TEMPLATE).toMatch(
+      /\.gocar-timeline-address\s*\{[^}]*overflow-wrap:\s*anywhere;/
+    );
   });
 
   it("embeds every original PDF image and font asset", () => {

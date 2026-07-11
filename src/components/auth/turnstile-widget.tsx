@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 
 declare global {
   interface Window {
@@ -36,8 +36,7 @@ export function TurnstileWidget({ onToken }: Props) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const onTokenRef = useRef(onToken);
-  onTokenRef.current = onToken;
+  const emitToken = useEffectEvent(onToken);
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
@@ -51,9 +50,9 @@ export function TurnstileWidget({ onToken }: Props) {
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
         theme: "dark",
-        callback: (token) => onTokenRef.current(token),
-        "expired-callback": () => onTokenRef.current(null),
-        "error-callback": () => onTokenRef.current(null),
+        callback: (token) => emitToken(token),
+        "expired-callback": () => emitToken(null),
+        "error-callback": () => emitToken(null),
       });
     };
 

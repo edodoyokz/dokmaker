@@ -42,7 +42,6 @@ export function LocationAutocomplete({
   addressLabel = "Alamat",
 }: LocationAutocompleteProps) {
   const listId = useId();
-  const [query, setQuery] = useState(name);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Suggestion[]>([]);
@@ -50,19 +49,9 @@ export function LocationAutocomplete({
   const abortRef = useRef<AbortController | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep search box in sync when parent resets content.
   useEffect(() => {
-    setQuery(name);
-  }, [name]);
-
-  useEffect(() => {
-    const q = query.trim();
-    if (disabled || q.length < 2) {
-      setItems([]);
-      setLoading(false);
-      setError(null);
-      return;
-    }
+    const q = name.trim();
+    if (disabled || q.length < 2) return;
 
     // Don't re-search the already-selected name if list is closed.
     const t = window.setTimeout(async () => {
@@ -95,7 +84,7 @@ export function LocationAutocomplete({
       window.clearTimeout(t);
       abortRef.current?.abort();
     };
-  }, [query, disabled]);
+  }, [name, disabled]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -107,7 +96,6 @@ export function LocationAutocomplete({
 
   function pick(item: Suggestion) {
     onPick({ name: item.name, address: item.address });
-    setQuery(item.name);
     setOpen(false);
     setItems([]);
   }
@@ -120,12 +108,17 @@ export function LocationAutocomplete({
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
           <input
             type="text"
-            value={query}
+            value={name}
             onChange={(e) => {
               const v = e.target.value;
-              setQuery(v);
               onNameChange(v);
               setOpen(true);
+              if (v.trim().length < 2) {
+                abortRef.current?.abort();
+                setItems([]);
+                setLoading(false);
+                setError(null);
+              }
             }}
             onFocus={() => items.length > 0 && setOpen(true)}
             disabled={disabled}
@@ -147,7 +140,7 @@ export function LocationAutocomplete({
               className="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-zinc-800 bg-zinc-950 py-1 shadow-xl"
             >
               {items.map((item) => (
-                <li key={item.id} role="option">
+                <li key={item.id} role="option" aria-selected="false">
                   <button
                     type="button"
                     className="flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-zinc-900 focus:bg-zinc-900 focus:outline-none"

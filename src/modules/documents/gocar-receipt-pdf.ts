@@ -130,7 +130,7 @@ function isReferenceSample(content: GoCarReceiptContent): boolean {
   return (
     content.service.orderId === "RB-4153088-49607870" &&
     content.service.orderDate === "Kamis, 11 Juni 2026" &&
-    content.customer.name === "Bernadus Putra" &&
+    content.customer.name === "Nama Pelanggan" &&
     content.payment.totalPaid === 50000 &&
     content.payment.tripFee === 42500 &&
     content.payment.appFee === 7500 &&

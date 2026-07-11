@@ -144,7 +144,7 @@ export function GoCarReceiptFormFields({
               onChange={(e) => updateCustomer({ name: e.target.value })}
               required
               disabled={disabled}
-              placeholder="Bernadus Putra"
+              placeholder="Nama Pelanggan"
               className={inputClass}
             />
           </div>

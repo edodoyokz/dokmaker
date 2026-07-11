@@ -108,7 +108,7 @@ export function getDefaultGoCarReceiptContent(): GoCarReceiptContent {
       orderId: "RB-4153088-49607870",
     },
     customer: {
-      name: "Bernadus Putra",
+      name: "Nama Pelanggan",
     },
     payment: {
       totalPaid: 50000,

@@ -191,6 +191,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
   .gocar-trip-right {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
 
   .gocar-trip-driver {
@@ -289,6 +290,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
     font-size: 10.5px;
     color: #666666;
     line-height: 1.4;
+    overflow-wrap: anywhere;
   }
 
   .gocar-footer {

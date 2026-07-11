@@ -10,7 +10,7 @@ describe("gocarReceiptContentSchema", () => {
 
     expect(parsed.service.name).toBe("GoCar");
     expect(parsed.service.orderId).toBe("RB-4153088-49607870");
-    expect(parsed.customer.name).toBe("Bernadus Putra");
+    expect(parsed.customer.name).toBe("Nama Pelanggan");
     expect(parsed.payment.totalPaid).toBe(50000);
     expect(parsed.trip.driverName).toBe("UDIN SAPRUDIN");
     expect(parsed.issuer.npwp).toBe("0745704361064000");
