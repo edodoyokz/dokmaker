@@ -35,7 +35,10 @@ export type GoCarReceiptPdfOptions = {
 const PAGE_W = 595;
 const PAGE_H = 842;
 const BLACK = rgb(0, 0, 0);
+const WHITE = rgb(1, 1, 1);
 const GREEN = rgb(0, 128 / 255, 0); // #008000 total value
+/** Header bar brand green (#00880d) — whiteout plates on green must use this, not white. */
+const HEADER_GREEN = rgb(0 / 255, 136 / 255, 13 / 255);
 
 // Right edge of payment amount column in the reference.
 const AMOUNT_RIGHT = 459.2;
@@ -246,9 +249,22 @@ export async function generateGoCarReceiptPdf(
   );
   const method = content.payment.method;
 
-  // --- page 1 header ---
-  drawRight(p1, date, 467, 18.3, 10.3, SIZE_BODY, regular);
-  drawRight(p1, orderId, 467, 28.7, 10.3, SIZE_BODY, regular);
+  // Header date/order sit on green bar. Re-paint plate green (never white),
+  // then stamp white text to match reference.
+  for (const page of [p1, p2]) {
+    page.drawRectangle({
+      x: 355,
+      y: PAGE_H - 16.5 - 25,
+      width: 115,
+      height: 25,
+      color: HEADER_GREEN,
+      borderWidth: 0,
+    });
+  }
+
+  // --- page 1 header (white text on green) ---
+  drawRight(p1, date, 467, 18.3, 10.3, SIZE_BODY, regular, WHITE);
+  drawRight(p1, orderId, 467, 28.7, 10.3, SIZE_BODY, regular, WHITE);
 
   // Hai {name},
   drawLeft(p1, `${name},`, 146.7, 80.2, 11.2, SIZE_BOLD, regular);
@@ -348,9 +364,9 @@ export async function generateGoCarReceiptPdf(
     }
   }
 
-  // --- page 2 ---
-  drawRight(p2, date, 467, 18.3, 10.3, SIZE_BODY, regular);
-  drawRight(p2, orderId, 467, 28.7, 10.3, SIZE_BODY, regular);
+  // --- page 2 header (white text on green) ---
+  drawRight(p2, date, 467, 18.3, 10.3, SIZE_BODY, regular, WHITE);
+  drawRight(p2, orderId, 467, 28.7, 10.3, SIZE_BODY, regular, WHITE);
   drawRight(p2, appFee, AMOUNT_RIGHT, 125.0, 10.3, SIZE_BODY, regular);
   drawRight(p2, appFeeDiscount, AMOUNT_RIGHT, 137.6, 10.3, SIZE_BODY, regular);
   drawRight(p2, appFeeTotal, AMOUNT_RIGHT, 162.4, 10.3, SIZE_BODY, regular);
