@@ -1,50 +1,70 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileText, User, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
 import { mapAuthError } from "@/lib/auth-errors";
+import { TurnstileWidget } from "@/components/auth/turnstile-widget";
+
+const turnstileRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot — humans leave empty
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-      },
-    });
-
-    if (error) {
-      setError(mapAuthError(error.message));
-      setLoading(false);
+    if (turnstileRequired && !turnstileToken) {
+      setError("Selesaikan verifikasi captcha terlebih dahulu.");
       return;
     }
 
-    router.push("/app");
-    router.refresh();
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          website, // honeypot
+          turnstileToken: turnstileToken || undefined,
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        ok?: boolean;
+      };
+
+      if (!res.ok) {
+        setError(mapAuthError(data.error) || data.error || "Gagal mendaftar.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/app");
+      router.refresh();
+    } catch {
+      setError("Koneksi gagal. Periksa internet Anda.");
+      setLoading(false);
+    }
   };
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-zinc-950 px-4 font-sans">
       <div className="z-10 w-full max-w-md space-y-6">
-        {/* Logo Header */}
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600">
             <FileText className="h-5 w-5 text-white" />
@@ -53,9 +73,26 @@ export default function RegisterPage() {
           <p className="text-sm text-zinc-500">Mulai membuat dokumen profesional Anda sekarang</p>
         </div>
 
-        {/* Form Card */}
         <div className="relative rounded-xl border border-zinc-800 bg-zinc-900 p-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" autoComplete="on">
+            {/* Honeypot: hidden from humans, bots often auto-fill */}
+            <div
+              aria-hidden="true"
+              className="absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0"
+              tabIndex={-1}
+            >
+              <label htmlFor="website">Website</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="fullName" className="block text-xs font-medium text-zinc-400">
                 Nama Lengkap
@@ -117,6 +154,8 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            <TurnstileWidget onToken={setTurnstileToken} />
+
             {error && (
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-2.5">
                 <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
@@ -126,7 +165,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (turnstileRequired && !turnstileToken)}
               className="dm-cta w-full gap-2"
             >
               {loading ? "Memproses..." : "Daftar"} <ArrowRight className="h-4 w-4" />
@@ -134,7 +173,6 @@ export default function RegisterPage() {
           </form>
         </div>
 
-        {/* Footer text */}
         <p className="text-center text-sm text-zinc-500">
           Sudah memiliki akun?{" "}
           <Link href="/login" className="text-indigo-400 font-medium hover:text-indigo-300 transition-colors">

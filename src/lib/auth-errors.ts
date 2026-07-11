@@ -23,6 +23,12 @@ export function mapAuthError(message: string | null | undefined): string {
   if (m.includes("signup is disabled")) {
     return "Pendaftaran sedang ditutup.";
   }
+  if (m.includes("captcha") || m.includes("turnstile")) {
+    return "Verifikasi captcha gagal. Muat ulang dan coba lagi.";
+  }
+  if (m.includes("terlalu banyak") || m.includes("too many requests")) {
+    return "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.";
+  }
   // Don't leak raw provider strings when we can avoid it.
   if (/^[a-z0-9 _.-]+$/i.test(message) && message.length < 120) {
     return message;
