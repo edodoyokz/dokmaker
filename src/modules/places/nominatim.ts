@@ -54,7 +54,41 @@ export function placeNameFromResult(result: NominatimResult): string {
 }
 
 export function placeAddressFromResult(result: NominatimResult): string {
-  return (result.display_name ?? "").trim();
+  const address = result.address ?? {};
+  const parts = [
+    address.road,
+    address.house_number,
+    address.neighbourhood,
+    address.suburb,
+    address.village,
+    address.city_district,
+    address.city,
+    address.town,
+    address.municipality,
+    address.county,
+    address.state,
+    address.province,
+    address.postcode,
+    address.country,
+  ].filter((part): part is string => Boolean(part?.trim()));
+
+  if (!parts.length) return (result.display_name ?? "").trim();
+
+  const unique = parts.filter(
+    (part, index) =>
+      parts.findIndex(
+        (candidate) => candidate.trim().toLocaleLowerCase("id-ID") === part.trim().toLocaleLowerCase("id-ID")
+      ) === index
+  );
+  const postcode = address.postcode?.trim();
+  if (postcode && unique.length > 1) {
+    const index = unique.indexOf(postcode);
+    if (index > 0) {
+      unique[index - 1] = `${unique[index - 1]} ${postcode}`;
+      unique.splice(index, 1);
+    }
+  }
+  return unique.map((part) => part.trim()).join(", ");
 }
 
 export function mapNominatimResults(

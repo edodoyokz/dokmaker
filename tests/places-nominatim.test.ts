@@ -31,6 +31,28 @@ describe("Nominatim place helpers", () => {
     ).toBe("Sentral Senayan 1 - 2");
   });
 
+  it("formats structured OSM addresses like GoCar receipts", () => {
+    expect(
+      placeAddressFromResult({
+        name: "Stasiun Gambir",
+        display_name:
+          "Stasiun Gambir, Jalan Medan Merdeka Timur, Gambir, Gambir, Jakarta Pusat, Daerah Khusus Ibukota Jakarta, 10110, Indonesia",
+        address: {
+          amenity: "Stasiun Gambir",
+          road: "Jalan Medan Merdeka Timur",
+          suburb: "Gambir",
+          city_district: "Gambir",
+          city: "Jakarta Pusat",
+          province: "Daerah Khusus Ibukota Jakarta",
+          postcode: "10110",
+          country: "Indonesia",
+        },
+      })
+    ).toBe(
+      "Jalan Medan Merdeka Timur, Gambir, Jakarta Pusat, Daerah Khusus Ibukota Jakarta 10110, Indonesia"
+    );
+  });
+
   it("maps and dedupes nominatim results", () => {
     const raw: NominatimResult[] = [
       {
@@ -72,6 +94,11 @@ describe("Nominatim place helpers", () => {
           place_id: 99,
           name: "Gelora Bung Karno",
           display_name: "Gelora Bung Karno, Jakarta, Indonesia",
+          address: {
+            tourism: "Gelora Bung Karno",
+            city: "Jakarta",
+            country: "Indonesia",
+          },
         },
       ]);
     };
@@ -84,7 +111,7 @@ describe("Nominatim place helpers", () => {
     expect(results[0]).toMatchObject({
       id: "99",
       name: "Gelora Bung Karno",
-      address: "Gelora Bung Karno, Jakarta, Indonesia",
+      address: "Jakarta, Indonesia",
     });
   });
 });
