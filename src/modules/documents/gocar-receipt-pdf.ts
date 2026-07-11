@@ -4,6 +4,7 @@ import fontkit from "@pdf-lib/fontkit";
 import {
   PDFDocument,
   degrees,
+  type PDFImage,
   type PDFFont,
   type PDFPage,
   rgb,
@@ -100,6 +101,30 @@ function drawRight(
     size: drawSize,
     font,
     color,
+  });
+}
+
+const TIMELINE_ICON_X = 300.5;
+const TIMELINE_ICON_SIZE = 12.8;
+
+function clearTimelineIcon(page: PDFPage, yTop: number) {
+  page.drawRectangle({
+    x: TIMELINE_ICON_X - 2,
+    y: PAGE_H - yTop - TIMELINE_ICON_SIZE - 2,
+    width: TIMELINE_ICON_SIZE + 4,
+    height: TIMELINE_ICON_SIZE + 4,
+    color: WHITE,
+    borderWidth: 0,
+  });
+}
+
+function drawTimelineIcon(page: PDFPage, icon: PDFImage, yTop: number) {
+  clearTimelineIcon(page, yTop);
+  page.drawImage(icon, {
+    x: TIMELINE_ICON_X,
+    y: PAGE_H - yTop - TIMELINE_ICON_SIZE,
+    width: TIMELINE_ICON_SIZE,
+    height: TIMELINE_ICON_SIZE,
   });
 }
 
@@ -235,6 +260,8 @@ export async function generateGoCarReceiptPdf(
 
   const p1 = doc.getPages()[0]!;
   const p2 = doc.getPages()[1]!;
+  const pickupIcon = await doc.embedPng(loadAsset("pickup.png"));
+  const dropoffIcon = await doc.embedPng(loadAsset("dropoff.png"));
 
   const date = content.service.orderDate;
   const orderId = content.service.orderId;
@@ -320,6 +347,8 @@ export async function generateGoCarReceiptPdf(
   const tlW = 140;
   let y = 344.8;
 
+  const pickupWhenTop = y;
+  drawTimelineIcon(p1, pickupIcon, pickupWhenTop);
   if (content.trip.pickupTime) {
     const when = `Dijemput ${content.trip.pickupTime} dari`;
     for (const line of wrapLines(when, regular, SIZE_BODY, tlW)) {
@@ -345,6 +374,10 @@ export async function generateGoCarReceiptPdf(
   }
 
   y = Math.max(y + 10.3, 419.8);
+  // The base PDF has a static drop-off icon at the reference position.
+  // Clear it before drawing the icon at the dynamically computed text row.
+  clearTimelineIcon(p1, 419.8);
+  drawTimelineIcon(p1, dropoffIcon, y);
   if (content.trip.dropoffTime) {
     const when = `Sampai ${content.trip.dropoffTime} di`;
     for (const line of wrapLines(when, regular, SIZE_BODY, tlW)) {

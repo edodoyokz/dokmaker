@@ -548,7 +548,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
   }
 
   .gocar-timeline-icon {
-    top: 2px;
+    top: calc((1.2em - 12.8px) / 2);
   }
 
   .gocar-timeline-when,

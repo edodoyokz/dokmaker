@@ -124,6 +124,9 @@ describe("GoCar receipt rendering", () => {
     expect(GOCAR_RECEIPT_HTML_TEMPLATE).toMatch(
       /\.gocar-timeline-address\s*\{[^}]*overflow-wrap:\s*anywhere;/
     );
+    expect(GOCAR_RECEIPT_HTML_TEMPLATE).toMatch(
+      /\.gocar-timeline-icon\s*\{[\s\S]*?top:\s*calc\(/
+    );
   });
 
   it("embeds every original PDF image and font asset", () => {
