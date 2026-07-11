@@ -132,4 +132,6 @@ export const RATE_LIMITS = {
   WEBHOOK: { limit: 100, windowSeconds: 60 },
   /** Auth: max 5 attempts per 15 minutes */
   AUTH: { limit: 5, windowSeconds: 900 },
+  /** Place autocomplete: max 30 per minute (Nominatim-friendly) */
+  PLACES: { limit: 30, windowSeconds: 60 },
 } as const;

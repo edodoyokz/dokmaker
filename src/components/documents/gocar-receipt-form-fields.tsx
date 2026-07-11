@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GoCarReceiptContent } from "@/modules/documents/gocar-receipt-content.schema";
+import { LocationAutocomplete } from "./location-autocomplete";
 
 interface GoCarReceiptFormFieldsProps {
   content: GoCarReceiptContent;
@@ -320,41 +321,31 @@ export function GoCarReceiptFormFields({
           </h2>
         </div>
         <CardContent className="p-5 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className={labelClass}>Waktu Jemput</label>
-              <input
-                type="text"
-                value={content.trip.pickupTime ?? ""}
-                onChange={(e) => updateTrip({ pickupTime: e.target.value })}
-                disabled={disabled}
-                placeholder="11 Juni 2026 jam 15:25"
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className={labelClass}>Nama Lokasi Jemput</label>
-              <input
-                type="text"
-                value={content.trip.pickupName ?? ""}
-                onChange={(e) => updateTrip({ pickupName: e.target.value })}
-                disabled={disabled}
-                placeholder="Sentral Senayan 1 - 2"
-                className={inputClass}
-              />
-            </div>
-          </div>
           <div className="space-y-1.5">
-            <label className={labelClass}>Alamat Jemput</label>
-            <textarea
-              value={content.trip.pickupAddress ?? ""}
-              onChange={(e) => updateTrip({ pickupAddress: e.target.value })}
-              rows={2}
+            <label className={labelClass}>Waktu Jemput</label>
+            <input
+              type="text"
+              value={content.trip.pickupTime ?? ""}
+              onChange={(e) => updateTrip({ pickupTime: e.target.value })}
               disabled={disabled}
-              placeholder="Gelora, Tanahabang, Jakarta Pusat, DKI Jakarta"
-              className="block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+              placeholder="11 Juni 2026 jam 15:25"
+              className={inputClass}
             />
           </div>
+          <LocationAutocomplete
+            name={content.trip.pickupName ?? ""}
+            address={content.trip.pickupAddress ?? ""}
+            disabled={disabled}
+            nameLabel="Nama Lokasi Jemput"
+            addressLabel="Alamat Jemput"
+            namePlaceholder="Cari / ketik lokasi jemput…"
+            addressPlaceholder="Gelora, Tanahabang, Jakarta Pusat, DKI Jakarta"
+            onNameChange={(pickupName) => updateTrip({ pickupName })}
+            onAddressChange={(pickupAddress) => updateTrip({ pickupAddress })}
+            onPick={({ name: pickupName, address: pickupAddress }) =>
+              updateTrip({ pickupName, pickupAddress })
+            }
+          />
         </CardContent>
       </Card>
 
@@ -367,41 +358,31 @@ export function GoCarReceiptFormFields({
           </h2>
         </div>
         <CardContent className="p-5 space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className={labelClass}>Waktu Sampai</label>
-              <input
-                type="text"
-                value={content.trip.dropoffTime ?? ""}
-                onChange={(e) => updateTrip({ dropoffTime: e.target.value })}
-                disabled={disabled}
-                placeholder="11 Juni 2026 jam 15:57"
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className={labelClass}>Nama Lokasi Tujuan</label>
-              <input
-                type="text"
-                value={content.trip.dropoffName ?? ""}
-                onChange={(e) => updateTrip({ dropoffName: e.target.value })}
-                disabled={disabled}
-                placeholder="Stasiun Gambir"
-                className={inputClass}
-              />
-            </div>
-          </div>
           <div className="space-y-1.5">
-            <label className={labelClass}>Alamat Tujuan</label>
-            <textarea
-              value={content.trip.dropoffAddress ?? ""}
-              onChange={(e) => updateTrip({ dropoffAddress: e.target.value })}
-              rows={2}
+            <label className={labelClass}>Waktu Sampai</label>
+            <input
+              type="text"
+              value={content.trip.dropoffTime ?? ""}
+              onChange={(e) => updateTrip({ dropoffTime: e.target.value })}
               disabled={disabled}
-              placeholder="Jl. Medan Merdeka Timur No.1, Gambir, Jakarta Pusat"
-              className="block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
+              placeholder="11 Juni 2026 jam 15:57"
+              className={inputClass}
             />
           </div>
+          <LocationAutocomplete
+            name={content.trip.dropoffName ?? ""}
+            address={content.trip.dropoffAddress ?? ""}
+            disabled={disabled}
+            nameLabel="Nama Lokasi Tujuan"
+            addressLabel="Alamat Tujuan"
+            namePlaceholder="Cari / ketik lokasi tujuan…"
+            addressPlaceholder="Jl. Medan Merdeka Timur No.1, Gambir, Jakarta Pusat"
+            onNameChange={(dropoffName) => updateTrip({ dropoffName })}
+            onAddressChange={(dropoffAddress) => updateTrip({ dropoffAddress })}
+            onPick={({ name: dropoffName, address: dropoffAddress }) =>
+              updateTrip({ dropoffName, dropoffAddress })
+            }
+          />
         </CardContent>
       </Card>
 
