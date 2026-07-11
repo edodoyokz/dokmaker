@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { debitWallet } from "@/modules/wallet/service";
+import { creditWallet, debitWallet } from "@/modules/wallet/service";
 
 /**
  * Mocks the minimal Prisma TransactionClient surface that debitWallet uses, with
@@ -28,6 +28,15 @@ function makeTx(initialBalance: number) {
     },
     wallet: {
       findUnique: async () => ({ ...wallet }),
+      update: async ({
+        data,
+      }: {
+        where: { id: string };
+        data: { currentBalance: { increment: number } };
+      }) => {
+        wallet.currentBalance += data.currentBalance.increment;
+        return { ...wallet };
+      },
       // Conditional atomic update — mirrors Postgres statement atomicity.
       updateMany: async ({
         where: cond,
@@ -91,6 +100,23 @@ describe("debitWallet negative-balance race prevention", () => {
     await expect(
       debitWallet(tx as never, "user-1", -5, "download_debit", "k4")
     ).rejects.toThrow(/lebih dari 0/i);
+    await expect(
+      debitWallet(tx as never, "user-1", 10.5, "download_debit", "k4b")
+    ).rejects.toThrow(/bilangan bulat/i);
+    expect(readBalance()).toBe(100_000);
+  });
+
+  it("rejects non-positive / non-integer credit amounts", async () => {
+    const { tx, readBalance } = makeTx(100_000);
+    await expect(
+      creditWallet(tx as never, "user-1", 0, "topup_credit", "c0")
+    ).rejects.toThrow(/lebih dari 0/i);
+    await expect(
+      creditWallet(tx as never, "user-1", -1, "refund_credit", "c1")
+    ).rejects.toThrow(/lebih dari 0/i);
+    await expect(
+      creditWallet(tx as never, "user-1", 50.5, "topup_credit", "c2")
+    ).rejects.toThrow(/bilangan bulat/i);
     expect(readBalance()).toBe(100_000);
   });
 

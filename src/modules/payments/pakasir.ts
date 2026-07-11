@@ -19,11 +19,26 @@ import { createHmac, randomUUID, timingSafeEqual } from "crypto";
 export interface PakasirWebhookBody {
   project: string;
   order_id: string;
-  amount: number;
+  /** JSON may deliver amount as number or digit-string; normalized before use. */
+  amount: number | string;
   status?: string;          // informational only — never trusted for crediting
   providerEventId?: string;
   signature?: string;
   [key: string]: unknown;   // permit extra fields without validation failure
+}
+
+/** Positive integer IDR amount only — rejects float / NaN / negative / empty. */
+export function normalizePakasirAmount(value: unknown): number {
+  const n =
+    typeof value === "number"
+      ? value
+      : typeof value === "string" && value.trim() !== ""
+        ? Number(value)
+        : NaN;
+  if (!Number.isFinite(n) || !Number.isInteger(n) || n <= 0) {
+    throw new Error("Amount tidak valid");
+  }
+  return n;
 }
 
 /**
@@ -124,7 +139,8 @@ export async function createTopUpPayment(
  * Verifies and credits wallet if valid.
  */
 export async function handlePakasirWebhook(body: PakasirWebhookBody) {
-  const { project, order_id, amount, status: bodyStatus, providerEventId, signature } = body;
+  const { project, order_id, status: bodyStatus, providerEventId, signature } = body;
+  const amount = normalizePakasirAmount(body.amount);
   const sandbox = isSandboxMode();
 
   logger.webhook("Pakasir webhook received", { project, order_id, amount, sandbox });

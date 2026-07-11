@@ -5,6 +5,19 @@ import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
 import { PROCESSING_PAYMENT_TIMEOUT_MS } from "./constants";
 import { pdfStorage, buildInvoiceFinalPdfStorageKey } from "./pdf-storage";
+
+/** Safe ASCII attachment name — strips path/control/quote chars from free-text titles. */
+export function buildDownloadFilename(
+  title: string | null | undefined,
+  invoiceNumber: string | null | undefined,
+  invoiceId: string,
+  versionNumber: number
+): string {
+  const raw = (title || invoiceNumber || invoiceId).replace(/[\r\n"\\/<>:\|\?\*\x00-\x1f]/g, "").trim();
+  const base = (raw || invoiceId).slice(0, 80);
+  return `${base}-v${versionNumber}.pdf`;
+}
+
 /**
  * Process final PDF download.
  * Handles paid/unpaid version logic and wallet debit.
@@ -117,7 +130,12 @@ export async function processDownload(
 
     return {
       pdf,
-      filename: `${invoice.title || invoice.invoiceNumber || invoice.id}-v${activeVersion.versionNumber}.pdf`,
+      filename: buildDownloadFilename(
+        invoice.title,
+        invoice.invoiceNumber,
+        invoice.id,
+        activeVersion.versionNumber
+      ),
     };
   }
 
@@ -211,7 +229,12 @@ export async function processDownload(
 
       return {
         pdf,
-        filename: `${invoice.title || invoice.invoiceNumber || invoice.id}-v${activeVersion.versionNumber}.pdf`,
+        filename: buildDownloadFilename(
+          invoice.title,
+          invoice.invoiceNumber,
+          invoice.id,
+          activeVersion.versionNumber
+        ),
       };
     } catch (error) {
       // Only reset from processing_payment so we never overwrite a version that

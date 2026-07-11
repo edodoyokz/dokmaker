@@ -52,6 +52,10 @@ export async function creditWallet(
     return existing; // Already processed
   }
 
+  if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
+    throw new Error("Jumlah kredit harus bilangan bulat lebih dari 0");
+  }
+
   // Get wallet
   const wallet = await tx.wallet.findUnique({
     where: { userId },
@@ -125,8 +129,8 @@ export async function debitWallet(
     throw new Error("Wallet tidak ditemukan");
   }
 
-  if (amount <= 0) {
-    throw new Error("Jumlah debit harus lebih dari 0");
+  if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0) {
+    throw new Error("Jumlah debit harus bilangan bulat lebih dari 0");
   }
 
   // Create ledger entry and update balance atomically.

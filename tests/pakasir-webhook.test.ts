@@ -24,7 +24,7 @@ vi.mock("@/modules/wallet/service", () => ({
   creditWallet: vi.fn(),
 }));
 
-import { handlePakasirWebhook } from "@/modules/payments/pakasir";
+import { handlePakasirWebhook, normalizePakasirAmount } from "@/modules/payments/pakasir";
 import { prisma } from "@/lib/db/prisma";
 import { creditWallet } from "@/modules/wallet/service";
 
@@ -112,6 +112,78 @@ describe("handlePakasirWebhook", () => {
     ).rejects.toThrow(/amount/i);
 
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(creditWalletMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts digit-string amount matching local record", async () => {
+    prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+      id: "payment-str",
+      userId: "user-1",
+      amount: 50000,
+      status: "created",
+    } satisfies PaymentRecord);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          transaction: {
+            amount: 50000,
+            order_id: "ORDER-STR",
+            project: "dokmaker-test",
+            status: "completed",
+          },
+        }),
+      })
+    );
+
+    const txClient: TransactionClientMock = {
+      paymentTransaction: { update: vi.fn() },
+      paymentWebhookEvent: { create: vi.fn() },
+    };
+    prismaMock.$transaction.mockImplementation(async (fn: (tx: TransactionClientMock) => Promise<unknown>) =>
+      fn(txClient)
+    );
+    creditWalletMock.mockResolvedValue({ id: "ledger-str" });
+
+    const result = await handlePakasirWebhook({
+      project: "dokmaker-test",
+      order_id: "ORDER-STR",
+      amount: "50000",
+    });
+
+    expect(result).toEqual({ status: "credited" });
+    expect(creditWalletMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-1",
+      50000,
+      "topup_credit",
+      "pakasir:ORDER-STR",
+      "payment_transaction",
+      "payment-str",
+      expect.any(String),
+      "webhook",
+      "pakasir"
+    );
+  });
+
+  it("rejects non-integer / non-positive amount before DB credit", async () => {
+    await expect(
+      handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-1",
+        amount: "50.5",
+      })
+    ).rejects.toThrow(/amount/i);
+    await expect(
+      handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-1",
+        amount: -1,
+      })
+    ).rejects.toThrow(/amount/i);
+    expect(prismaMock.paymentTransaction.findFirst).not.toHaveBeenCalled();
     expect(creditWalletMock).not.toHaveBeenCalled();
   });
 
@@ -492,5 +564,20 @@ describe("handlePakasirWebhook", () => {
       // Signature valid → proceeds past verification; payment already success.
       expect(result).toEqual({ status: "already_processed" });
     });
+  });
+});
+
+describe("normalizePakasirAmount", () => {
+  it("accepts positive integers and digit strings", () => {
+    expect(normalizePakasirAmount(50000)).toBe(50000);
+    expect(normalizePakasirAmount("100000")).toBe(100000);
+  });
+
+  it("rejects float, zero, negative, empty", () => {
+    expect(() => normalizePakasirAmount(50.5)).toThrow(/amount/i);
+    expect(() => normalizePakasirAmount(0)).toThrow(/amount/i);
+    expect(() => normalizePakasirAmount(-1)).toThrow(/amount/i);
+    expect(() => normalizePakasirAmount("")).toThrow(/amount/i);
+    expect(() => normalizePakasirAmount("abc")).toThrow(/amount/i);
   });
 });
