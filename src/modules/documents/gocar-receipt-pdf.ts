@@ -55,9 +55,13 @@ function loadAsset(name: string): Buffer {
   return readFileSync(join(ASSET_DIR, name));
 }
 
-/** pdftotext top-origin yMin + CSS box height → pdf-lib baseline. */
-function baselineY(yTop: number, cssSize: number): number {
-  return PAGE_H - yTop - cssSize;
+/**
+ * pdftotext top-origin yMin → pdf-lib baseline.
+ * Use drawSize (not CSS size): drawSize = CSS×FONT_SCALE, so subtracting full
+ * CSS size drops glyphs ~1.5–2.4pt below static labels (Hai / Dibayar pakai).
+ */
+function baselineY(yTop: number, drawSize: number): number {
+  return PAGE_H - yTop - drawSize;
 }
 
 function drawLeft(
@@ -72,7 +76,7 @@ function drawLeft(
 ) {
   page.drawText(text, {
     x,
-    y: baselineY(yTop, cssSize),
+    y: baselineY(yTop, drawSize),
     size: drawSize,
     font,
     color,
@@ -92,7 +96,7 @@ function drawRight(
   const w = font.widthOfTextAtSize(text, drawSize);
   page.drawText(text, {
     x: right - w,
-    y: baselineY(yTop, cssSize),
+    y: baselineY(yTop, drawSize),
     size: drawSize,
     font,
     color,
