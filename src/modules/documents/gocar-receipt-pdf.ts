@@ -249,14 +249,15 @@ export async function generateGoCarReceiptPdf(
   const totalPaid = paymentTotal; // same figure on receipt + "Dibayar pakai"
   const method = content.payment.method;
 
-  // Header date/order sit on green bar. Re-paint plate green (never white),
-  // then stamp white text to match reference.
+  // Header date + "ID pesanan: {orderId}" sit on green bar (ref x≈308–467).
+  // Plate must cover full label+id; partial plate cut the static "ID pesanan:" mid-glyph.
+  const orderLine = `ID pesanan: ${orderId}`;
   for (const page of [p1, p2]) {
     page.drawRectangle({
-      x: 355,
-      y: PAGE_H - 16.5 - 25,
-      width: 115,
-      height: 25,
+      x: 300,
+      y: PAGE_H - 16.5 - 26,
+      width: 175,
+      height: 26,
       color: HEADER_GREEN,
       borderWidth: 0,
     });
@@ -264,7 +265,7 @@ export async function generateGoCarReceiptPdf(
 
   // --- page 1 header (white text on green) ---
   drawRight(p1, date, 467, 18.3, 10.3, SIZE_BODY, regular, WHITE);
-  drawRight(p1, orderId, 467, 28.7, 10.3, SIZE_BODY, regular, WHITE);
+  drawRight(p1, orderLine, 467, 28.7, 10.3, SIZE_BODY, regular, WHITE);
 
   // Hai {name},
   drawLeft(p1, `${name},`, 146.7, 80.2, 11.2, SIZE_BOLD, regular);
@@ -366,7 +367,7 @@ export async function generateGoCarReceiptPdf(
 
   // --- page 2 header (white text on green) ---
   drawRight(p2, date, 467, 18.3, 10.3, SIZE_BODY, regular, WHITE);
-  drawRight(p2, orderId, 467, 28.7, 10.3, SIZE_BODY, regular, WHITE);
+  drawRight(p2, orderLine, 467, 28.7, 10.3, SIZE_BODY, regular, WHITE);
   drawRight(p2, appFee, AMOUNT_RIGHT, 125.0, 10.3, SIZE_BODY, regular);
   drawRight(p2, appFeeDiscount, AMOUNT_RIGHT, 137.6, 10.3, SIZE_BODY, regular);
   drawRight(p2, appFeeTotal, AMOUNT_RIGHT, 162.4, 10.3, SIZE_BODY, regular);
