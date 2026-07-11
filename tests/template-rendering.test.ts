@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderInvoiceTemplateHtml } from "@/modules/templates/render-template";
+import { renderDocumentHtml } from "@/modules/templates/render-document";
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
 
 const content: InvoiceContent = {
@@ -14,6 +15,47 @@ const content: InvoiceContent = {
 };
 
 describe("renderInvoiceTemplateHtml", () => {
+  it("changes only preview watermark/meta between preview and final documents", () => {
+    const htmlTemplate = [
+      '<main data-page="invoice">',
+      "<h1>{{invoice.number}}</h1>",
+      "{{preview.watermark}}",
+      "<p>{{client.name}}</p>",
+      "{{preview.meta}}",
+      "</main>",
+    ].join("");
+    const preview = renderDocumentHtml({
+      htmlTemplate,
+      documentType: "invoice",
+      content,
+      mode: "preview",
+      previewMeta: {
+        email: "user@example.test",
+        timestamp: "20 Jun 2026",
+        versionId: "ver_1",
+      },
+    });
+    const final = renderDocumentHtml({
+      htmlTemplate,
+      documentType: "invoice",
+      content,
+      mode: "final",
+    });
+
+    const withoutPreviewOnlyNodes = preview
+      .replace(/<div class="dokmaker-preview-watermark">[\s\S]*?<\/div>/, "")
+      .replace(/<div class="dokmaker-preview-meta">[\s\S]*?<\/div>/, "");
+
+    expect(withoutPreviewOnlyNodes).toBe(final);
+    expect(preview).toContain("<!DOCTYPE html>");
+    expect(preview).toContain("@page { size: A4; margin: 0; }");
+    expect(preview).toContain("position: fixed");
+    expect(preview).toContain("inset: 0");
+    expect(preview).toContain("background-image:");
+    expect(preview).toContain("background-repeat: repeat");
+    expect(preview).toContain("top: 8px");
+    expect(preview).toContain("right: 8px");
+  });
   it("escapes scalar user content", () => {
     const html = renderInvoiceTemplateHtml({
       htmlTemplate: "{{sender.name}} - {{client.name}}",

@@ -10,16 +10,32 @@ import { createHmac, randomUUID, timingSafeEqual } from "crypto";
  * an optional HMAC the gateway may attach (verified only when a shared secret
  * is configured — graceful no-op otherwise, since Pakasir's signature support
  * is undocumented).
+ *
+ * SECURITY: sandbox mode is NEVER read from this body. A `status`/`is_sandbox`
+ * field in the request is attacker-controllable and must not influence whether
+ * we cross-check the payment with Pakasir. Sandbox mode is derived from server
+ * config only (see `isSandboxMode`).
  */
 export interface PakasirWebhookBody {
   project: string;
   order_id: string;
   amount: number;
-  status?: string;          // "completed" / "pending" — present in sandbox webhooks
-  is_sandbox?: boolean;     // true for sandbox; skip Transaction Detail API verification
+  status?: string;          // informational only — never trusted for crediting
   providerEventId?: string;
   signature?: string;
   [key: string]: unknown;   // permit extra fields without validation failure
+}
+
+/**
+ * Whether this deployment runs against the Pakasir sandbox. Derived from server
+ * env ONLY — never from the webhook body. In sandbox mode the webhook body
+ * `status` is authoritative (the Transaction Detail API is not always available
+ * for sandbox orders). In production we always cross-check via the Detail API.
+ *
+ * Set `PAKASIR_SANDBOX=true` for sandbox/staging; leave unset in production.
+ */
+function isSandboxMode(): boolean {
+  return process.env.PAKASIR_SANDBOX === "true";
 }
 
 /**
@@ -99,9 +115,10 @@ export async function createTopUpPayment(
  * Verifies and credits wallet if valid.
  */
 export async function handlePakasirWebhook(body: PakasirWebhookBody) {
-  const { project, order_id, amount, status: bodyStatus, is_sandbox, providerEventId, signature } = body;
+  const { project, order_id, amount, status: bodyStatus, providerEventId, signature } = body;
+  const sandbox = isSandboxMode();
 
-  logger.webhook("Pakasir webhook received", { project, order_id, amount, is_sandbox });
+  logger.webhook("Pakasir webhook received", { project, order_id, amount, sandbox });
 
   // ── Defense in depth: optional HMAC signature ──────────────────────────
   // If a shared secret is configured, require and verify the signature so a
@@ -167,13 +184,14 @@ export async function handlePakasirWebhook(body: PakasirWebhookBody) {
   }
 
   // ── Verify payment status ───────────────────────────────────────────
-  // Per Pakasir docs (https://pakasir.com/p/docs), the webhook body always
-  // carries a top-level `status`. For sandbox projects the webhook is
-  // authoritative; for production Pakasir recommends cross-checking with the
-  // Transaction Detail API for a more valid status.
+  // Per Pakasir docs (https://pakasir.com/p/docs), the webhook body carries a
+  // top-level `status`. Sandbox mode is determined by SERVER config only
+  // (PAKASIR_SANDBOX) — never by the request body — so an attacker cannot skip
+  // upstream verification by forging a flag. In production we always confirm
+  // the transaction with the Pakasir Transaction Detail API.
   let providerReference: string | null = null;
 
-  if (is_sandbox) {
+  if (sandbox) {
     if (bodyStatus !== "completed") {
       throw new Error("Sandbox webhook: status belum completed");
     }
@@ -185,6 +203,11 @@ export async function handlePakasirWebhook(body: PakasirWebhookBody) {
     }
 
     // Docs: GET /api/transactiondetail?project={slug}&amount={amount}&order_id={order_id}&api_key={api_key}
+    // NOTE: Pakasir authenticates this endpoint via the api_key query param (per
+    // their docs). The key is server-only (never NEXT_PUBLIC) and redacted from
+    // this app's logs. Residual risk: the key may appear in upstream gateway/CDN
+    // access logs. ponytail: query-param auth is Pakasir's documented scheme;
+    // switch to header auth if/when Pakasir supports it.
     const detailResponse = await fetch(
       `${process.env.PAKASIR_BASE_URL || "https://app.pakasir.com"}/api/transactiondetail?project=${project}&amount=${amount}&order_id=${order_id}&api_key=${apiKey}`
     );

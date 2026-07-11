@@ -63,6 +63,7 @@ describe("handlePakasirWebhook", () => {
     process.env.PAKASIR_API_KEY = "secret-key";
     process.env.PAKASIR_BASE_URL = "https://app.pakasir.com";
     delete process.env.PAKASIR_WEBHOOK_SECRET;
+    delete process.env.PAKASIR_SANDBOX;
     // By default, no prior webhook event exists.
     prismaMock.paymentWebhookEvent.findUnique.mockResolvedValue(null);
   });
@@ -290,6 +291,78 @@ describe("handlePakasirWebhook", () => {
       "pakasir"
     );
     expect(createMock).toHaveBeenCalledTimes(1);
+  });
+
+  // ── SECURITY: sandbox mode must come from server env, not the body ──────
+  describe("sandbox bypass protection", () => {
+    it("ignores a forged is_sandbox in the body and still verifies via Detail API", async () => {
+      // Server is NOT in sandbox mode (PAKASIR_SANDBOX unset in beforeEach).
+      prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+        id: "payment-x",
+        userId: "user-x",
+        amount: 50000,
+        status: "created",
+      } satisfies PaymentRecord);
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ transaction: { status: "pending" } }),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      // Attacker forges is_sandbox + completed status to try skipping the
+      // upstream check. It must NOT credit — the Detail API says "pending".
+      await expect(
+        handlePakasirWebhook({
+          project: "dokmaker-test",
+          order_id: "ORDER-FORGED",
+          amount: 50000,
+          status: "completed",
+          is_sandbox: true,
+        } as unknown as Parameters<typeof handlePakasirWebhook>[0])
+      ).rejects.toThrow(/completed/i);
+
+      // The Detail API was called (body flag did not short-circuit it).
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(prismaMock.$transaction).not.toHaveBeenCalled();
+      expect(creditWalletMock).not.toHaveBeenCalled();
+    });
+
+    it("uses body status as authoritative only when server is in sandbox mode", async () => {
+      process.env.PAKASIR_SANDBOX = "true";
+      prismaMock.paymentTransaction.findFirst.mockResolvedValue({
+        id: "payment-sb",
+        userId: "user-sb",
+        amount: 50000,
+        status: "created",
+      } satisfies PaymentRecord);
+
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+
+      const updateMock = vi.fn().mockResolvedValue(undefined);
+      const createMock = vi.fn().mockResolvedValue(undefined);
+      prismaMock.$transaction.mockImplementation(
+        async (callback: (tx: TransactionClientMock) => unknown) =>
+          callback({
+            paymentTransaction: { update: updateMock },
+            paymentWebhookEvent: { create: createMock },
+          })
+      );
+      creditWalletMock.mockResolvedValue({ id: "ledger-sb" });
+
+      const result = await handlePakasirWebhook({
+        project: "dokmaker-test",
+        order_id: "ORDER-SB",
+        amount: 50000,
+        status: "completed",
+      });
+
+      expect(result).toEqual({ status: "credited" });
+      // Sandbox mode: no upstream Detail API call.
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(creditWalletMock).toHaveBeenCalledTimes(1);
+    });
   });
 
   // ── P1-2: intake-level dedup + optional HMAC signature ────────────────

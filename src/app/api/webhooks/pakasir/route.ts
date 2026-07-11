@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { handlePakasirWebhook } from "@/modules/payments/pakasir";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { safeApiError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
@@ -34,17 +35,19 @@ export async function POST(request: Request) {
     const result = await handlePakasirWebhook(body);
     return NextResponse.json(result);
   } catch (error) {
-    // Log full error server-side; return the actual error message to help
-    // debug webhook issues in production. In a fully hardened deployment the
-    // safeApiError wrapper would be restored.
-    const message = error instanceof Error ? error.message : "Unknown webhook error";
+    // Log full error server-side; return a generic message to the caller so
+    // internal validation details (slug/amount/order_id checks) cannot be used
+    // as a reconnaissance oracle to forge webhooks.
     logger.error(
       "webhook",
       "Pakasir webhook processing failed",
-      { message, stack: error instanceof Error ? error.stack : undefined }
+      {
+        message: error instanceof Error ? error.message : "Unknown webhook error",
+        stack: error instanceof Error ? error.stack : undefined,
+      }
     );
     return NextResponse.json(
-      { error: message },
+      { error: safeApiError(error) },
       { status: 400 }
     );
   }

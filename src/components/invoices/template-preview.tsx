@@ -1,6 +1,6 @@
 "use client";
 
-import { renderDocumentTemplateHtml } from "@/modules/templates/render-template";
+import { renderDocumentHtml } from "@/modules/templates/render-document";
 import { isSupportedDocumentType } from "@/modules/documents/document-type-registry";
 import type { DocumentType } from "@/modules/documents/types";
 
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function TemplatePreview({ htmlTemplate, documentType, content, previewMeta }: Props) {
-  const html = renderDocumentTemplateHtml({
+  const html = renderDocumentHtml({
     htmlTemplate,
     documentType: (isSupportedDocumentType(documentType) ? documentType : "invoice") as DocumentType,
     content,
@@ -25,9 +25,11 @@ export default function TemplatePreview({ htmlTemplate, documentType, content, p
   });
 
   return (
-    <div
-      className="dokmaker-template-preview relative bg-white text-zinc-900"
-      dangerouslySetInnerHTML={{ __html: html }}
+    <iframe
+      title="Preview dokumen"
+      srcDoc={html}
+      sandbox=""
+      className={`block ${documentType === "gocar_receipt" ? "h-[2246px]" : "h-[1123px]"} w-[794px] border-0 bg-white`}
     />
   );
 }

@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Decompiled Gojek APK used only for template reverse-engineering; not
+    // project source and gitignored. Skip so its minified JS doesn't pollute lint.
+    "apk/**",
   ]),
 ]);
 

@@ -1,9 +1,13 @@
 import type { InvoiceContent } from "@/modules/invoices/invoice-content.schema";
-import { renderDocumentTemplateHtml } from "@/modules/templates/render-template";
+import { renderDocumentHtml } from "@/modules/templates/render-document";
 import {
   isSupportedDocumentType,
 } from "@/modules/documents/document-type-registry";
 import type { DocumentType } from "@/modules/documents/types";
+import {
+  gocarReceiptContentSchema,
+} from "@/modules/documents/gocar-receipt-content.schema";
+import { generateGoCarReceiptPdf } from "@/modules/documents/gocar-receipt-pdf";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { pdfStorage } from "@/modules/downloads/pdf-storage";
 
@@ -140,24 +144,12 @@ export function generateInvoiceHtml(
     : "invoice";
 
   if (template?.htmlTemplate) {
-    const bodyHtml = renderDocumentTemplateHtml({
+    return renderDocumentHtml({
       htmlTemplate: template.htmlTemplate,
       documentType,
       content,
       mode: "final",
     });
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-      <meta charset="utf-8">
-</head>
-<body>
-${bodyHtml}
-
-</body>
-</html>
-`.trim();
   }
 
   // Fallback: existing hardcoded layout for backward compatibility.
@@ -291,6 +283,12 @@ export async function generateInvoicePdf(
   content: unknown,
   options: GenerateInvoicePdfOptions = {}
 ): Promise<Buffer> {
+  const effectiveType = options.template?.documentType ?? "invoice";
+  if (effectiveType === "gocar_receipt") {
+    const parsed = gocarReceiptContentSchema.parse(content);
+    return generateGoCarReceiptPdf(parsed);
+  }
+
   const html = generateInvoiceHtml(content, options.template);
   const loadPuppeteer = options.loadPuppeteer ?? loadRuntimePuppeteer;
 

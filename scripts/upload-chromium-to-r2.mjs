@@ -18,7 +18,7 @@
  * Only needs to be re-run when upgrading @sparticuz/chromium.
  */
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { createReadStream, statSync } from "node:fs";
+import { statSync } from "node:fs";
 import { readdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import "dotenv/config";

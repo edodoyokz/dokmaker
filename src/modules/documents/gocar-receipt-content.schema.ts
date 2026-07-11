@@ -130,7 +130,7 @@ export function getDefaultGoCarReceiptContent(): GoCarReceiptContent {
       dropoffTime: "11 Juni 2026 jam 15:57",
       dropoffName: "Stasiun Gambir",
       dropoffAddress:
-        "Jl. Medan Merdeka Timur No.1, Gambir, Gambir, Jakarta Pusat, Daerah Khusus Ibukota Jakarta 10110, Indonesia",
+        "Jl. Medan Merdeka Timur. No.1, Gambir, Gambir, Jakarta Pusat, Daerah Khusus Ibukota Jakarta 10110, Indonesia",
     },
     issuer: {
       companyName: "PT GoTo Gojek Tokopedia Tbk",

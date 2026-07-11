@@ -55,7 +55,6 @@ import { processDownload } from "@/modules/downloads/service";
 import { prisma } from "@/lib/db/prisma";
 import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
-import { GOCAR_RECEIPT_HTML_TEMPLATE } from "@/modules/documents/gocar-receipt-template";
 import {
   pdfStorage,
   buildInvoiceFinalPdfStorageKey,
@@ -435,7 +434,7 @@ describe("processDownload", () => {
     );
   });
 
-  it("uses the canonical GoCar template for final PDF generation", async () => {
+  it("uses the stored template for GoCar final PDF generation so preview and download match", async () => {
     prismaMock.invoice.findUnique.mockResolvedValue(
       mockInvoice({
         documentType: "gocar_receipt",
@@ -452,7 +451,7 @@ describe("processDownload", () => {
       expect.anything(),
       expect.objectContaining({
         template: expect.objectContaining({
-          htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
+          htmlTemplate: "<div>stale-db-template</div>",
           documentType: "gocar_receipt",
         }),
       })

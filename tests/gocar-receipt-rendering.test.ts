@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { GOCAR_RECEIPT_ASSETS } from "@/modules/documents/gocar-receipt-assets";
 import { getDefaultGoCarReceiptContent } from "@/modules/documents/gocar-receipt-content.schema";
 import { GOCAR_RECEIPT_HTML_TEMPLATE } from "@/modules/documents/gocar-receipt-template";
 import { renderDocumentTemplateHtml } from "@/modules/templates/render-template";
@@ -96,6 +97,34 @@ describe("GoCar receipt rendering", () => {
 
     // Two-page structure
     expect(html).toContain("gocar-page-break");
+  });
+
+  it("preserves the original two-page GoCar visual structure", () => {
+    const html = renderDocumentTemplateHtml({
+      htmlTemplate: GOCAR_RECEIPT_HTML_TEMPLATE,
+      documentType: "gocar_receipt",
+      content: getDefaultGoCarReceiptContent(),
+      mode: "final",
+    });
+
+    expect(html.match(/class="gocar-header"/g)).toHaveLength(2);
+    expect(html).toContain('data-gocar-page="1"');
+    expect(html).toContain('data-gocar-page="2"');
+    expect(html).not.toContain("gocar-driver-avatar");
+    expect(html).toContain(
+      "Pasaraya Blok M GD B, 7th Floor, Kebayoran Baru, DKI Jakarta Indonesia 12160"
+    );
+    expect(html).toContain("Jl. Medan Merdeka Timur. No.1");
+  });
+
+  it("embeds every original PDF image and font asset", () => {
+    for (const asset of Object.values(GOCAR_RECEIPT_ASSETS)) {
+      expect(asset).toMatch(/^data:(?:image\/png|font\/woff2);base64,/);
+      expect(GOCAR_RECEIPT_HTML_TEMPLATE).toContain(asset);
+    }
+
+    expect(GOCAR_RECEIPT_HTML_TEMPLATE.match(/<img\b/g)).toHaveLength(15);
+    expect(GOCAR_RECEIPT_HTML_TEMPLATE).not.toContain('aria-label="X"');
   });
 
   it("adds preview watermark only in preview mode", () => {

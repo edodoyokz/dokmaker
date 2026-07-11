@@ -5,15 +5,14 @@ import { debitWallet } from "@/modules/wallet/service";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
 import { PROCESSING_PAYMENT_TIMEOUT_MS } from "./constants";
 import { pdfStorage, buildInvoiceFinalPdfStorageKey } from "./pdf-storage";
-import { GOCAR_RECEIPT_HTML_TEMPLATE } from "@/modules/documents/gocar-receipt-template";
 /**
  * Process final PDF download.
  * Handles paid/unpaid version logic and wallet debit.
  */
-function getFinalHtmlTemplate(invoice: { documentType: string; template: { htmlTemplate: string } }) {
-  return invoice.documentType === "gocar_receipt"
-    ? GOCAR_RECEIPT_HTML_TEMPLATE
-    : invoice.template.htmlTemplate;
+function getFinalHtmlTemplate(invoice: { template: { htmlTemplate: string } }) {
+  // ponytail: keep preview & download identical by using the stored template for both.
+  // Add per-document-type overrides only if the product explicitly wants divergence.
+  return invoice.template.htmlTemplate;
 }
 
 export async function processDownload(

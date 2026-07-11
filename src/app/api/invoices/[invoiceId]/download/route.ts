@@ -57,11 +57,8 @@ export async function GET(
       error instanceof Error ? { message: error.message, stack: error.stack } : undefined,
       undefined
     );
-    // Debug: return actual error message to identify the failure point.
-    // Restore safeApiError(error) once the root cause is fixed.
-    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: message },
+      { error: safeApiError(error) },
       { status: 500 }
     );
   }
