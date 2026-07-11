@@ -4,22 +4,18 @@ import { escapeHtml, formatRupiah } from "@/modules/templates/render-utils";
 export function buildGoCarReceiptRenderContext(
   content: GoCarReceiptContent
 ): Record<string, string> {
-  const paymentTotal =
-    content.payment.tripFee +
-    content.payment.appFee -
-    content.payment.appFeeDiscount;
-
-  // App-fee subtotal for the Faktur page ("Total biaya jasa aplikasi").
-  // Distinct from paymentTotal (the grand total) — see reference receipt page 2.
+  // Same formula as stamp PDF: total always follows line items.
   const appFeeTotal =
     content.payment.appFee - content.payment.appFeeDiscount;
+  const paymentTotal =
+    content.payment.tripFee + appFeeTotal;
 
   return {
     "service.name": escapeHtml(content.service.name),
     "service.orderDate": escapeHtml(content.service.orderDate),
     "service.orderId": escapeHtml(content.service.orderId),
     "customer.name": escapeHtml(content.customer.name),
-    "payment.totalPaid": formatRupiah(content.payment.totalPaid),
+    "payment.totalPaid": formatRupiah(paymentTotal),
     "payment.tripFee": formatRupiah(content.payment.tripFee),
     "payment.appFee": formatRupiah(content.payment.appFee),
     "payment.appFeeDiscount": formatRupiah(content.payment.appFeeDiscount),

@@ -53,7 +53,17 @@ export function GoCarReceiptFormFields({
   const updatePayment = (
     payment: Partial<GoCarReceiptContent["payment"]>
   ) => {
-    onChange({ ...content, payment: { ...content.payment, ...payment } });
+    const next = { ...content.payment, ...payment };
+    // Keep totalPaid in lockstep with line items so PDF rows never disagree.
+    if (
+      payment.tripFee !== undefined ||
+      payment.appFee !== undefined ||
+      payment.appFeeDiscount !== undefined
+    ) {
+      next.totalPaid =
+        next.tripFee + next.appFee - next.appFeeDiscount;
+    }
+    onChange({ ...content, payment: next });
   };
 
   const updateTrip = (trip: Partial<GoCarReceiptContent["trip"]>) => {
@@ -192,20 +202,6 @@ export function GoCarReceiptFormFields({
                 className={inputClass}
               />
             </div>
-            <div className="space-y-1.5">
-              <label className={labelClass}>Total Dibayar (Rp)</label>
-              <input
-                type="number"
-                value={content.payment.totalPaid}
-                onChange={(e) =>
-                  updatePayment({ totalPaid: Number(e.target.value) })
-                }
-                min={0}
-                required
-                disabled={disabled}
-                className={inputClass}
-              />
-            </div>
           </div>
 
           <div className="space-y-1.5">
@@ -224,14 +220,13 @@ export function GoCarReceiptFormFields({
           <div className="mt-4 border-t border-zinc-800/80 pt-4 flex items-center justify-between">
             <div>
               <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">
-                Perhitungan
+                Total dibayar
               </p>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Tarif + Biaya Aplikasi - Diskon
+                Tarif + biaya aplikasi − diskon (otomatis)
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-zinc-500">Total Perhitungan</p>
               <p className="text-2xl font-extrabold tracking-tight text-emerald-400 mt-0.5">
                 Rp{paymentTotal.toLocaleString("id-ID")}
               </p>

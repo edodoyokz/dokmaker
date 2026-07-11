@@ -235,18 +235,18 @@ export async function generateGoCarReceiptPdf(
   const date = content.service.orderDate;
   const orderId = content.service.orderId;
   const name = content.customer.name;
-  const totalPaid = formatRupiah(content.payment.totalPaid);
-  const tripFee = formatRupiah(content.payment.tripFee);
-  const appFee = formatRupiah(content.payment.appFee);
-  const appFeeDiscount = formatRupiah(content.payment.appFeeDiscount);
-  const appFeeTotal = formatRupiah(
-    content.payment.appFee - content.payment.appFeeDiscount
-  );
-  const paymentTotal = formatRupiah(
-    content.payment.tripFee +
-      content.payment.appFee -
-      content.payment.appFeeDiscount
-  );
+  // Single source of truth: line items → totals (ignore stale totalPaid).
+  const tripFeeNum = content.payment.tripFee;
+  const appFeeNum = content.payment.appFee;
+  const appFeeDiscountNum = content.payment.appFeeDiscount;
+  const appFeeTotalNum = appFeeNum - appFeeDiscountNum;
+  const paymentTotalNum = tripFeeNum + appFeeTotalNum;
+  const tripFee = formatRupiah(tripFeeNum);
+  const appFee = formatRupiah(appFeeNum);
+  const appFeeDiscount = formatRupiah(appFeeDiscountNum);
+  const appFeeTotal = formatRupiah(appFeeTotalNum);
+  const paymentTotal = formatRupiah(paymentTotalNum);
+  const totalPaid = paymentTotal; // same figure on receipt + "Dibayar pakai"
   const method = content.payment.method;
 
   // Header date/order sit on green bar. Re-paint plate green (never white),

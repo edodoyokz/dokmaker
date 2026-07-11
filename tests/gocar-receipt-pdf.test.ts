@@ -14,8 +14,10 @@ describe("GoCar receipt PDF stamp", () => {
     const content = getDefaultGoCarReceiptContent();
     content.customer.name = "Budi Santoso";
     content.service.orderId = "RB-9999999-00000001";
-    content.payment.totalPaid = 75_000;
     content.payment.tripFee = 65_000;
+    content.payment.appFee = 10_000;
+    content.payment.appFeeDiscount = 0;
+    content.payment.totalPaid = 999_999; // stale — stamp must ignore this
     content.trip.driverName = "AHMAD RIZKI";
     const pdf = await generateGoCarReceiptPdf(content);
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");

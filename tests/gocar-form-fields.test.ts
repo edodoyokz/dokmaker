@@ -15,9 +15,23 @@ describe("GoCar form content roundtrip", () => {
   it("partial edits still validate when required fields present", () => {
     const content = getDefaultGoCarReceiptContent();
     content.customer.name = "Test User";
-    content.payment.totalPaid = 75000;
+    content.payment.tripFee = 65000;
+    content.payment.appFee = 10000;
+    content.payment.totalPaid = 75000; // trip + app
     content.trip.driverName = "BUDI SANTOSO";
     expect(gocarReceiptContentSchema.safeParse(content).success).toBe(true);
+  });
+
+  it("payment total is tripFee + appFee - discount", () => {
+    const content = getDefaultGoCarReceiptContent();
+    content.payment.tripFee = 65000;
+    content.payment.appFee = 10000;
+    content.payment.appFeeDiscount = 2500;
+    const total =
+      content.payment.tripFee +
+      content.payment.appFee -
+      content.payment.appFeeDiscount;
+    expect(total).toBe(72500);
   });
 
   it("rejects content when required fields are empty", () => {
