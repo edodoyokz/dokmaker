@@ -1,264 +1,320 @@
 import Link from "next/link";
-import { 
-  FileText, 
-  Wallet, 
-  ArrowRight, 
-  CheckCircle2, 
-  Sparkles, 
-  ShieldCheck, 
-  Smartphone, 
-  Zap 
+import {
+  FileText,
+  Wallet,
+  ArrowRight,
+  CheckCircle2,
+  Smartphone,
+  ShieldCheck,
+  Download,
 } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-sans selection:bg-indigo-500 selection:text-white relative overflow-hidden">
-      {/* Background Gradients */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/10 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/10 blur-[120px] pointer-events-none" />
-
-      {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-20" />
-
-      {/* Navigation Header */}
-      <header className="border-b border-zinc-800/80 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+    <div className="min-h-screen bg-zinc-950 font-sans text-zinc-50">
+      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
               <FileText className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            <span className="text-base font-semibold tracking-tight text-zinc-50">
               DokMaker
             </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/login" 
-              className="text-sm font-medium text-zinc-400 hover:text-zinc-100 transition-colors"
+          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/login"
+              className="px-3 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-100"
             >
               Masuk
             </Link>
-            <Link 
-              href="/register" 
-              className="text-sm font-medium px-4 py-2 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-100 transition-all shadow-md"
+            <Link
+              href="/register"
+              className="rounded-lg bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
             >
-              Daftar Gratis
+              Daftar
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center relative z-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-indigo-500/30 bg-indigo-500/5 text-indigo-300 text-xs font-semibold mb-6 animate-pulse">
-          <Sparkles className="h-3 w-3" /> PWA Mobile-First & Instan
-        </div>
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight md:leading-none">
-          Buat Invoice Premium & Profesional{" "}
-          <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            dalam Hitungan Detik
-          </span>
-        </h1>
-        <p className="mt-6 text-zinc-400 max-w-2xl mx-auto text-base md:text-lg">
-          Solusi invoice pintar untuk freelancer dan kreator independen. Draft gratis, preview ber-watermark gratis, dan bayar hanya saat Anda siap men-download PDF final.
-        </p>
-        <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-          <Link 
-            href="/register" 
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold shadow-lg shadow-indigo-500/25 transition-all hover:-translate-y-0.5"
-          >
-            Mulai Sekarang <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link 
-            href="#pricing" 
-            className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 rounded-full border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 hover:border-zinc-700 text-zinc-200 font-medium transition-all"
-          >
-            Lihat Harga
-          </Link>
-        </div>
+      <main>
+        {/* Hero */}
+        <section className="mx-auto max-w-5xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20">
+          <div className="max-w-2xl">
+            <p className="text-sm font-medium text-indigo-400">
+              Dokumen siap pakai · mobile-first
+            </p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-zinc-50 sm:text-5xl sm:leading-tight">
+              Buat invoice & receipt profesional, bayar hanya saat unduh PDF
+            </h1>
+            <p className="mt-4 text-base leading-relaxed text-zinc-400 sm:text-lg">
+              Pilih template platform, isi data, pratinjau gratis berwatermark.
+              PDF final bersih seharga Rp10.000 per versi — unduh ulang versi
+              yang sama gratis.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                href="/register"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-500"
+              >
+                Mulai gratis <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="#harga"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-800 px-5 text-sm font-medium text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900"
+              >
+                Lihat harga
+              </Link>
+            </div>
+          </div>
 
-        {/* Feature Badges for Freelancers */}
-        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
-          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
-            <Smartphone className="h-6 w-6 text-indigo-400 mb-2" />
-            <h3 className="font-semibold text-zinc-200">Mobile-First PWA</h3>
-            <p className="text-xs text-zinc-500 mt-1">Buat invoice langsung dari smartphone, di mana saja.</p>
+          <div className="mt-12 grid gap-3 sm:grid-cols-3">
+            {[
+              {
+                icon: Smartphone,
+                title: "Mobile-first PWA",
+                body: "Alur utama dirancang untuk layar HP 360px.",
+              },
+              {
+                icon: Download,
+                title: "Preview gratis",
+                body: "Draf & pratinjau berwatermark tanpa potong saldo.",
+              },
+              {
+                icon: Wallet,
+                title: "Bayar per unduhan",
+                body: "Isi dompet, unduh PDF final kapan saja.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+              >
+                <item.icon className="h-5 w-5 text-zinc-400" />
+                <h2 className="mt-3 text-sm font-semibold text-zinc-100">
+                  {item.title}
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                  {item.body}
+                </p>
+              </div>
+            ))}
           </div>
-          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
-            <Zap className="h-6 w-6 text-purple-400 mb-2" />
-            <h3 className="font-semibold text-zinc-200">Instan & Mudah</h3>
-            <p className="text-xs text-zinc-500 mt-1">Pilih template, isi data, dan invoice Anda langsung siap.</p>
-          </div>
-          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
-            <Wallet className="h-6 w-6 text-pink-400 mb-2" />
-            <h3 className="font-semibold text-zinc-200">Deposit Dompet</h3>
-            <p className="text-xs text-zinc-500 mt-1">Top up saldo dengan mudah via Pakasir Payment Gateway.</p>
-          </div>
-          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
-            <ShieldCheck className="h-6 w-6 text-emerald-400 mb-2" />
-            <h3 className="font-semibold text-zinc-200">Aman & Terlindungi</h3>
-            <p className="text-xs text-zinc-500 mt-1">File PDF tersimpan aman dan diunduh menggunakan signed URL.</p>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Interactive Mockup section */}
-      <section className="max-w-5xl mx-auto px-6 pb-24 relative z-10">
-        <div className="relative rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 shadow-indigo-500/5 overflow-hidden">
-          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-60" />
-          <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80 mb-4">
-            <div className="h-3 w-3 rounded-full bg-rose-500/80" />
-            <div className="h-3 w-3 rounded-full bg-amber-500/80" />
-            <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
-            <span className="text-xs text-zinc-500 ml-2 font-mono">dokmaker.app/dashboard</span>
+        {/* How it works */}
+        <section className="border-t border-zinc-900 bg-zinc-950">
+          <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-50">
+              Cara kerja
+            </h2>
+            <p className="mt-2 max-w-xl text-sm text-zinc-400">
+              Empat langkah. Tanpa langganan bulanan.
+            </p>
+            <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  n: "1",
+                  t: "Pilih template",
+                  d: "Invoice, GoCar receipt, dan template resmi lain.",
+                },
+                {
+                  n: "2",
+                  t: "Isi data",
+                  d: "Form modular di HP. Simpan → langsung pratinjau.",
+                },
+                {
+                  n: "3",
+                  t: "Pratinjau",
+                  d: "Draft berwatermark — jujur, bukan file final.",
+                },
+                {
+                  n: "4",
+                  t: "Unduh PDF",
+                  d: "Potong saldo Rp10.000 / versi. Sama versi = gratis.",
+                },
+              ].map((step) => (
+                <li
+                  key={step.n}
+                  className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-indigo-600/20 text-xs font-semibold text-indigo-300">
+                    {step.n}
+                  </span>
+                  <h3 className="mt-3 text-sm font-semibold text-zinc-100">
+                    {step.t}
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                    {step.d}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </div>
-          <div className="aspect-[16/9] w-full bg-zinc-950 rounded-lg border border-zinc-900 flex flex-col justify-center items-center p-6 text-center">
-            <div className="max-w-md space-y-4">
-              <FileText className="h-12 w-12 text-zinc-700 mx-auto animate-bounce" />
-              <h4 className="text-lg font-bold text-zinc-300">Editor Invoice Responsif</h4>
-              <p className="text-sm text-zinc-500">
-                Formulir modular yang otomatis menghitung total, PPN, dan menyusun tata letak PDF secara presisi untuk kenyamanan klien Anda.
+        </section>
+
+        {/* Pricing */}
+        <section id="harga" className="border-t border-zinc-900">
+          <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-zinc-50">
+              Harga transparan
+            </h2>
+            <p className="mt-2 max-w-xl text-sm text-zinc-400">
+              Tidak ada biaya berlangganan. Bayar hanya saat butuh PDF final.
+            </p>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              <div className="flex flex-col rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  Draf & pratinjau
+                </h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Desain dan cek layout tanpa biaya.
+                </p>
+                <p className="mt-4 text-3xl font-semibold text-zinc-50">Rp0</p>
+                <ul className="mt-4 flex-1 space-y-2 text-sm text-zinc-400">
+                  <Li>Draf tak terbatas</Li>
+                  <Li>Preview berwatermark</Li>
+                  <Li>Template platform aktif</Li>
+                </ul>
+                <Link
+                  href="/register"
+                  className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-700 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                >
+                  Mulai gratis
+                </Link>
+              </div>
+
+              <div className="relative flex flex-col rounded-xl border border-indigo-500/50 bg-zinc-900 p-5">
+                <span className="absolute -top-2.5 right-4 rounded-full bg-indigo-600 px-2 py-0.5 text-xs font-medium text-white">
+                  Utama
+                </span>
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  PDF final
+                </h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  File bersih siap kirim ke klien.
+                </p>
+                <p className="mt-4 text-3xl font-semibold text-zinc-50">
+                  Rp10.000
+                  <span className="ml-1 text-sm font-normal text-zinc-500">
+                    / versi
+                  </span>
+                </p>
+                <ul className="mt-4 flex-1 space-y-2 text-sm text-zinc-300">
+                  <Li accent>PDF tanpa watermark</Li>
+                  <Li accent>Unduh ulang versi sama gratis</Li>
+                  <Li accent>Edit = versi baru (bayar lagi)</Li>
+                  <Li accent>Penyimpanan aman, unduh terotorisasi</Li>
+                </ul>
+                <Link
+                  href="/register"
+                  className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-500"
+                >
+                  Coba sekarang
+                </Link>
+              </div>
+
+              <div className="flex flex-col rounded-xl border border-zinc-800 bg-zinc-900 p-5">
+                <h3 className="text-sm font-semibold text-zinc-100">
+                  Top up dompet
+                </h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Isi saldo via Pakasir (QRIS, VA, dll).
+                </p>
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2">
+                    <span className="text-xs text-zinc-400">Paket 50rb</span>
+                    <span className="text-sm font-semibold text-zinc-100">
+                      Rp50.000
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2">
+                    <span className="text-xs text-zinc-400">Paket 100rb</span>
+                    <span className="text-sm font-semibold text-zinc-100">
+                      Rp100.000
+                    </span>
+                  </div>
+                </div>
+                <ul className="mt-4 flex-1 space-y-2 text-sm text-zinc-400">
+                  <Li>Setara ±5 / ±10 unduhan final</Li>
+                  <Li>Saldo tidak hangus</Li>
+                  <Li>Pembayaran lewat Pakasir</Li>
+                </ul>
+                <Link
+                  href="/register"
+                  className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-700 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
+                >
+                  Isi saldo
+                </Link>
+              </div>
+            </div>
+
+            <p className="mt-6 flex items-start gap-2 text-xs text-zinc-500">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-zinc-600" />
+              Preview sengaja berwatermark (deterrence). PDF final hanya lewat
+              unduhan berbayar / re-download versi lunas.
+            </p>
+          </div>
+        </section>
+
+        {/* Bottom CTA */}
+        <section className="border-t border-zinc-900">
+          <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-4 px-4 py-14 sm:flex-row sm:items-center sm:px-6">
+            <div>
+              <h2 className="text-xl font-semibold text-zinc-50">
+                Siap coba di HP?
+              </h2>
+              <p className="mt-1 text-sm text-zinc-400">
+                Daftar gratis. Butuh waktu ±2 menit sampai draf pertama.
               </p>
-              <div className="inline-flex gap-2 p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 font-mono">
-                Rp10.000 / Download • Unpaid Version Edit = New Snapshot
-              </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="max-w-6xl mx-auto px-6 py-20 border-t border-zinc-900 relative z-10">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold tracking-tight">Skema Harga yang Transparan</h2>
-          <p className="mt-4 text-zinc-400">
-            Tanpa biaya bulanan atau komitmen jangka panjang. Bayar hanya ketika Anda mengunduh dokumen versi final yang siap dikirim.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
-          {/* Card 1: Draft & Preview */}
-          <div className="p-8 rounded-3xl bg-zinc-900/30 border border-zinc-800/80 flex flex-col justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-zinc-300">Draft & Preview</h3>
-              <p className="mt-2 text-sm text-zinc-500">Desain dan sesuaikan invoice sesuka hati Anda tanpa biaya.</p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold text-zinc-100">Rp 0</span>
-              </div>
-              <ul className="mt-6 space-y-3 text-sm text-zinc-400">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0" />
-                  <span>Buat draf tak terbatas</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0" />
-                  <span>Preview ber-watermark di browser</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-indigo-500 shrink-0" />
-                  <span>Akses template platform aktif</span>
-                </li>
-              </ul>
-            </div>
-            <Link 
-              href="/register" 
-              className="mt-8 w-full py-3 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-center text-sm font-medium text-zinc-300 transition-colors"
+            <Link
+              href="/register"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white hover:bg-indigo-500"
             >
-              Mulai Gratis
+              Buat akun <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+        </section>
+      </main>
 
-          {/* Card 2: Premium Download */}
-          <div className="p-8 rounded-3xl bg-zinc-900/60 border-2 border-indigo-500/80 flex flex-col justify-between relative shadow-xl shadow-indigo-500/5">
-            <div className="absolute top-0 right-6 -translate-y-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-[10px] font-bold tracking-wider uppercase text-white shadow-md">
-              Terpopuler
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-zinc-200">Download PDF Final</h3>
-              <p className="mt-2 text-sm text-zinc-400">Unduh invoice resmi berformat PDF bersih tanpa watermark.</p>
-              <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold text-white">Rp 10.000</span>
-                <span className="text-xs text-zinc-500">/ versi invoice</span>
-              </div>
-              <ul className="mt-6 space-y-3 text-sm text-zinc-300">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Format PDF kualitas cetak tinggi</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Bebas watermark & pelindung copy</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span><strong>Download ulang gratis</strong> untuk versi yang sama</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>Penyimpanan aman di cloud</span>
-                </li>
-              </ul>
-            </div>
-            <Link 
-              href="/register" 
-              className="mt-8 w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-center text-sm font-semibold text-white transition-all shadow-md shadow-indigo-500/10"
-            >
-              Coba Sekarang
-            </Link>
-          </div>
-
-          {/* Card 3: Top Up Packages */}
-          <div className="p-8 rounded-3xl bg-zinc-900/30 border border-zinc-800/80 flex flex-col justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-zinc-300">Top Up Saldo Dompet</h3>
-              <p className="mt-2 text-sm text-zinc-500">Isi saldo akun Anda untuk download instan kapan saja.</p>
-              <div className="mt-6 flex flex-col gap-2">
-                <div className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 flex justify-between items-center">
-                  <span className="text-xs font-semibold text-zinc-400">Paket Hemat</span>
-                  <span className="text-sm font-bold text-zinc-200">Rp 50.000</span>
-                </div>
-                <div className="px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 flex justify-between items-center">
-                  <span className="text-xs font-semibold text-zinc-400">Paket Premium</span>
-                  <span className="text-sm font-bold text-zinc-200">Rp 100.000</span>
-                </div>
-              </div>
-              <ul className="mt-6 space-y-3 text-sm text-zinc-400">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
-                  <span>Top up instan via <strong>Pakasir</strong></span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
-                  <span>Dukung QRIS, Virtual Account, dll</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-purple-500 shrink-0" />
-                  <span>Saldo tidak hangus / kadaluarsa</span>
-                </li>
-              </ul>
-            </div>
-            <Link 
-              href="/register" 
-              className="mt-8 w-full py-3 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 text-center text-sm font-medium text-zinc-300 transition-colors"
-            >
-              Isi Saldo
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-zinc-900 bg-zinc-950 py-12 relative z-10 text-center text-zinc-500 text-xs">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <footer className="border-t border-zinc-900 py-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-3 px-4 text-xs text-zinc-500 sm:flex-row sm:items-center sm:px-6">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center">
+            <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-600">
               <FileText className="h-3 w-3 text-white" />
             </div>
-            <span className="font-bold text-sm text-zinc-300">DokMaker</span>
+            <span className="font-medium text-zinc-400">DokMaker</span>
           </div>
-          <p>© {new Date().getFullYear()} DokMaker. Hak Cipta Dilindungi Undang-Undang. Integrasi Pembayaran oleh Pakasir.</p>
+          <p>
+            © {new Date().getFullYear()} DokMaker · Pembayaran via Pakasir
+          </p>
         </div>
       </footer>
     </div>
+  );
+}
+
+function Li({
+  children,
+  accent,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <li className="flex items-start gap-2">
+      <CheckCircle2
+        className={
+          accent
+            ? "mt-0.5 h-4 w-4 shrink-0 text-emerald-400"
+            : "mt-0.5 h-4 w-4 shrink-0 text-zinc-600"
+        }
+      />
+      <span>{children}</span>
+    </li>
   );
 }

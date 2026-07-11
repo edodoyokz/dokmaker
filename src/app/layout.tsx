@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DokMaker — Invoice Profesional dalam Hitungan Menit",
+  title: "DokMaker — Invoice & receipt profesional",
   description:
-    "Buat invoice profesional dari template siap pakai. Preview gratis, bayar hanya saat download PDF final.",
+    "Buat dokumen dari template platform. Pratinjau gratis berwatermark, PDF final Rp10.000 per versi.",
   applicationName: "DokMaker",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
