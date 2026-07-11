@@ -41,7 +41,8 @@ describe("PdfStampPreview", () => {
 describe("PreviewClient UX", () => {
   it("is mobile-first with sticky CTA and honest draft copy", () => {
     expect(previewClient).toContain("FINAL_DOWNLOAD_PRICE");
-    expect(previewClient).toContain("fixed inset-x-0 bottom-0");
+    // Above app bottom nav (h-16), not buried under it at bottom-0.
+    expect(previewClient).toContain("fixed inset-x-0 bottom-16");
     expect(previewClient).toContain("draft berwatermark");
     expect(previewClient).toContain("bukan file final");
     expect(previewClient).not.toContain("text-zinc-350");

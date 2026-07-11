@@ -96,16 +96,30 @@ export default function PreviewClient({
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${displayTitle}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
+      const filename = `${displayTitle}.pdf`;
+      // iOS Safari often ignores <a download> for blobs — open the PDF instead.
+      const isIos =
+        /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (isIos) {
+        const opened = window.open(url, "_blank");
+        if (!opened) window.location.assign(url);
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // Revoke after the browser has started the download.
+        window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+      }
 
       // Trust server as source of truth — no optimistic −Rp10.000.
-      if (status !== "paid") setStatus("paid");
+      if (status !== "paid") {
+        setStatus("paid");
+        setBalance((b) => Math.max(0, b - FINAL_DOWNLOAD_PRICE));
+      }
       router.refresh();
     } catch (err) {
       setError(
@@ -163,7 +177,8 @@ export default function PreviewClient({
   })();
 
   return (
-    <div className="space-y-4 pb-28 sm:space-y-6 sm:pb-12">
+    // pb clears sticky buy bar (~7rem) + app bottom nav (4rem) on phones.
+    <div className="space-y-4 pb-44 sm:space-y-6 lg:pb-12">
       <div className="flex items-center justify-between gap-3">
         <Link
           href="/app/invoices"
@@ -240,15 +255,15 @@ export default function PreviewClient({
         </div>
       </div>
 
-      {/* Mobile sticky checkout */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden safe-area-pb">
+      {/* Mobile sticky checkout — sits above app bottom nav (h-16), not under it. */}
+      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden">
         <div className="mx-auto flex max-w-lg flex-col gap-2">
-          <div className="flex items-center justify-between text-[11px] text-zinc-400">
-            <span className="inline-flex items-center gap-1">
-              <Wallet className="h-3.5 w-3.5 text-indigo-400" />
+          <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-400">
+            <span className="inline-flex min-w-0 items-center gap-1 truncate">
+              <Wallet className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
               {formatIdr(balance)}
             </span>
-            <span>
+            <span className="shrink-0">
               {isPaid ? (
                 <span className="font-semibold text-emerald-400">Lunas</span>
               ) : (
@@ -259,7 +274,9 @@ export default function PreviewClient({
             </span>
           </div>
           {error && (
-            <p className="text-[11px] font-medium text-rose-400">{error}</p>
+            <p className="text-[11px] font-medium leading-snug text-rose-400">
+              {error}
+            </p>
           )}
           {cta}
           <Link
