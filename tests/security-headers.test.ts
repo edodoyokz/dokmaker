@@ -2,26 +2,45 @@ import { describe, expect, it } from "vitest";
 import config from "../next.config";
 
 describe("security headers", () => {
-  it("defines headers for all routes", async () => {
+  it("defines headers for all routes plus same-origin PDF preview", async () => {
     expect(typeof config.headers).toBe("function");
     const headers = await (config.headers as () => Promise<
       { source: string; headers: { key: string; value: string }[] }[]
     >)();
 
-    expect(headers).toHaveLength(1);
-    expect(headers[0].source).toBe("/(.*)");
+    expect(headers).toHaveLength(2);
 
-    const entries = headers[0].headers;
-    const find = (key: string) => entries.find((h) => h.key === key)?.value;
+    const preview = headers.find((h) =>
+      h.source.includes("/api/invoices/")
+    );
+    const rest = headers.find((h) => h.source.includes("(?!"));
+    expect(preview).toBeDefined();
+    expect(rest).toBeDefined();
 
-    expect(find("X-Frame-Options")).toBe("DENY");
-    expect(find("X-Content-Type-Options")).toBe("nosniff");
-    expect(find("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
-    expect(find("Permissions-Policy")).toBe(
+    const find =
+      (entries: { key: string; value: string }[]) => (key: string) =>
+        entries.find((h) => h.key === key)?.value;
+
+    const previewFind = find(preview!.headers);
+    expect(previewFind("X-Frame-Options")).toBe("SAMEORIGIN");
+    expect(previewFind("Content-Security-Policy")).toContain(
+      "frame-ancestors 'self'"
+    );
+    expect(previewFind("Content-Security-Policy")).not.toContain(
+      "frame-ancestors 'none'"
+    );
+
+    const restFind = find(rest!.headers);
+    expect(restFind("X-Frame-Options")).toBe("DENY");
+    expect(restFind("X-Content-Type-Options")).toBe("nosniff");
+    expect(restFind("Referrer-Policy")).toBe(
+      "strict-origin-when-cross-origin"
+    );
+    expect(restFind("Permissions-Policy")).toBe(
       "camera=(), microphone=(), geolocation=()"
     );
 
-    const csp = find("Content-Security-Policy");
+    const csp = restFind("Content-Security-Policy");
     expect(csp).toBeDefined();
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");

@@ -6,22 +6,26 @@ import type { NextConfig } from "next";
  *   for some runtime inline scripts; tighten in a follow-up hardening pass once
  *   a nonce-based policy is in place.
  * - connect-src whitelists Supabase (auth/DB) and Pakasir (payment redirect API).
+ * - frame-ancestors 'none' everywhere except the stamp-preview PDF endpoint,
+ *   which must be iframe-able same-origin.
  */
-const csp = [
+const cspDirectives = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "connect-src 'self' https://*.supabase.co https://app.pakasir.com",
-  "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-].join("; ");
+];
 
-const securityHeaders = [
-  { key: "Content-Security-Policy", value: csp },
-  { key: "X-Frame-Options", value: "DENY" },
+const cspDenyFraming = [...cspDirectives, "frame-ancestors 'none'"].join("; ");
+const cspSameOriginFrame = [...cspDirectives, "frame-ancestors 'self'"].join(
+  "; "
+);
+
+const commonSecurityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
@@ -35,6 +39,19 @@ const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
 ];
 
+const securityHeaders = [
+  { key: "Content-Security-Policy", value: cspDenyFraming },
+  { key: "X-Frame-Options", value: "DENY" },
+  ...commonSecurityHeaders,
+];
+
+/** PDF stamp draft preview is embedded in an iframe on the invoice preview page. */
+const previewPdfSecurityHeaders = [
+  { key: "Content-Security-Policy", value: cspSameOriginFrame },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  ...commonSecurityHeaders,
+];
+
 const nextConfig: NextConfig = {
   // @sparticuz/chromium and puppeteer-core must not be bundled by webpack;
   // resolve them from node_modules at runtime. The chromium binary itself
@@ -42,8 +59,14 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   async headers() {
     return [
+      // More specific source first — must not inherit frame-ancestors 'none'.
       {
-        source: "/(.*)",
+        source: "/api/invoices/:invoiceId/preview",
+        headers: previewPdfSecurityHeaders,
+      },
+      {
+        // Everything else (exclude stamp preview so headers don't merge-deny).
+        source: "/((?!api/invoices/.*/preview$).*)",
         headers: securityHeaders,
       },
     ];

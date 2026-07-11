@@ -78,9 +78,13 @@ export async function GET(
     return new NextResponse(pdf as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": "inline; filename=\"gocar-preview.pdf\"",
+        "Content-Disposition": 'inline; filename="gocar-preview.pdf"',
         "Cache-Control": "no-store, must-revalidate",
         "X-Dokmaker-Preview": "watermarked",
+        // Same-origin iframe on the draft preview page (overrides clickjacking DENY).
+        "Content-Security-Policy":
+          "default-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'",
+        "X-Frame-Options": "SAMEORIGIN",
       },
     });
   } catch (error) {
