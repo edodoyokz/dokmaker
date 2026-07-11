@@ -134,4 +134,6 @@ export const RATE_LIMITS = {
   AUTH: { limit: 5, windowSeconds: 900 },
   /** Place autocomplete: max 30 per minute (Nominatim-friendly) */
   PLACES: { limit: 30, windowSeconds: 60 },
+  /** Draft preview PDF: max 30 per 5 minutes */
+  PREVIEW: { limit: 30, windowSeconds: 300 },
 } as const;

@@ -1,19 +1,36 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import fontkit from "@pdf-lib/fontkit";
-import { PDFDocument, type PDFFont, type PDFPage, rgb } from "pdf-lib";
+import {
+  PDFDocument,
+  degrees,
+  type PDFFont,
+  type PDFPage,
+  rgb,
+} from "pdf-lib";
 import type { GoCarReceiptContent } from "./gocar-receipt-content.schema";
 import { formatRupiah } from "@/modules/templates/render-utils";
 
 /**
- * Final PDF for gocar_receipt: stamp dynamic fields onto the original
+ * Final/preview PDF for gocar_receipt: stamp dynamic fields onto the original
  * wkhtmltopdf GoCar receipt base so layout/icons match 1:1.
  *
- * Preview still uses HTML (gocar-receipt-template.ts).
+ * Preview uses the same stamp path with a PREVIEW watermark (not HTML).
  *
  * Font note: full DejaVu metrics are ~1.167× wider than the CSS/wkhtml
  * subset used in the reference PDF. Draw size = CSS size × FONT_SCALE.
  */
+
+export type GoCarReceiptPdfWatermark = {
+  email: string;
+  timestamp: string;
+  versionId?: string;
+};
+
+export type GoCarReceiptPdfOptions = {
+  /** When set, stamp a deterrent PREVIEW watermark (never omit for draft preview). */
+  watermark?: GoCarReceiptPdfWatermark;
+};
 
 const PAGE_W = 595;
 const PAGE_H = 842;
@@ -130,12 +147,78 @@ function isReferenceSample(content: GoCarReceiptContent): boolean {
   );
 }
 
+async function applyPreviewWatermark(
+  doc: PDFDocument,
+  watermark: GoCarReceiptPdfWatermark
+): Promise<void> {
+  doc.registerFontkit(fontkit);
+  const font = await doc.embedFont(loadAsset("fonts/DejaVuSans-Bold.ttf"));
+  const metaFont = await doc.embedFont(loadAsset("fonts/DejaVuSans.ttf"));
+  const red = rgb(0.86, 0.15, 0.15);
+  const label = [watermark.email, watermark.timestamp]
+    .filter(Boolean)
+    .join(" · ")
+    .slice(0, 80);
+
+  for (const page of doc.getPages()) {
+    const { width, height } = page.getSize();
+    // Light tiled diagonal PREVIEW marks (deterrence, not screenshot-proof).
+    for (let y = 80; y < height; y += 160) {
+      for (let x = 40; x < width; x += 220) {
+        page.drawText("PREVIEW", {
+          x,
+          y,
+          size: 28,
+          font,
+          color: red,
+          rotate: degrees(-30),
+          opacity: 0.12,
+        });
+      }
+    }
+    if (label) {
+      const size = 8;
+      const tw = metaFont.widthOfTextAtSize(label, size);
+      const padX = 6;
+      const padY = 4;
+      const boxW = tw + padX * 2;
+      const boxH = size + padY * 2;
+      const bx = Math.max(8, width - boxW - 8);
+      const by = height - boxH - 8;
+      page.drawRectangle({
+        x: bx,
+        y: by,
+        width: boxW,
+        height: boxH,
+        color: rgb(0.86, 0.15, 0.15),
+        opacity: 0.92,
+        borderWidth: 0,
+      });
+      page.drawText(label, {
+        x: bx + padX,
+        y: by + padY,
+        size,
+        font: metaFont,
+        color: rgb(1, 1, 1),
+      });
+    }
+  }
+}
+
 export async function generateGoCarReceiptPdf(
-  content: GoCarReceiptContent
+  content: GoCarReceiptContent,
+  options: GoCarReceiptPdfOptions = {}
 ): Promise<Buffer> {
-  // Sample payload == original receipt → serve wkhtml PDF as-is (pixel-identical).
-  if (isReferenceSample(content)) {
+  // Sample payload == original receipt → serve wkhtml PDF as-is (pixel-identical),
+  // unless a preview watermark is required.
+  if (isReferenceSample(content) && !options.watermark) {
     return loadAsset("receipt-base-source.pdf");
+  }
+
+  if (isReferenceSample(content) && options.watermark) {
+    const doc = await PDFDocument.load(loadAsset("receipt-base-source.pdf"));
+    await applyPreviewWatermark(doc, options.watermark);
+    return Buffer.from(await doc.save());
   }
 
   const doc = await PDFDocument.load(loadAsset("receipt-base.pdf"));
@@ -302,6 +385,10 @@ export async function generateGoCarReceiptPdf(
       });
       iy += 10.4;
     }
+  }
+
+  if (options.watermark) {
+    await applyPreviewWatermark(doc, options.watermark);
   }
 
   const bytes = await doc.save();

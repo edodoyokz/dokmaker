@@ -135,6 +135,7 @@ export default function PreviewClient({
             <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-zinc-900 bg-white [-webkit-overflow-scrolling:touch]">
               <div className="w-[794px] max-w-none">
                 <TemplatePreview
+                  invoiceId={invoiceId}
                   htmlTemplate={htmlTemplate}
                   documentType={documentType}
                   content={content}

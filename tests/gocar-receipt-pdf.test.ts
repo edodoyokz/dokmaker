@@ -34,4 +34,18 @@ describe("GoCar receipt PDF stamp", () => {
     });
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
   });
+
+  it("can stamp a PREVIEW watermark without changing the clean sample path", async () => {
+    const clean = await generateGoCarReceiptPdf(getDefaultGoCarReceiptContent());
+    const preview = await generateGoCarReceiptPdf(getDefaultGoCarReceiptContent(), {
+      watermark: {
+        email: "user@example.com",
+        timestamp: "11 Jul 2026, 12.00",
+        versionId: "ver_test",
+      },
+    });
+    expect(preview.subarray(0, 5).toString("utf8")).toBe("%PDF-");
+    expect(preview.equals(clean)).toBe(false);
+    expect(preview.length).toBeGreaterThan(clean.length - 5_000);
+  });
 });
