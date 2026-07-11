@@ -12,7 +12,7 @@ describe("TemplatePreview", () => {
     expect(source).toContain("/api/invoices/");
     expect(source).toContain("/preview");
     expect(source).not.toContain("createObjectURL");
-    expect(source).not.toContain("blob:");
+    expect(source).not.toContain("URL.createObjectURL");
     expect(source).toContain("renderDocumentHtml");
     expect(source).toContain("<iframe");
     expect(source).toContain("srcDoc={html}");

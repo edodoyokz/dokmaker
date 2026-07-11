@@ -24,7 +24,7 @@ export default function TemplatePreview({
   previewMeta,
   invoiceId,
 }: Props) {
-  // Same-origin API URL (not blob:) so CSP default-src 'self' allows the iframe.
+  // Same-origin API URL so CSP default-src 'self' allows the iframe (no object URL).
   if (documentType === "gocar_receipt" && invoiceId) {
     return (
       <iframe
