@@ -27,7 +27,7 @@ export default async function NewInvoicePage({
             <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Katalog Template
           </Link>
         </div>
-        <div className="p-5 rounded-2xl border border-zinc-800 bg-zinc-900/30 flex items-start gap-3">
+        <div className="p-5 rounded-xl border border-zinc-800 bg-zinc-900/30 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
           <div>
             <h1 className="text-lg font-bold text-zinc-100">Template Belum Dipilih</h1>

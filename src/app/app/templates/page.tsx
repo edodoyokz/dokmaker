@@ -17,18 +17,17 @@ export default async function TemplatesPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-zinc-100">
-          Pilih template <Layers className="h-5 w-5 text-indigo-400" />
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
+          Pilih template
         </h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="text-sm text-zinc-400">
           Template resmi platform — invoice, receipt, dan lainnya.
         </p>
       </div>
 
       {templates.length === 0 ? (
-        <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl">
+        <Card className="border-zinc-800 bg-zinc-900/30 rounded-xl">
           <CardContent className="py-12 text-center flex flex-col items-center justify-center">
             <Layers className="h-10 w-10 text-zinc-700 mb-2" />
             <p className="text-sm font-semibold text-zinc-300">Belum Ada Template Tersedia</p>
@@ -40,7 +39,7 @@ export default async function TemplatesPage() {
           {templates.map((template) => (
             <Card 
               key={template.id} 
-              className="overflow-hidden border-zinc-800/80 bg-zinc-900/40 hover:border-indigo-500/50 backdrop-blur-md rounded-2xl transition-all hover:-translate-y-1 group relative flex flex-col justify-between"
+              className="overflow-hidden border-zinc-800/80 bg-zinc-900/40 hover:border-indigo-500/50 rounded-xl transition-all hover:-translate-y-1 group relative flex flex-col justify-between"
             >
               {/* Card Preview Image */}
               <div className="aspect-[4/3] bg-zinc-950/80 flex items-center justify-center relative border-b border-zinc-900 overflow-hidden">
@@ -56,7 +55,7 @@ export default async function TemplatesPage() {
                   />
                 ) : (
                   // Document Fallback Mockup
-                  <div className="w-[80%] h-[80%] bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-2.5 opacity-70 group-hover:opacity-95 group-hover:scale-[1.02] transition-all duration-300 shadow-xl">
+                  <div className="w-[80%] h-[80%] bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-2.5 opacity-70 group-hover:opacity-95 group-hover:scale-[1.02] transition-all duration-300">
                     <div className="flex justify-between items-start">
                       <div className="h-4 w-12 rounded bg-indigo-500/20" />
                       <div className="h-3 w-8 rounded bg-zinc-800" />
@@ -78,7 +77,7 @@ export default async function TemplatesPage() {
 
                 {/* Overlaid Badge */}
                 <div className="absolute top-3 right-3 z-20">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-zinc-800 text-[10px] font-bold text-indigo-400 backdrop-blur-sm">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-zinc-800 text-xs font-medium text-indigo-400 backdrop-blur-sm">
                     <Sparkles className="h-3 w-3" /> Aktif
                   </span>
                 </div>
@@ -97,7 +96,7 @@ export default async function TemplatesPage() {
 
                 <div className="mt-5 pt-4 border-t border-zinc-800/60 flex items-center justify-between">
                   <div>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Biaya Cetak</span>
+                    <span className="text-xs text-zinc-500">Biaya Cetak</span>
                     <p className="text-xs font-semibold text-zinc-200">Rp10.000 / Final PDF</p>
                   </div>
                   

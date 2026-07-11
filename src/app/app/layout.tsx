@@ -52,24 +52,24 @@ export default async function AppLayout({
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-950 font-sans text-zinc-100 selection:bg-indigo-500 selection:text-white">
-      <header className="sticky top-0 z-50 hidden border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md md:block">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-          <div className="flex items-center gap-10">
+    <div className="flex min-h-screen flex-col bg-zinc-950 font-sans text-zinc-100">
+      <header className="sticky top-0 z-50 hidden border-b border-zinc-800 bg-zinc-950 md:block">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <div className="flex items-center gap-8">
             <Link href="/app" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/20">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
                 <FileText className="h-4 w-4 text-white" />
               </div>
-              <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">
+              <span className="text-base font-semibold tracking-tight text-zinc-50">
                 DokMaker
               </span>
             </Link>
-            <nav className="flex items-center gap-1.5">
+            <nav className="flex items-center gap-1">
               {navigation.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-zinc-400 transition-all hover:bg-zinc-900 hover:text-zinc-100"
+                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                 >
                   {item.name}
                 </Link>
@@ -80,13 +80,13 @@ export default async function AppLayout({
         </div>
       </header>
 
-      <header className="sticky top-0 z-50 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md md:hidden">
+      <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950 md:hidden">
         <div className="flex h-14 items-center justify-between px-4">
           <Link href="/app" className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded bg-gradient-to-tr from-indigo-500 to-purple-500">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600">
               <FileText className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-base font-bold tracking-tight text-transparent">
+            <span className="text-sm font-semibold tracking-tight text-zinc-50">
               DokMaker
             </span>
           </Link>

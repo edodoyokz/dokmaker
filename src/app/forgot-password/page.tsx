@@ -37,10 +37,9 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-zinc-950 px-4 font-sans selection:bg-indigo-500 selection:text-white">
-      <div className="pointer-events-none absolute left-[20%] top-[20%] h-[300px] w-[300px] rounded-full bg-indigo-500/10 blur-[100px]" />
-      <div className="z-10 w-full max-w-md space-y-6">
+            <div className="z-10 w-full max-w-md space-y-6">
         <div className="flex flex-col items-center space-y-2 text-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600">
             <FileText className="h-5 w-5 text-white" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-zinc-100">
@@ -51,7 +50,7 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <div className="relative rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-8 shadow-2xl backdrop-blur-md">
+        <div className="relative rounded-xl border border-zinc-800 bg-zinc-900 p-6">
           {sent ? (
             <div className="space-y-4 text-center">
               <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-400" />
@@ -74,7 +73,7 @@ export default function ForgotPasswordPage() {
               <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="block text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                  className="block text-xs font-medium text-zinc-400"
                 >
                   Alamat Email
                 </label>
@@ -106,7 +105,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+                className="dm-cta w-full gap-2"
               >
                 {loading ? "Mengirim…" : "Kirim tautan reset"}
               </button>

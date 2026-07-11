@@ -27,7 +27,7 @@ const inputClass =
   "block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all";
 
 const labelClass =
-  "block text-xs font-semibold text-zinc-400 uppercase tracking-wider";
+  "block text-xs font-semibold text-zinc-400 ";
 
 export function LocationAutocomplete({
   name,

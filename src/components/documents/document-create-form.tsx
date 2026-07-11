@@ -129,7 +129,7 @@ export function DocumentCreateForm({
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-4 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+            className="dm-cta w-full gap-2"
           >
             <Save className="h-4 w-4" />
             {loading ? "Menyimpan…" : "Simpan & pratinjau"}
@@ -137,11 +137,11 @@ export function DocumentCreateForm({
         </div>
 
         {/* Mobile sticky save — bottom nav is hidden on this route. */}
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 lg:hidden">
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50"
+            className="dm-cta w-full gap-2"
           >
             <Save className="h-4 w-4" />
             {loading ? "Menyimpan…" : "Simpan & pratinjau"}

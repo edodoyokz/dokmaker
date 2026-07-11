@@ -9,6 +9,7 @@ import {
   Plus,
   Wallet,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * App chrome bottom nav. Hidden on long form / checkout screens so sticky
@@ -26,21 +27,13 @@ export function MobileBottomNav() {
   if (hide) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-900 bg-zinc-950/90 px-2 backdrop-blur-md md:hidden">
-      <div className="mx-auto flex h-16 max-w-md items-center justify-around">
-        <NavItem href="/app" icon={Home} label="Home" />
-        <NavItem href="/app/templates" icon={Layers} label="Template" />
-        <Link
-          href="/app/templates"
-          className="relative flex -translate-y-4 flex-col items-center gap-1 text-[10px] font-semibold text-zinc-400 hover:text-indigo-400"
-        >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-zinc-950 bg-gradient-to-tr from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-600/35 hover:from-indigo-500 hover:to-purple-500">
-            <Plus className="h-6 w-6" />
-          </div>
-          <span className="mt-1 translate-y-1">Baru</span>
-        </Link>
-        <NavItem href="/app/invoices" icon={FileText} label="Dokumen" />
-        <NavItem href="/app/wallet" icon={Wallet} label="Dompet" />
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-800 bg-zinc-950 md:hidden">
+      <div className="mx-auto flex h-16 max-w-md items-center justify-around px-1">
+        <NavItem href="/app" icon={Home} label="Home" pathname={pathname} exact />
+        <NavItem href="/app/templates" icon={Layers} label="Template" pathname={pathname} />
+        <NavItem href="/app/templates" icon={Plus} label="Baru" pathname={pathname} forceInactive />
+        <NavItem href="/app/invoices" icon={FileText} label="Dokumen" pathname={pathname} />
+        <NavItem href="/app/wallet" icon={Wallet} label="Dompet" pathname={pathname} />
       </div>
     </nav>
   );
@@ -50,18 +43,33 @@ function NavItem({
   href,
   icon: Icon,
   label,
+  pathname,
+  exact,
+  forceInactive,
 }: {
   href: string;
   icon: typeof Home;
   label: string;
+  pathname: string;
+  exact?: boolean;
+  forceInactive?: boolean;
 }) {
+  const active = forceInactive
+    ? false
+    : exact
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
+
   return (
     <Link
       href={href}
-      className="flex flex-col items-center gap-1 text-[10px] font-semibold text-zinc-400 hover:text-indigo-400"
+      className={cn(
+        "flex min-w-0 flex-1 flex-col items-center gap-1 py-1 text-xs font-medium",
+        active ? "text-indigo-400" : "text-zinc-400 hover:text-zinc-200"
+      )}
     >
       <Icon className="h-5 w-5" />
-      <span>{label}</span>
+      <span className="truncate">{label}</span>
     </Link>
   );
 }

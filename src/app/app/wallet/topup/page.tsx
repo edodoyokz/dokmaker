@@ -78,7 +78,7 @@ export default function TopUpPage() {
                 <button
                   key={amount}
                   onClick={() => setSelectedAmount(amount)}
-                  className={`relative overflow-hidden rounded-2xl border text-left p-5 transition-all select-none flex flex-col justify-between h-[160px] ${
+                  className={`relative overflow-hidden rounded-xl border text-left p-5 transition-all select-none flex flex-col justify-between h-[160px] ${
                     isSelected
                       ? "border-indigo-500 bg-indigo-500/5 shadow-lg shadow-indigo-500/5"
                       : "border-zinc-800 bg-zinc-900/30 hover:border-zinc-700 hover:bg-zinc-900/10"
@@ -89,7 +89,7 @@ export default function TopUpPage() {
                       <p className="text-xs font-bold text-indigo-400 tracking-wider uppercase">
                         {isPremium ? "Paket Premium" : "Paket Basic"}
                       </p>
-                      <p className="text-2xl font-extrabold text-zinc-100 mt-1">
+                      <p className="text-2xl font-semibold text-zinc-100 mt-1">
                         Rp{amount.toLocaleString("id-ID")}
                       </p>
                     </div>
@@ -102,12 +102,12 @@ export default function TopUpPage() {
                   </div>
 
                   <div>
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold tracking-wide uppercase bg-zinc-800 text-zinc-400 border border-zinc-800">
+                    <span className="inline-block px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wide uppercase bg-zinc-800 text-zinc-400 border border-zinc-800">
                       {isPremium
                         ? "±10 unduhan final"
                         : "±5 unduhan final"}
                     </span>
-                    <p className="mt-2 text-[10px] text-zinc-500">
+                    <p className="mt-2 text-xs text-zinc-500">
                       Setara unduhan PDF final @ Rp10.000 / versi (versi sama
                       gratis diunduh ulang). Biaya AI terpisah bila dipakai.
                     </p>
@@ -115,7 +115,7 @@ export default function TopUpPage() {
 
                   {/* Highlights for Premium */}
                   {isPremium && (
-                    <div className="absolute top-0 right-0 p-1.5 rounded-bl-lg bg-indigo-500 text-[8px] font-bold text-white uppercase tracking-wider">
+                    <div className="absolute top-0 right-0 p-1.5 rounded-bl-lg bg-indigo-500 text-[8px] font-bold text-white">
                       Populer
                     </div>
                   )}
@@ -125,7 +125,7 @@ export default function TopUpPage() {
           </div>
 
           {error && (
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold">
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold">
               {error}
             </div>
           )}
@@ -133,7 +133,7 @@ export default function TopUpPage() {
           <button
             onClick={handleTopUp}
             disabled={!selectedAmount || loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 transition-all disabled:opacity-50"
+            className="dm-cta w-full gap-2"
           >
             {loading ? "Memproses Checkout..." : "Bayar Aman dengan Pakasir"}
           </button>
@@ -141,13 +141,13 @@ export default function TopUpPage() {
 
         {/* Info card - 1 column */}
         <div className="space-y-4">
-          <Card className="border-zinc-800 bg-zinc-900/20 backdrop-blur-md rounded-2xl overflow-hidden">
+          <Card className="border-zinc-800 bg-zinc-900/20 rounded-xl overflow-hidden">
             <CardContent className="p-4 space-y-4">
               <div className="flex gap-2.5">
                 <ShieldCheck className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-bold text-zinc-200">Pembayaran Terverifikasi</h4>
-                  <p className="text-[10px] text-zinc-400 mt-0.5">
+                  <p className="text-xs text-zinc-400 mt-0.5">
                     Transaksi diproses secara real-time via gateway aman Pakasir.
                   </p>
                 </div>
@@ -157,7 +157,7 @@ export default function TopUpPage() {
                 <CreditCard className="h-5 w-5 text-purple-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-bold text-zinc-200">Metode Pembayaran Lengkap</h4>
-                  <p className="text-[10px] text-zinc-400 mt-0.5">
+                  <p className="text-xs text-zinc-400 mt-0.5">
                     Mendukung QRIS, Virtual Account bank lokal, e-wallet, dan gerai retail.
                   </p>
                 </div>
@@ -167,7 +167,7 @@ export default function TopUpPage() {
                 <Zap className="h-5 w-5 text-pink-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-bold text-zinc-200">Kredit Saldo Instan</h4>
-                  <p className="text-[10px] text-zinc-400 mt-0.5">
+                  <p className="text-xs text-zinc-400 mt-0.5">
                     Dompet digital Anda akan langsung terisi begitu pembayaran sukses dikonfirmasi.
                   </p>
                 </div>

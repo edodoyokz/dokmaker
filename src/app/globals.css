@@ -84,24 +84,40 @@
 }
 
 .dark {
+  /* DokMaker app shell tokens — redesign 2026-07-11 */
+  --dm-bg: #09090b;
+  --dm-surface: #18181b;
+  --dm-surface-2: #09090b;
+  --dm-border: #27272a;
+  --dm-text: #fafafa;
+  --dm-muted: #a1a1aa;
+  --dm-accent: #6366f1;
+  --dm-accent-hover: #818cf8;
+  --dm-success: #34d399;
+  --dm-warning: #fbbf24;
+  --dm-danger: #fb7185;
+  --dm-radius-card: 0.75rem;
+  --dm-radius-btn: 0.5rem;
+
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  /* Solid indigo primary — replaces light-on-dark default */
+  --primary: oklch(0.585 0.2 277);
+  --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.705 0.015 286.067);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: oklch(0.274 0.006 286.033);
+  --input: oklch(0.274 0.006 286.033);
+  --ring: oklch(0.585 0.2 277);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -123,6 +139,10 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Quiet touch target for sticky CTAs */
+  .dm-cta {
+    @apply inline-flex min-h-11 items-center justify-center rounded-lg bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:pointer-events-none disabled:opacity-50;
   }
   html {
     @apply font-sans;

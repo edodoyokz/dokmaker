@@ -73,7 +73,7 @@ export function MobileNav({ user }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent className="bg-zinc-950 border-l border-zinc-900 text-zinc-100 flex flex-col p-6 max-w-[280px]">
         <SheetHeader className="border-b border-zinc-900 pb-4">
-          <SheetTitle className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">Navigasi</SheetTitle>
+          <SheetTitle className="text-zinc-400 text-xs font-semibold">Navigasi</SheetTitle>
         </SheetHeader>
         
         <div className="flex flex-col gap-6 py-4 flex-1">

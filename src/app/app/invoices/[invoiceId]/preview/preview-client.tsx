@@ -190,7 +190,7 @@ export default function PreviewClient({
         >
           <ArrowLeft className="h-3.5 w-3.5" /> Daftar dokumen
         </Link>
-        <Badge className="border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+        <Badge className="border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-xs font-semibold text-zinc-300">
           {label}
         </Badge>
       </div>
@@ -223,12 +223,12 @@ export default function PreviewClient({
       <div className="grid items-start gap-5 lg:grid-cols-12">
         {/* Document surface — fits viewport width on mobile (no forced 794 scroll). */}
         <div className="lg:col-span-8">
-          <div className="relative rounded-2xl border border-zinc-900 bg-zinc-950 p-2 sm:p-3 md:p-4">
+          <div className="relative rounded-xl border border-zinc-900 bg-zinc-950 p-2 sm:p-3 md:p-4">
             <div className="mb-2 flex items-center justify-between gap-2 px-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              <span className="text-xs font-medium text-zinc-500">
                 Draft · watermark
               </span>
-              <span className="truncate text-[10px] text-zinc-600">
+              <span className="truncate text-xs text-zinc-600">
                 {previewMeta.email}
               </span>
             </div>
@@ -260,7 +260,7 @@ export default function PreviewClient({
       </div>
 
       {/* Mobile sticky checkout — full bottom (app nav hidden on this route). */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 lg:hidden">
         <div className="mx-auto flex max-w-lg flex-col gap-2">
           <div className="flex items-center justify-between gap-2 text-[11px] text-zinc-400">
             <span className="inline-flex min-w-0 items-center gap-1 truncate">
@@ -315,9 +315,9 @@ function CheckoutCard({
   editLabel: string;
 }) {
   return (
-    <Card className="overflow-hidden rounded-2xl border-zinc-800 bg-zinc-900/30 shadow-lg backdrop-blur-md">
+    <Card className="overflow-hidden rounded-xl border-zinc-800 bg-zinc-900/30 shadow-lg">
       <div className="border-b border-zinc-800/60 bg-zinc-900/10 px-5 py-4">
-        <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-400">
+        <h2 className="text-xs font-semibold text-zinc-400">
           Status cetak
         </h2>
       </div>
@@ -342,7 +342,7 @@ function CheckoutCard({
 
         <div className="flex items-center justify-between">
           <span className="text-xs text-zinc-400">Harga cetak</span>
-          <span className="text-xs font-extrabold text-zinc-200">{priceLabel}</span>
+          <span className="text-xs font-semibold text-zinc-200">{priceLabel}</span>
         </div>
 
         <div className="flex items-center justify-between border-t border-zinc-800/80 pt-4">

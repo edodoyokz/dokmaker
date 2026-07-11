@@ -21,7 +21,7 @@ export default function Home() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none opacity-20" />
 
       {/* Navigation Header */}
-      <header className="border-b border-zinc-800/80 backdrop-blur-md sticky top-0 z-50">
+      <header className="border-b border-zinc-800/80 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -79,22 +79,22 @@ export default function Home() {
 
         {/* Feature Badges for Freelancers */}
         <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
-          <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
             <Smartphone className="h-6 w-6 text-indigo-400 mb-2" />
             <h3 className="font-semibold text-zinc-200">Mobile-First PWA</h3>
             <p className="text-xs text-zinc-500 mt-1">Buat invoice langsung dari smartphone, di mana saja.</p>
           </div>
-          <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
             <Zap className="h-6 w-6 text-purple-400 mb-2" />
             <h3 className="font-semibold text-zinc-200">Instan & Mudah</h3>
             <p className="text-xs text-zinc-500 mt-1">Pilih template, isi data, dan invoice Anda langsung siap.</p>
           </div>
-          <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
             <Wallet className="h-6 w-6 text-pink-400 mb-2" />
             <h3 className="font-semibold text-zinc-200">Deposit Dompet</h3>
             <p className="text-xs text-zinc-500 mt-1">Top up saldo dengan mudah via Pakasir Payment Gateway.</p>
           </div>
-          <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/60 backdrop-blur-md">
+          <div className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/60">
             <ShieldCheck className="h-6 w-6 text-emerald-400 mb-2" />
             <h3 className="font-semibold text-zinc-200">Aman & Terlindungi</h3>
             <p className="text-xs text-zinc-500 mt-1">File PDF tersimpan aman dan diunduh menggunakan signed URL.</p>
@@ -104,7 +104,7 @@ export default function Home() {
 
       {/* Interactive Mockup section */}
       <section className="max-w-5xl mx-auto px-6 pb-24 relative z-10">
-        <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 backdrop-blur-md shadow-2xl shadow-indigo-500/5 overflow-hidden">
+        <div className="relative rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 shadow-indigo-500/5 overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-60" />
           <div className="flex items-center gap-2 pb-4 border-b border-zinc-800/80 mb-4">
             <div className="h-3 w-3 rounded-full bg-rose-500/80" />

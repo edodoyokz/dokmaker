@@ -35,7 +35,7 @@ export default async function TemplateDetailPage({
       </div>
 
       {/* Detail Layout */}
-      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+      <Card className="border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden">
         <CardContent className="p-4 sm:p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-8">
           
           {/* Left: Template Preview Image */}
@@ -53,7 +53,7 @@ export default async function TemplateDetailPage({
               />
             ) : (
               // Document Fallback Mockup
-              <div className="w-[80%] h-[80%] bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-2.5 opacity-80 shadow-xl">
+              <div className="w-[80%] h-[80%] bg-zinc-900 border border-zinc-800 rounded-lg p-4 space-y-2.5 opacity-80">
                 <div className="flex justify-between items-start">
                   <div className="h-4 w-12 rounded bg-indigo-500/20" />
                   <div className="h-3 w-8 rounded bg-zinc-800" />
@@ -75,8 +75,8 @@ export default async function TemplateDetailPage({
             
             {/* Overlaid Badge */}
             <div className="absolute top-3 right-3 z-20">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-zinc-800 text-[10px] font-bold text-indigo-400 backdrop-blur-sm">
-                <Sparkles className="h-3 w-3" /> Ready to Use
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/90 border border-zinc-800 text-xs font-medium text-indigo-400 backdrop-blur-sm">
+                <Sparkles className="h-3 w-3" /> Siap pakai
               </span>
             </div>
           </div>
@@ -85,8 +85,8 @@ export default async function TemplateDetailPage({
           <div className="w-full md:w-1/2 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               <div>
-                <span className="text-[10px] text-indigo-400 uppercase tracking-widest font-mono font-bold">Template Resmi</span>
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-zinc-100 mt-1">
+                <span className="text-xs font-medium text-indigo-400">Template Resmi</span>
+                <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-zinc-100 mt-1">
                   {template.name}
                 </h1>
               </div>
@@ -99,11 +99,11 @@ export default async function TemplateDetailPage({
 
               {/* Price Details Card */}
               <div className="bg-zinc-950/40 border border-zinc-800/80 rounded-xl p-4 space-y-1">
-                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Biaya Cetak Dokumen</span>
+                <span className="text-xs text-zinc-500">Biaya Cetak Dokumen</span>
                 <p className="text-lg font-bold text-zinc-200">
                   Rp{template.price.toLocaleString("id-ID")} <span className="text-xs font-normal text-zinc-500">/ final PDF</span>
                 </p>
-                <p className="text-[10px] text-zinc-500 leading-relaxed pt-1.5 border-t border-zinc-900 mt-1.5">
+                <p className="text-xs text-zinc-500 leading-relaxed pt-1.5 border-t border-zinc-900 mt-1.5">
                   Pembuatan draf dan pratinjau gratis (ber-watermark). Biaya hanya dikenakan saat Anda ingin mengunduh PDF final yang bersih dan sah.
                 </p>
               </div>
@@ -113,7 +113,7 @@ export default async function TemplateDetailPage({
             <div className="space-y-3 pt-4 border-t border-zinc-800/60">
               <Link
                 href={`/app/invoices/new?templateId=${template.id}`}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/15 hover:shadow-indigo-500/25 transition-all text-center"
+                className="dm-cta w-full gap-2"
               >
                 <Plus className="h-4 w-4" /> Gunakan Template Ini
               </Link>

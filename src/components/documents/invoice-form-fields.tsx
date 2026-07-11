@@ -24,7 +24,7 @@ const inputClass =
   "block w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-zinc-200 placeholder-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all";
 
 const labelClass =
-  "block text-xs font-semibold text-zinc-400 uppercase tracking-wider";
+  "block text-xs font-semibold text-zinc-400 ";
 
 export function InvoiceFormFields({
   content,
@@ -77,10 +77,10 @@ export function InvoiceFormFields({
   return (
     <div className="space-y-6">
       {/* Sender Card */}
-      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+      <Card className="border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
           <User className="h-4 w-4 text-indigo-400" />
-          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-zinc-200">
             Informasi Pengirim
           </h2>
         </div>
@@ -101,10 +101,10 @@ export function InvoiceFormFields({
       </Card>
 
       {/* Client Card */}
-      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+      <Card className="border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
           <Users className="h-4 w-4 text-purple-400" />
-          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-zinc-200">
             Informasi Klien
           </h2>
         </div>
@@ -125,10 +125,10 @@ export function InvoiceFormFields({
       </Card>
 
       {/* Details Card */}
-      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+      <Card className="border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
           <Calendar className="h-4 w-4 text-pink-400" />
-          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-zinc-200">
             Detail Dokumen
           </h2>
         </div>
@@ -163,11 +163,11 @@ export function InvoiceFormFields({
       </Card>
 
       {/* Items Card */}
-      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+      <Card className="border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-            <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-zinc-200">
               Daftar Item & Jasa
             </h2>
           </div>
@@ -182,7 +182,7 @@ export function InvoiceFormFields({
         </div>
 
         <CardContent className="p-5">
-          <div className="hidden sm:grid sm:grid-cols-12 gap-3 mb-2 px-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+          <div className="hidden sm:grid sm:grid-cols-12 gap-3 mb-2 px-1 text-[10px] font-bold text-zinc-500">
             <div className="col-span-6">Deskripsi Layanan</div>
             <div className="col-span-2 text-center">Jumlah</div>
             <div className="col-span-3">Harga Satuan (Rp)</div>
@@ -265,7 +265,7 @@ export function InvoiceFormFields({
 
           <div className="mt-6 border-t border-zinc-800/80 pt-5 flex items-center justify-between">
             <div>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">
+              <p className="text-xs text-zinc-500">
                 Ketentuan Harga
               </p>
               <p className="text-xs text-zinc-400 mt-0.5">
@@ -284,10 +284,10 @@ export function InvoiceFormFields({
       </Card>
 
       {/* Notes Card */}
-      <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden">
+      <Card className="border-zinc-800 bg-zinc-900/30 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-zinc-800/80 bg-zinc-900/10 flex items-center gap-2.5">
           <FileText className="h-4 w-4 text-zinc-400" />
-          <h2 className="text-sm font-bold text-zinc-200 uppercase tracking-wider">
+          <h2 className="text-sm font-bold text-zinc-200">
             Catatan Tambahan
           </h2>
         </div>
