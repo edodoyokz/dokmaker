@@ -3,6 +3,7 @@
 import { renderDocumentHtml } from "@/modules/templates/render-document";
 import { isSupportedDocumentType } from "@/modules/documents/document-type-registry";
 import type { DocumentType } from "@/modules/documents/types";
+import PdfStampPreview from "@/components/invoices/pdf-stamp-preview";
 
 interface Props {
   htmlTemplate: string;
@@ -24,13 +25,12 @@ export default function TemplatePreview({
   previewMeta,
   invoiceId,
 }: Props) {
-  // Same-origin API URL so CSP default-src 'self' allows the iframe (no object URL).
+  // Stamp path: rasterize watermarked PDF (no browser PDF chrome / download UI).
   if (documentType === "gocar_receipt" && invoiceId) {
     return (
-      <iframe
-        title="Preview dokumen GoCar"
-        src={`/api/invoices/${invoiceId}/preview`}
-        className="block h-[2246px] w-[794px] border-0 bg-white"
+      <PdfStampPreview
+        invoiceId={invoiceId}
+        reloadKey={previewMeta.versionId}
       />
     );
   }
@@ -46,11 +46,13 @@ export default function TemplatePreview({
   });
 
   return (
-    <iframe
-      title="Preview dokumen"
-      srcDoc={html}
-      sandbox=""
-      className={`block ${documentType === "gocar_receipt" ? "h-[2246px]" : "h-[1123px]"} w-[794px] border-0 bg-white`}
-    />
+    <div className="mx-auto w-full max-w-[794px] overflow-x-auto rounded-md border border-zinc-200 bg-white shadow-sm [-webkit-overflow-scrolling:touch]">
+      <iframe
+        title="Preview dokumen"
+        srcDoc={html}
+        sandbox=""
+        className="block h-[1123px] w-[794px] max-w-none border-0 bg-white"
+      />
+    </div>
   );
 }

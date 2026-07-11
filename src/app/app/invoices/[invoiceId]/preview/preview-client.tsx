@@ -1,26 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TemplatePreview from "@/components/invoices/template-preview";
-import { 
-  ArrowLeft, 
-  Download, 
-  CreditCard, 
-  Sparkles, 
-  Edit3, 
+import {
+  ArrowLeft,
+  Download,
+  CreditCard,
+  Edit3,
   AlertCircle,
-  Wallet
+  Wallet,
+  ShieldAlert,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FINAL_DOWNLOAD_PRICE } from "@/modules/pricing/constants";
+import { getDocumentTypeDefinition } from "@/modules/documents/document-type-registry";
 
 interface Props {
   invoiceId: string;
   invoiceNumber: string;
   documentType: string;
   title?: string | null;
+  versionNumber: number;
   initialStatus: string;
   initialBalance: number;
   content: unknown;
@@ -32,11 +35,28 @@ interface Props {
   };
 }
 
+function formatIdr(amount: number) {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(amount);
+}
+
+function documentLabel(documentType: string) {
+  try {
+    return getDocumentTypeDefinition(documentType).label;
+  } catch {
+    return "Dokumen";
+  }
+}
+
 export default function PreviewClient({
   invoiceId,
   invoiceNumber,
   documentType,
   title,
+  versionNumber,
   initialStatus,
   initialBalance,
   content,
@@ -49,13 +69,11 @@ export default function PreviewClient({
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const label = documentLabel(documentType);
+  const displayTitle = title?.trim() || invoiceNumber;
+  const isPaid = status === "paid";
+  const hasInsufficientBalance = balance < FINAL_DOWNLOAD_PRICE;
+  const priceLabel = formatIdr(FINAL_DOWNLOAD_PRICE);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -66,182 +84,275 @@ export default function PreviewClient({
 
       if (!response.ok) {
         if (response.status === 402) {
-          throw new Error("Saldo tidak mencukupi untuk melakukan cetak invoice.");
+          throw new Error(
+            `Saldo tidak mencukupi. Diperlukan ${priceLabel} untuk cetak final.`
+          );
         }
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Gagal mengunduh invoice final");
+        throw new Error(
+          (data as { error?: string }).error || "Gagal mengunduh PDF final"
+        );
       }
 
-      // Convert response to blob
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${title || invoiceNumber}.pdf`;
+      a.download = `${displayTitle}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      // Successfully processed download
-      if (status !== "paid") {
-        setStatus("paid");
-        setBalance((prev) => Math.max(0, prev - 10000));
-        router.refresh();
-      }
+      // Trust server as source of truth — no optimistic −Rp10.000.
+      if (status !== "paid") setStatus("paid");
+      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat cetak PDF");
+      setError(
+        err instanceof Error ? err.message : "Terjadi kesalahan saat cetak PDF"
+      );
     } finally {
       setDownloading(false);
     }
   };
 
-  const isPaid = status === "paid";
-  const hasInsufficientBalance = balance < 10000;
+  const cta = (() => {
+    if (isPaid) {
+      return (
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={downloading}
+          className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-emerald-500/15 transition-all disabled:opacity-50"
+        >
+          <Download className="h-4 w-4" />
+          {downloading ? "Mengunduh…" : "Unduh PDF final (gratis)"}
+        </button>
+      );
+    }
+    if (hasInsufficientBalance) {
+      return (
+        <div className="space-y-3">
+          <div className="flex gap-2 rounded-xl border border-amber-500/15 bg-amber-500/5 p-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <p className="text-[11px] leading-normal text-amber-400">
+              Saldo kurang dari {priceLabel}. Isi saldo dulu untuk unduh PDF
+              final tanpa watermark.
+            </p>
+          </div>
+          <Link
+            href="/app/wallet/topup"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-3 text-xs font-bold text-white shadow-md transition-all"
+          >
+            <CreditCard className="h-4 w-4" /> Top up saldo
+          </Link>
+        </div>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={handleDownload}
+        disabled={downloading}
+        className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-indigo-500/15 transition-all disabled:opacity-50"
+      >
+        <CreditCard className="h-4 w-4" />
+        {downloading ? "Memproses…" : `Beli & unduh PDF (${priceLabel})`}
+      </button>
+    );
+  })();
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header breadcrumb */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 pb-28 sm:space-y-6 sm:pb-12">
+      <div className="flex items-center justify-between gap-3">
         <Link
           href="/app/invoices"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-indigo-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 transition-colors hover:text-indigo-400"
         >
-          <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke Daftar Invoice
+          <ArrowLeft className="h-3.5 w-3.5" /> Daftar dokumen
         </Link>
+        <Badge className="border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold text-zinc-300">
+          {label}
+        </Badge>
       </div>
 
-      {/* Title block */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
-          Workspace Invoice <Sparkles className="h-5 w-5 text-indigo-400" />
+        <h1 className="text-xl font-bold tracking-tight text-zinc-100 sm:text-2xl">
+          Pratinjau {label}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
-          Lakukan pratinjau watermark draft di bawah ini sebelum mencetak file PDF final Anda.
+        <p className="mt-1 text-sm text-zinc-400">
+          {displayTitle}
+          <span className="text-zinc-600"> · </span>
+          versi {versionNumber}
         </p>
       </div>
 
-      {/* Main Grid Workbench */}
-      <div className="grid gap-6 lg:grid-cols-12 items-start">
-        {/* Left Side: Watermarked Document View */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-2 shadow-2xl relative sm:p-4 md:p-6">
-            <div className="absolute top-2 left-2 z-10">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-900/80 border border-zinc-800 text-[9px] font-semibold text-zinc-400 backdrop-blur-sm">
-                Document Draft Preview
+      {/* Draft banner — always visible, honest about non-final. */}
+      <div className="flex gap-2.5 rounded-xl border border-amber-500/25 bg-amber-500/10 px-3.5 py-3">
+        <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+        <div className="min-w-0 text-[12px] leading-relaxed text-amber-100/90">
+          <p className="font-semibold text-amber-200">
+            Ini draft berwatermark — bukan file final
+          </p>
+          <p className="mt-0.5 text-amber-100/70">
+            Pratinjau gratis. PDF bersih tanpa watermark diunduh setelah
+            pembayaran {priceLabel} (versi yang sama bisa diunduh ulang gratis).
+          </p>
+        </div>
+      </div>
+
+      <div className="grid items-start gap-5 lg:grid-cols-12">
+        {/* Document surface — fits viewport width on mobile (no forced 794 scroll). */}
+        <div className="lg:col-span-8">
+          <div className="relative rounded-2xl border border-zinc-900 bg-zinc-950 p-2 sm:p-3 md:p-4">
+            <div className="mb-2 flex items-center justify-between gap-2 px-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                Draft · watermark
+              </span>
+              <span className="truncate text-[10px] text-zinc-600">
+                {previewMeta.email}
               </span>
             </div>
-            
-            <div className="max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-zinc-900 bg-white [-webkit-overflow-scrolling:touch]">
-              <div className="w-[794px] max-w-none">
-                <TemplatePreview
-                  invoiceId={invoiceId}
-                  htmlTemplate={htmlTemplate}
-                  documentType={documentType}
-                  content={content}
-                  previewMeta={previewMeta}
-                />
-              </div>
+            <div className="max-w-full">
+              <TemplatePreview
+                invoiceId={invoiceId}
+                htmlTemplate={htmlTemplate}
+                documentType={documentType}
+                content={content}
+                previewMeta={previewMeta}
+              />
             </div>
           </div>
         </div>
 
-        {/* Right Side: Control & Checkout Widget */}
-        <div className="space-y-4 lg:sticky lg:top-24 lg:col-span-4">
-          {/* Status Details */}
-          <Card className="border-zinc-800 bg-zinc-900/30 backdrop-blur-md rounded-2xl overflow-hidden shadow-lg">
-            <div className="px-5 py-4 border-b border-zinc-800/60 bg-zinc-900/10">
-              <h2 className="text-xs font-extrabold text-zinc-400 uppercase tracking-widest">Detail Status Cetak</h2>
-            </div>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-zinc-400">Nomor Invoice</span>
-                <span className="text-xs font-bold text-zinc-200">{invoiceNumber}</span>
-              </div>
+        {/* Checkout panel — desktop sidebar; mobile uses sticky bar below. */}
+        <div className="hidden space-y-4 lg:sticky lg:top-24 lg:col-span-4 lg:block">
+          <CheckoutCard
+            invoiceNumber={invoiceNumber}
+            isPaid={isPaid}
+            balance={balance}
+            priceLabel={priceLabel}
+            error={error}
+            cta={cta}
+            invoiceId={invoiceId}
+            editLabel={label}
+          />
+        </div>
+      </div>
 
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-zinc-400">Status Invoice</span>
-                <div>
-                  {isPaid ? (
-                    <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-xs">
-                      Lunas
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full text-xs">
-                      Belum Bayar
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-zinc-400">Harga Cetak</span>
-                <span className="text-xs font-extrabold text-zinc-200">Rp10.000</span>
-              </div>
-
-              <div className="border-t border-zinc-800/80 pt-4 flex justify-between items-center">
-                <div className="flex items-center gap-1.5">
-                  <Wallet className="h-4 w-4 text-indigo-400" />
-                  <span className="text-xs text-zinc-400">Saldo Dompet</span>
-                </div>
-                <span className="text-xs font-bold text-zinc-200">
-                  {formatCurrency(balance)}
+      {/* Mobile sticky checkout */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800 bg-zinc-950/95 p-3 backdrop-blur-md lg:hidden safe-area-pb">
+        <div className="mx-auto flex max-w-lg flex-col gap-2">
+          <div className="flex items-center justify-between text-[11px] text-zinc-400">
+            <span className="inline-flex items-center gap-1">
+              <Wallet className="h-3.5 w-3.5 text-indigo-400" />
+              {formatIdr(balance)}
+            </span>
+            <span>
+              {isPaid ? (
+                <span className="font-semibold text-emerald-400">Lunas</span>
+              ) : (
+                <span className="font-semibold text-zinc-300">
+                  Cetak {priceLabel}
                 </span>
-              </div>
-
-              {error && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-rose-300 font-semibold leading-normal">{error}</p>
-                </div>
               )}
-
-              {/* Action Buttons */}
-              <div className="space-y-2 pt-2">
-                {isPaid ? (
-                  <button
-                    onClick={handleDownload}
-                    disabled={downloading}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-emerald-500/15 transition-all disabled:opacity-50"
-                  >
-                    <Download className="h-4 w-4" /> {downloading ? "Mengunduh..." : "Download PDF Clean (Free)"}
-                  </button>
-                ) : hasInsufficientBalance ? (
-                  <div className="space-y-3">
-                    <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10 flex gap-2">
-                      <AlertCircle className="h-4.5 w-4.5 text-amber-500 shrink-0 mt-0.5" />
-                      <p className="text-[10px] text-amber-400 leading-normal">
-                        Saldo Dompet Anda tidak cukup untuk membayar biaya cetak. Harap isi saldo terlebih dahulu.
-                      </p>
-                    </div>
-                    <Link
-                      href="/app/wallet/topup"
-                      className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-3 text-xs font-bold text-white shadow-md transition-all"
-                    >
-                      <CreditCard className="h-4 w-4" /> Top Up Saldo Sekarang
-                    </Link>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleDownload}
-                    disabled={downloading}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-indigo-500/15 transition-all disabled:opacity-50"
-                  >
-                    <CreditCard className="h-4 w-4" /> {downloading ? "Memproses Cetak..." : "Beli & Download PDF (Rp10.000)"}
-                  </button>
-                )}
-
-                <Link
-                  href={`/app/invoices/${invoiceId}/edit`}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 px-4 py-2.5 text-xs font-semibold text-zinc-350 hover:text-zinc-100 transition-all"
-                >
-                  <Edit3 className="h-3.5 w-3.5" /> Edit Draf Invoice
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+            </span>
+          </div>
+          {error && (
+            <p className="text-[11px] font-medium text-rose-400">{error}</p>
+          )}
+          {cta}
+          <Link
+            href={`/app/invoices/${invoiceId}/edit`}
+            className="w-full py-1 text-center text-[11px] font-semibold text-zinc-400 hover:text-zinc-200"
+          >
+            Edit draf {label}
+          </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+function CheckoutCard({
+  invoiceNumber,
+  isPaid,
+  balance,
+  priceLabel,
+  error,
+  cta,
+  invoiceId,
+  editLabel,
+}: {
+  invoiceNumber: string;
+  isPaid: boolean;
+  balance: number;
+  priceLabel: string;
+  error: string | null;
+  cta: ReactNode;
+  invoiceId: string;
+  editLabel: string;
+}) {
+  return (
+    <Card className="overflow-hidden rounded-2xl border-zinc-800 bg-zinc-900/30 shadow-lg backdrop-blur-md">
+      <div className="border-b border-zinc-800/60 bg-zinc-900/10 px-5 py-4">
+        <h2 className="text-xs font-extrabold uppercase tracking-widest text-zinc-400">
+          Status cetak
+        </h2>
+      </div>
+      <CardContent className="space-y-4 p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-zinc-400">Nomor</span>
+          <span className="text-xs font-bold text-zinc-200">{invoiceNumber}</span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-zinc-400">Status</span>
+          {isPaid ? (
+            <Badge className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-400">
+              Lunas
+            </Badge>
+          ) : (
+            <Badge className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-400">
+              Belum bayar
+            </Badge>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-zinc-400">Harga cetak</span>
+          <span className="text-xs font-extrabold text-zinc-200">{priceLabel}</span>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-zinc-800/80 pt-4">
+          <div className="flex items-center gap-1.5">
+            <Wallet className="h-4 w-4 text-indigo-400" />
+            <span className="text-xs text-zinc-400">Saldo</span>
+          </div>
+          <span className="text-xs font-bold text-zinc-200">
+            {formatIdr(balance)}
+          </span>
+        </div>
+
+        {error && (
+          <div className="flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+            <p className="text-[11px] font-semibold leading-normal text-rose-300">
+              {error}
+            </p>
+          </div>
+        )}
+
+        <div className="space-y-2 pt-1">
+          {cta}
+          <Link
+            href={`/app/invoices/${invoiceId}/edit`}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-2.5 text-xs font-semibold text-zinc-400 transition-all hover:bg-zinc-900 hover:text-zinc-100"
+          >
+            <Edit3 className="h-3.5 w-3.5" /> Edit draf {editLabel}
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

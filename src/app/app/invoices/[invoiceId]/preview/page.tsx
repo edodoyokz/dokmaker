@@ -45,6 +45,7 @@ export default async function InvoicePreviewPage({
       invoiceNumber={invoice.invoiceNumber}
       documentType={invoice.documentType as string}
       title={invoice.title}
+      versionNumber={activeVersion.versionNumber}
       initialStatus={activeVersion.status}
       initialBalance={wallet?.currentBalance ?? 0}
       content={activeVersion.contentSnapshot as unknown}
@@ -56,7 +57,7 @@ export default async function InvoicePreviewPage({
           month: "short",
           year: "numeric",
           hour: "2-digit",
-          minute: "2-digit"
+          minute: "2-digit",
         }),
         versionId: activeVersion.id,
       }}
