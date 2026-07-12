@@ -106,6 +106,15 @@ function drawRight(
 
 const TIMELINE_ICON_X = 300.5;
 const TIMELINE_ICON_SIZE = 12.8;
+const TRIP_BORDER_TOP_Y = 513;
+const TRIP_BORDER_MAX_Y = 540;
+
+export function tripBorderY(contentBottomY: number): number {
+  return Math.min(
+    TRIP_BORDER_MAX_Y,
+    Math.max(TRIP_BORDER_TOP_Y, contentBottomY + 10)
+  );
+}
 
 function clearTimelineIcon(page: PDFPage, yTop: number) {
   page.drawRectangle({
@@ -400,6 +409,24 @@ export async function generateGoCarReceiptPdf(
       drawLeft(p1, line, tlX, y, 10.3, SIZE_BODY, regular);
       y += 10.4;
     }
+  }
+
+  const borderY = tripBorderY(y);
+  if (borderY > TRIP_BORDER_TOP_Y) {
+    p1.drawRectangle({
+      x: 125,
+      y: PAGE_H - TRIP_BORDER_TOP_Y - 2,
+      width: 345,
+      height: 4,
+      color: WHITE,
+      borderWidth: 0,
+    });
+    p1.drawLine({
+      start: { x: 125, y: PAGE_H - borderY },
+      end: { x: 470, y: PAGE_H - borderY },
+      thickness: 0.7,
+      color: rgb(0.91, 0.91, 0.91),
+    });
   }
 
   // --- page 2 header (white text on green) ---

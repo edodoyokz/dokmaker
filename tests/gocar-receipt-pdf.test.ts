@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { getDefaultGoCarReceiptContent } from "@/modules/documents/gocar-receipt-content.schema";
-import { generateGoCarReceiptPdf } from "@/modules/documents/gocar-receipt-pdf";
+import {
+  generateGoCarReceiptPdf,
+  tripBorderY,
+} from "@/modules/documents/gocar-receipt-pdf";
 import { generateInvoicePdf } from "@/lib/pdf/generator";
 
 describe("GoCar receipt PDF stamp", () => {
+  it("extends only the trip card border needed by wrapped content", () => {
+    expect(tripBorderY(503)).toBe(513);
+    expect(tripBorderY(526.6)).toBeCloseTo(536.6);
+    expect(tripBorderY(600)).toBe(540);
+  });
+
   it("serves the original wkhtml PDF for the reference sample", async () => {
     const pdf = await generateGoCarReceiptPdf(getDefaultGoCarReceiptContent());
     expect(pdf.subarray(0, 5).toString("utf8")).toBe("%PDF-");
