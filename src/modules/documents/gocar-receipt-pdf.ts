@@ -351,6 +351,17 @@ export async function generateGoCarReceiptPdf(
     );
   }
 
+  // Remove the base card's fixed bottom border before drawing timeline text.
+  // It is redrawn at the content-aware position after the timeline.
+  p1.drawRectangle({
+    x: 125,
+    y: PAGE_H - TRIP_BORDER_TOP_Y - 2,
+    width: 345,
+    height: 4,
+    color: WHITE,
+    borderWidth: 0,
+  });
+
   // Timeline (right column) — widths match ref after FONT_SCALE
   const tlX = 316.5;
   const tlW = 140;
@@ -412,16 +423,8 @@ export async function generateGoCarReceiptPdf(
   }
 
   const borderY = tripBorderY(y);
+  const borderColor = rgb(0.91, 0.91, 0.91);
   if (borderY > TRIP_BORDER_TOP_Y) {
-    p1.drawRectangle({
-      x: 125,
-      y: PAGE_H - TRIP_BORDER_TOP_Y - 2,
-      width: 345,
-      height: 4,
-      color: WHITE,
-      borderWidth: 0,
-    });
-    const borderColor = rgb(0.91, 0.91, 0.91);
     for (const x of [125, 470]) {
       p1.drawLine({
         start: { x, y: PAGE_H - TRIP_BORDER_TOP_Y },
@@ -430,13 +433,13 @@ export async function generateGoCarReceiptPdf(
         color: borderColor,
       });
     }
-    p1.drawLine({
-      start: { x: 125, y: PAGE_H - borderY },
-      end: { x: 470, y: PAGE_H - borderY },
-      thickness: 0.7,
-      color: borderColor,
-    });
   }
+  p1.drawLine({
+    start: { x: 125, y: PAGE_H - borderY },
+    end: { x: 470, y: PAGE_H - borderY },
+    thickness: 0.7,
+    color: borderColor,
+  });
 
   // --- page 2 header (white text on green) ---
   drawRight(p2, date, 467, 18.3, 10.3, SIZE_BODY, regular, WHITE);
