@@ -27,6 +27,16 @@ describe("GoCar receipt PDF stamp", () => {
     expect(pdf.equals(sample)).toBe(false);
   });
 
+  it("moves oversized trip details to a continuation page", async () => {
+    const content = getDefaultGoCarReceiptContent();
+    content.customer.name = "Budi Santoso";
+    content.trip.pickupAddress = "Jalan pickup sangat panjang ".repeat(12);
+    content.trip.dropoffAddress = "Jalan dropoff sangat panjang ".repeat(12);
+    const pdf = await generateGoCarReceiptPdf(content);
+    const text = (await import("pdf-lib")).PDFDocument.load(pdf);
+    expect((await text).getPageCount()).toBe(3);
+  });
+
   it("routes gocar_receipt through stamp path in generateInvoicePdf", async () => {
     const pdf = await generateInvoicePdf(getDefaultGoCarReceiptContent(), {
       template: {

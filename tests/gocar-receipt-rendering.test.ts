@@ -127,6 +127,12 @@ describe("GoCar receipt rendering", () => {
     expect(GOCAR_RECEIPT_HTML_TEMPLATE).toMatch(
       /\.gocar-timeline-icon\s*\{[\s\S]*?top:\s*calc\(/
     );
+    expect(GOCAR_RECEIPT_HTML_TEMPLATE).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(0,\s*1fr\)/
+    );
+    expect(GOCAR_RECEIPT_HTML_TEMPLATE).toMatch(
+      /\.gocar-timeline-address\s*\{[\s\S]*?max-width:\s*100%/
+    );
   });
 
   it("embeds every original PDF image and font asset", () => {

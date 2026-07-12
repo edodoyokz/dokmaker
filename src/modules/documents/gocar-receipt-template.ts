@@ -186,6 +186,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
   .gocar-trip-left {
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
 
   .gocar-trip-right {
@@ -235,6 +236,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
 
   .gocar-timeline {
     position: relative;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -253,6 +255,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
 
   .gocar-timeline-item {
     position: relative;
+    min-width: 0;
     padding-left: 28px;
     z-index: 2;
   }
@@ -290,7 +293,9 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
     font-size: 10.5px;
     color: #666666;
     line-height: 1.4;
+    max-width: 100%;
     overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .gocar-footer {
@@ -479,7 +484,7 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
   }
 
   .gocar-trip-container {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     align-items: start;
     margin-top: 0;
@@ -577,7 +582,6 @@ export const GOCAR_RECEIPT_HTML_TEMPLATE = `<style>
   .gocar-timeline-address {
     margin-top: 2px;
     margin-bottom: 0;
-    max-width: 190px;
   }
 
   .gocar-timeline-item + .gocar-timeline-item .gocar-timeline-name {

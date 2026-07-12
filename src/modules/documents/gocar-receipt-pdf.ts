@@ -342,64 +342,78 @@ export async function generateGoCarReceiptPdf(
     );
   }
 
-  // Timeline (right column) — widths match ref after FONT_SCALE
+  // Timeline uses the receipt column on normal content. Very long content is
+  // moved to a clean continuation page so neither the card nor footer clips it.
   const tlX = 316.5;
   const tlW = 140;
-  let y = 344.8;
+  const pickupWhen = `Dijemput ${content.trip.pickupTime ?? ""} dari`;
+  const dropoffWhen = `Sampai ${content.trip.dropoffTime ?? ""} di`;
+  const lineCount =
+    wrapLines(pickupWhen, regular, SIZE_BODY, tlW).length +
+    (content.trip.pickupName ? 2 : 0) +
+    wrapLines(content.trip.pickupAddress ?? "", regular, SIZE_BODY, tlW).length +
+    wrapLines(dropoffWhen, regular, SIZE_BODY, tlW).length +
+    (content.trip.dropoffName ? 2 : 0) +
+    wrapLines(content.trip.dropoffAddress ?? "", regular, SIZE_BODY, tlW).length;
+  const timelineOverflow = lineCount > 12;
+  const timelinePage = timelineOverflow
+    ? doc.insertPage(1, [PAGE_W, PAGE_H])
+    : p1;
+  const timelineX = timelineOverflow ? 85 : tlX;
+  const timelineWidth = timelineOverflow ? 425 : tlW;
+  let y = timelineOverflow ? 135 : 344.8;
 
-  const pickupWhenTop = y;
-  drawTimelineIcon(p1, pickupIcon, pickupWhenTop);
+  if (timelineOverflow) {
+    timelinePage.drawText("Detail perjalanan", {
+      x: 58,
+      y: PAGE_H - 90,
+      size: 18,
+      font: bold,
+      color: BLACK,
+    });
+    timelinePage.drawRectangle({
+      x: 48,
+      y: PAGE_H - 120,
+      width: 499,
+      height: 1,
+      color: rgb(0.9, 0.9, 0.9),
+    });
+  }
+
+  drawTimelineIcon(timelinePage, pickupIcon, y);
   if (content.trip.pickupTime) {
-    const when = `Dijemput ${content.trip.pickupTime} dari`;
-    for (const line of wrapLines(when, regular, SIZE_BODY, tlW)) {
-      drawLeft(p1, line, tlX, y, 10.3, SIZE_BODY, regular);
+    for (const line of wrapLines(pickupWhen, regular, SIZE_BODY, timelineWidth)) {
+      drawLeft(timelinePage, line, timelineX, y, 10.3, SIZE_BODY, regular);
       y += 10.4;
     }
   }
   if (content.trip.pickupName) {
-    y = Math.max(y + 2.2, 367.8);
-    drawLeft(p1, content.trip.pickupName, tlX, y, 11.2, SIZE_BOLD, bold);
-    y += 20.9; // ref gap name → address
+    y = Math.max(y + 2.2, timelineOverflow ? y : 367.8);
+    drawLeft(timelinePage, content.trip.pickupName, timelineX, y, 11.2, SIZE_BOLD, bold);
+    y += 20.9;
   }
-  if (content.trip.pickupAddress) {
-    for (const line of wrapLines(
-      content.trip.pickupAddress,
-      regular,
-      SIZE_BODY,
-      tlW
-    )) {
-      drawLeft(p1, line, tlX, y, 10.3, SIZE_BODY, regular);
-      y += 10.4;
-    }
+  for (const line of wrapLines(content.trip.pickupAddress ?? "", regular, SIZE_BODY, timelineWidth)) {
+    drawLeft(timelinePage, line, timelineX, y, 10.3, SIZE_BODY, regular);
+    y += 10.4;
   }
 
-  y = Math.max(y + 10.3, 419.8);
-  // The base PDF has a static drop-off icon at the reference position.
-  // Clear it before drawing the icon at the dynamically computed text row.
-  clearTimelineIcon(p1, 419.8);
-  drawTimelineIcon(p1, dropoffIcon, y);
+  y = Math.max(y + 10.3, timelineOverflow ? y + 10.3 : 419.8);
+  if (!timelineOverflow) clearTimelineIcon(p1, 419.8);
+  drawTimelineIcon(timelinePage, dropoffIcon, y);
   if (content.trip.dropoffTime) {
-    const when = `Sampai ${content.trip.dropoffTime} di`;
-    for (const line of wrapLines(when, regular, SIZE_BODY, tlW)) {
-      drawLeft(p1, line, tlX, y, 10.3, SIZE_BODY, regular);
+    for (const line of wrapLines(dropoffWhen, regular, SIZE_BODY, timelineWidth)) {
+      drawLeft(timelinePage, line, timelineX, y, 10.3, SIZE_BODY, regular);
       y += 10.4;
     }
   }
   if (content.trip.dropoffName) {
-    y = Math.max(y + 2.2, y);
-    drawLeft(p1, content.trip.dropoffName, tlX, y, 11.2, SIZE_BOLD, bold);
+    y += 2.2;
+    drawLeft(timelinePage, content.trip.dropoffName, timelineX, y, 11.2, SIZE_BOLD, bold);
     y += 20.9;
   }
-  if (content.trip.dropoffAddress) {
-    for (const line of wrapLines(
-      content.trip.dropoffAddress,
-      regular,
-      SIZE_BODY,
-      tlW
-    )) {
-      drawLeft(p1, line, tlX, y, 10.3, SIZE_BODY, regular);
-      y += 10.4;
-    }
+  for (const line of wrapLines(content.trip.dropoffAddress ?? "", regular, SIZE_BODY, timelineWidth)) {
+    drawLeft(timelinePage, line, timelineX, y, 10.3, SIZE_BODY, regular);
+    y += 10.4;
   }
 
   // --- page 2 header (white text on green) ---
