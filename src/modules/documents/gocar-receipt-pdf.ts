@@ -351,20 +351,47 @@ export async function generateGoCarReceiptPdf(
     );
   }
 
-  // Remove the base card's fixed bottom border before drawing timeline text.
-  // It is redrawn at the content-aware position after the timeline.
+  // Timeline (right column) — widths match ref after FONT_SCALE
+  const tlX = 316.5;
+  const tlW = 140;
+  const pickupAddressLines = wrapLines(
+    content.trip.pickupAddress ?? "",
+    regular,
+    SIZE_BODY,
+    tlW
+  );
+  const dropoffAddressLines = wrapLines(
+    content.trip.dropoffAddress ?? "",
+    regular,
+    SIZE_BODY,
+    tlW
+  );
+  let measuredY = 344.8;
+  measuredY += content.trip.pickupTime
+    ? wrapLines(`Dijemput ${content.trip.pickupTime} dari`, regular, SIZE_BODY, tlW)
+        .length * 10.4
+    : 0;
+  if (content.trip.pickupName) measuredY = Math.max(measuredY + 2.2, 367.8) + 20.9;
+  measuredY += pickupAddressLines.length * 10.4;
+  measuredY = Math.max(measuredY + 10.3, 419.8);
+  measuredY += content.trip.dropoffTime
+    ? wrapLines(`Sampai ${content.trip.dropoffTime} di`, regular, SIZE_BODY, tlW)
+        .length * 10.4
+    : 0;
+  if (content.trip.dropoffName) measuredY += 2.2 + 20.9;
+  measuredY += dropoffAddressLines.length * 10.4;
+  const measuredBorderY = tripBorderY(measuredY);
+
+  // Extend the card background before drawing text, then redraw its border.
   p1.drawRectangle({
     x: 125,
-    y: PAGE_H - TRIP_BORDER_TOP_Y - 2,
+    y: PAGE_H - measuredBorderY,
     width: 345,
-    height: 4,
+    height: measuredBorderY - TRIP_BORDER_TOP_Y + 2,
     color: WHITE,
     borderWidth: 0,
   });
 
-  // Timeline (right column) — widths match ref after FONT_SCALE
-  const tlX = 316.5;
-  const tlW = 140;
   let y = 344.8;
 
   const pickupWhenTop = y;
@@ -382,12 +409,7 @@ export async function generateGoCarReceiptPdf(
     y += 20.9; // ref gap name → address
   }
   if (content.trip.pickupAddress) {
-    for (const line of wrapLines(
-      content.trip.pickupAddress,
-      regular,
-      SIZE_BODY,
-      tlW
-    )) {
+    for (const line of pickupAddressLines) {
       drawLeft(p1, line, tlX, y, 10.3, SIZE_BODY, regular);
       y += 10.4;
     }
@@ -411,12 +433,7 @@ export async function generateGoCarReceiptPdf(
     y += 20.9;
   }
   if (content.trip.dropoffAddress) {
-    for (const line of wrapLines(
-      content.trip.dropoffAddress,
-      regular,
-      SIZE_BODY,
-      tlW
-    )) {
+    for (const line of dropoffAddressLines) {
       drawLeft(p1, line, tlX, y, 10.3, SIZE_BODY, regular);
       y += 10.4;
     }
