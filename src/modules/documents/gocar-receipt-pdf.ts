@@ -421,11 +421,20 @@ export async function generateGoCarReceiptPdf(
       color: WHITE,
       borderWidth: 0,
     });
+    const borderColor = rgb(0.91, 0.91, 0.91);
+    for (const x of [125, 470]) {
+      p1.drawLine({
+        start: { x, y: PAGE_H - TRIP_BORDER_TOP_Y },
+        end: { x, y: PAGE_H - borderY },
+        thickness: 0.7,
+        color: borderColor,
+      });
+    }
     p1.drawLine({
       start: { x: 125, y: PAGE_H - borderY },
       end: { x: 470, y: PAGE_H - borderY },
       thickness: 0.7,
-      color: rgb(0.91, 0.91, 0.91),
+      color: borderColor,
     });
   }
 
