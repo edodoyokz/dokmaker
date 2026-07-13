@@ -50,6 +50,13 @@ describe("PreviewClient UX", () => {
     expect(previewClient).not.toContain("Workspace Invoice");
   });
 
+  it("delivers final PDF on iOS via pre-opened tab + share sheet", () => {
+    expect(previewClient).toContain('window.open("about:blank"');
+    expect(previewClient).toContain("navigator.share");
+    expect(previewClient).toContain("openPdfBlob");
+    expect(previewClient).toContain("Simpan ke Files");
+  });
+
   it("scales HTML invoice preview to container width", () => {
     expect(templatePreview).toContain("containerType");
     expect(templatePreview).toContain("100cqw");
