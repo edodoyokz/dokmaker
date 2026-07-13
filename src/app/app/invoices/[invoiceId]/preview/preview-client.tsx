@@ -116,9 +116,14 @@ export default function PreviewClient({
       }
 
       const blob = await response.blob();
-      const safeBase =
+      // Prefer server Content-Disposition so GoCar files use ID pesanan.
+      const headerName = response.headers
+        .get("Content-Disposition")
+        ?.match(/filename="([^"]+)"/)?.[1];
+      const fallbackBase =
         displayTitle.replace(/[\/:*?"<>|\r\n]+/g, "").trim() || invoiceNumber;
-      const filename = `${safeBase.slice(0, 80)}.pdf`;
+      const filename =
+        headerName?.trim() || `${fallbackBase.slice(0, 80)}.pdf`;
       const file = new File([blob], filename, { type: "application/pdf" });
 
       if (isIos) {

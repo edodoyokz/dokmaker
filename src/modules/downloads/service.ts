@@ -6,14 +6,39 @@ import { generateInvoicePdf } from "@/lib/pdf/generator";
 import { PROCESSING_PAYMENT_TIMEOUT_MS } from "./constants";
 import { pdfStorage, buildInvoiceFinalPdfStorageKey } from "./pdf-storage";
 
+/** Prefer order id / invoice number from content so the saved file matches the document. */
+export function preferredDownloadBaseName(
+  documentType: string | null | undefined,
+  content: unknown
+): string | null {
+  if (!content || typeof content !== "object") return null;
+  const c = content as Record<string, unknown>;
+  if (documentType === "gocar_receipt") {
+    const service = c.service as Record<string, unknown> | undefined;
+    const orderId = service?.orderId;
+    if (typeof orderId === "string" && orderId.trim()) return orderId.trim();
+  }
+  if (documentType === "invoice") {
+    const meta = c.meta as Record<string, unknown> | undefined;
+    const invoiceNumber = meta?.invoiceNumber;
+    if (typeof invoiceNumber === "string" && invoiceNumber.trim()) {
+      return invoiceNumber.trim();
+    }
+  }
+  return null;
+}
+
 /** Safe ASCII attachment name — strips path/control/quote chars from free-text titles. */
 export function buildDownloadFilename(
   title: string | null | undefined,
   invoiceNumber: string | null | undefined,
   invoiceId: string,
-  versionNumber: number
+  versionNumber: number,
+  preferredName?: string | null
 ): string {
-  const raw = (title || invoiceNumber || invoiceId).replace(/[\r\n"\\/<>:\|\?\*\x00-\x1f]/g, "").trim();
+  const raw = (preferredName || title || invoiceNumber || invoiceId)
+    .replace(/[\r\n"\\/<>:\|\?\*\x00-\x1f]/g, "")
+    .trim();
   const base = (raw || invoiceId).slice(0, 80);
   return `${base}-v${versionNumber}.pdf`;
 }
@@ -134,7 +159,8 @@ export async function processDownload(
         invoice.title,
         invoice.invoiceNumber,
         invoice.id,
-        activeVersion.versionNumber
+        activeVersion.versionNumber,
+        preferredDownloadBaseName(invoice.documentType, content)
       ),
     };
   }
@@ -233,7 +259,8 @@ export async function processDownload(
           invoice.title,
           invoice.invoiceNumber,
           invoice.id,
-          activeVersion.versionNumber
+          activeVersion.versionNumber,
+          preferredDownloadBaseName(invoice.documentType, content)
         ),
       };
     } catch (error) {
