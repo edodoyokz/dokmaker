@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileText, User, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
 import { mapAuthError } from "@/lib/auth-errors";
 import { TurnstileWidget } from "@/components/auth/turnstile-widget";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 const turnstileRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
@@ -72,6 +73,20 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="mb-5 space-y-4">
+            <GoogleSignInButton
+              label="Daftar dengan Google"
+              onError={setError}
+            />
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-800" />
+              <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+                atau email
+              </span>
+              <div className="h-px flex-1 bg-zinc-800" />
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5" autoComplete="on">
             {/* Honeypot: hidden from humans, bots often auto-fill */}
             <div

@@ -8,6 +8,7 @@ describe("mapAuthError", () => {
     expect(mapAuthError("Email not confirmed")).toMatch(/dikonfirmasi/i);
     expect(mapAuthError("Email rate limit exceeded")).toMatch(/email/i);
     expect(mapAuthError("Too many requests")).toMatch(/percobaan/i);
+    expect(mapAuthError("Provider is not enabled")).toMatch(/Google/i);
   });
 
   it("handles empty", () => {

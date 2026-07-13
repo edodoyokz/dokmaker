@@ -26,6 +26,16 @@ export function mapAuthError(message: string | null | undefined): string {
   if (m.includes("signup is disabled")) {
     return "Pendaftaran sedang ditutup.";
   }
+  if (
+    m.includes("provider is not enabled") ||
+    m.includes("unsupported provider") ||
+    m.includes("validation_failed")
+  ) {
+    return "Login Google belum diaktifkan. Coba email/password.";
+  }
+  if (m.includes("oauth") && (m.includes("denied") || m.includes("access_denied"))) {
+    return "Login Google dibatalkan.";
+  }
   if (m.includes("captcha") || m.includes("turnstile")) {
     return "Verifikasi captcha gagal. Muat ulang dan coba lagi.";
   }

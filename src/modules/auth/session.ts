@@ -89,7 +89,10 @@ async function syncLocalUser(
         data: {
           id: authUserId,
           email,
-          fullName: (metadata?.full_name as string) || null,
+          fullName:
+            (metadata?.full_name as string) ||
+            (metadata?.name as string) ||
+            null,
           role: "user",
           authProvider: "supabase",
           authProviderUserId: authUserId,

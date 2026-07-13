@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { FileText, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
 import { mapAuthError } from "@/lib/auth-errors";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
+
+  // OAuth callback lands here with ?error=... when exchange fails.
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("error");
+    if (raw) setError(mapAuthError(raw));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +60,17 @@ export default function LoginPage() {
 
         {/* Form Card */}
         <div className="relative rounded-xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="mb-5 space-y-4">
+            <GoogleSignInButton onError={setError} />
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-800" />
+              <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+                atau email
+              </span>
+              <div className="h-px flex-1 bg-zinc-800" />
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label htmlFor="email" className="block text-xs font-medium text-zinc-400">
