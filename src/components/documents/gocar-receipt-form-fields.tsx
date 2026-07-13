@@ -13,6 +13,14 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { GoCarReceiptContent } from "@/modules/documents/gocar-receipt-content.schema";
+import {
+  durationMinutesBetween,
+  formatDurationMinutes,
+  formatOrderDate,
+  formatTripDateTime,
+  parseOrderDateDisplay,
+  parseTripDateTimeDisplay,
+} from "@/modules/documents/gocar-datetime";
 import { LocationAutocomplete } from "./location-autocomplete";
 
 interface GoCarReceiptFormFieldsProps {
@@ -67,7 +75,55 @@ export function GoCarReceiptFormFields({
   };
 
   const updateTrip = (trip: Partial<GoCarReceiptContent["trip"]>) => {
-    onChange({ ...content, trip: { ...content.trip, ...trip } });
+    const nextTrip = { ...content.trip, ...trip };
+    // Auto-fill duration when both pickup/dropoff times are known and user
+    // didn't just edit duration manually in this same update.
+    if (
+      trip.duration === undefined &&
+      (trip.pickupTime !== undefined || trip.dropoffTime !== undefined)
+    ) {
+      const mins = durationMinutesBetween(
+        nextTrip.pickupTime,
+        nextTrip.dropoffTime
+      );
+      if (mins !== null) {
+        nextTrip.duration = formatDurationMinutes(mins);
+      }
+    }
+    onChange({ ...content, trip: nextTrip });
+  };
+
+  const orderDateInput = parseOrderDateDisplay(content.service.orderDate);
+  const pickupParts = parseTripDateTimeDisplay(content.trip.pickupTime ?? "");
+  const dropoffParts = parseTripDateTimeDisplay(content.trip.dropoffTime ?? "");
+
+  const setOrderDateFromPicker = (value: string) => {
+    const formatted = formatOrderDate(value);
+    if (formatted) updateService({ orderDate: formatted });
+  };
+
+  const setPickupFromPicker = (part: "date" | "time", value: string) => {
+    const date =
+      part === "date"
+        ? value
+        : pickupParts?.date || orderDateInput || "";
+    const time =
+      part === "time" ? value : pickupParts?.time || "00:00";
+    if (!date || !time) return;
+    const formatted = formatTripDateTime(date, time);
+    if (formatted) updateTrip({ pickupTime: formatted });
+  };
+
+  const setDropoffFromPicker = (part: "date" | "time", value: string) => {
+    const date =
+      part === "date"
+        ? value
+        : dropoffParts?.date || pickupParts?.date || orderDateInput || "";
+    const time =
+      part === "time" ? value : dropoffParts?.time || "00:00";
+    if (!date || !time) return;
+    const formatted = formatTripDateTime(date, time);
+    if (formatted) updateTrip({ dropoffTime: formatted });
   };
 
   const updateIssuer = (issuer: Partial<GoCarReceiptContent["issuer"]>) => {
@@ -111,19 +167,36 @@ export function GoCarReceiptFormFields({
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <label className={labelClass}>Tanggal Pesanan</label>
-            <div className="relative">
-              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600" />
-              <input
-                type="text"
-                value={content.service.orderDate}
-                onChange={(e) => updateService({ orderDate: e.target.value })}
-                required
-                disabled={disabled}
-                placeholder="Kamis, 11 Juni 2026"
-                className={`${inputClass} pl-10`}
-              />
-            </div>
-          </div>
+            {orderDateInput || !content.service.orderDate ? (
+              <>
+                <div className="relative">
+                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={orderDateInput ?? ""}
+                    onChange={(e) => setOrderDateFromPicker(e.target.value)}
+                    required
+                    disabled={disabled}
+                    className={`${inputClass} pl-10 [color-scheme:dark]`}
+                  />
+                </div>
+                <p className="text-[11px] text-zinc-500">
+                  Di PDF: {content.service.orderDate || "—"}
+                </p>
+              </>
+            ) : (
+              <div className="relative">
+                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 pointer-events-none" />
+                <input
+                  type="text"
+                  value={content.service.orderDate}
+                  onChange={(e) => updateService({ orderDate: e.target.value })}
+                  required
+                  disabled={disabled}
+                  className={`${inputClass} pl-10`}
+                />
+              </div>
+            )}
         </CardContent>
       </Card>
 
@@ -318,15 +391,37 @@ export function GoCarReceiptFormFields({
         <CardContent className="p-5 space-y-4">
           <div className="space-y-1.5">
             <label className={labelClass}>Waktu Jemput</label>
-            <input
-              type="text"
-              value={content.trip.pickupTime ?? ""}
-              onChange={(e) => updateTrip({ pickupTime: e.target.value })}
-              disabled={disabled}
-              placeholder="11 Juni 2026 jam 15:25"
-              className={inputClass}
-            />
-          </div>
+            {pickupParts || !content.trip.pickupTime ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    value={pickupParts?.date ?? orderDateInput ?? ""}
+                    onChange={(e) => setPickupFromPicker("date", e.target.value)}
+                    disabled={disabled}
+                    className={`${inputClass} [color-scheme:dark]`}
+                  />
+                  <input
+                    type="time"
+                    value={pickupParts?.time ?? ""}
+                    onChange={(e) => setPickupFromPicker("time", e.target.value)}
+                    disabled={disabled}
+                    className={`${inputClass} [color-scheme:dark]`}
+                  />
+                </div>
+                <p className="text-[11px] text-zinc-500">
+                  Di PDF: {content.trip.pickupTime || "—"}
+                </p>
+              </>
+            ) : (
+              <input
+                type="text"
+                value={content.trip.pickupTime}
+                onChange={(e) => updateTrip({ pickupTime: e.target.value })}
+                disabled={disabled}
+                className={inputClass}
+              />
+            )}
           <LocationAutocomplete
             name={content.trip.pickupName ?? ""}
             address={content.trip.pickupAddress ?? ""}
@@ -355,15 +450,46 @@ export function GoCarReceiptFormFields({
         <CardContent className="p-5 space-y-4">
           <div className="space-y-1.5">
             <label className={labelClass}>Waktu Sampai</label>
-            <input
-              type="text"
-              value={content.trip.dropoffTime ?? ""}
-              onChange={(e) => updateTrip({ dropoffTime: e.target.value })}
-              disabled={disabled}
-              placeholder="11 Juni 2026 jam 15:57"
-              className={inputClass}
-            />
-          </div>
+            {dropoffParts || !content.trip.dropoffTime ? (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    value={
+                      dropoffParts?.date ??
+                      pickupParts?.date ??
+                      orderDateInput ??
+                      ""
+                    }
+                    onChange={(e) =>
+                      setDropoffFromPicker("date", e.target.value)
+                    }
+                    disabled={disabled}
+                    className={`${inputClass} [color-scheme:dark]`}
+                  />
+                  <input
+                    type="time"
+                    value={dropoffParts?.time ?? ""}
+                    onChange={(e) =>
+                      setDropoffFromPicker("time", e.target.value)
+                    }
+                    disabled={disabled}
+                    className={`${inputClass} [color-scheme:dark]`}
+                  />
+                </div>
+                <p className="text-[11px] text-zinc-500">
+                  Di PDF: {content.trip.dropoffTime || "—"}
+                </p>
+              </>
+            ) : (
+              <input
+                type="text"
+                value={content.trip.dropoffTime}
+                onChange={(e) => updateTrip({ dropoffTime: e.target.value })}
+                disabled={disabled}
+                className={inputClass}
+              />
+            )}
           <LocationAutocomplete
             name={content.trip.dropoffName ?? ""}
             address={content.trip.dropoffAddress ?? ""}
