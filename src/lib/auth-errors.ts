@@ -14,6 +14,9 @@ export function mapAuthError(message: string | null | undefined): string {
   if (m.includes("password") && (m.includes("least") || m.includes("short") || m.includes("6"))) {
     return "Password terlalu pendek (minimal 6 karakter).";
   }
+  if (m.includes("email rate limit") || m.includes("over_email_send_rate_limit")) {
+    return "Batas pengiriman email pendaftaran tercapai. Tunggu beberapa menit, lalu coba lagi.";
+  }
   if (m.includes("rate limit") || m.includes("too many")) {
     return "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.";
   }

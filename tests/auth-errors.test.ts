@@ -6,6 +6,8 @@ describe("mapAuthError", () => {
     expect(mapAuthError("Invalid login credentials")).toMatch(/salah/i);
     expect(mapAuthError("User already registered")).toMatch(/terdaftar/i);
     expect(mapAuthError("Email not confirmed")).toMatch(/dikonfirmasi/i);
+    expect(mapAuthError("Email rate limit exceeded")).toMatch(/email/i);
+    expect(mapAuthError("Too many requests")).toMatch(/percobaan/i);
   });
 
   it("handles empty", () => {

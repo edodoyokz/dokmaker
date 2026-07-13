@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileText, User, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
 import { mapAuthError } from "@/lib/auth-errors";
@@ -17,7 +16,6 @@ export default function RegisterPage() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +52,8 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/app");
-      router.refresh();
+      // Hard nav after signup session cookies are set (same stuck-loading issue as login).
+      window.location.assign("/app");
     } catch {
       setError("Koneksi gagal. Periksa internet Anda.");
       setLoading(false);

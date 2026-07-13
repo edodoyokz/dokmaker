@@ -11,11 +11,14 @@ import type { NextConfig } from "next";
  */
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  // challenges.cloudflare.com: Cloudflare Turnstile on /register
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co https://app.pakasir.com",
+  "connect-src 'self' https://*.supabase.co https://app.pakasir.com https://challenges.cloudflare.com",
+  "frame-src https://challenges.cloudflare.com",
+  "worker-src 'self' blob:",
   "base-uri 'self'",
   "form-action 'self'",
 ];

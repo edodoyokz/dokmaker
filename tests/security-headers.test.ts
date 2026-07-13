@@ -43,11 +43,15 @@ describe("security headers", () => {
     const csp = restFind("Content-Security-Policy");
     expect(csp).toBeDefined();
     expect(csp).toContain("default-src 'self'");
-    expect(csp).toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
+    expect(csp).toContain(
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com"
+    );
     expect(csp).toContain("style-src 'self' 'unsafe-inline'");
     expect(csp).toContain("img-src 'self' data: blob:");
     expect(csp).toContain("font-src 'self'");
     expect(csp).toContain("connect-src 'self'");
+    expect(csp).toContain("https://challenges.cloudflare.com");
+    expect(csp).toContain("frame-src https://challenges.cloudflare.com");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("base-uri 'self'");
     expect(csp).toContain("form-action 'self'");

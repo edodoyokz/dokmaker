@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FileText, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
 import { mapAuthError } from "@/lib/auth-errors";
@@ -12,7 +11,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,19 +18,25 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(mapAuthError(error.message));
+      if (error) {
+        setError(mapAuthError(error.message));
+        setLoading(false);
+        return;
+      }
+
+      // Hard nav so auth cookies are sent on the next full request (soft
+      // router.push can leave this page stuck on "Memproses..." if /app hangs).
+      window.location.assign("/app");
+    } catch {
+      setError("Koneksi gagal. Periksa internet Anda.");
       setLoading(false);
-      return;
     }
-
-    router.push("/app");
-    router.refresh();
   };
 
   return (
