@@ -197,6 +197,7 @@ export function GoCarReceiptFormFields({
                 />
               </div>
             )}
+          </div>
         </CardContent>
       </Card>
 
@@ -422,6 +423,7 @@ export function GoCarReceiptFormFields({
                 className={inputClass}
               />
             )}
+          </div>
           <LocationAutocomplete
             name={content.trip.pickupName ?? ""}
             address={content.trip.pickupAddress ?? ""}
@@ -490,6 +492,7 @@ export function GoCarReceiptFormFields({
                 className={inputClass}
               />
             )}
+          </div>
           <LocationAutocomplete
             name={content.trip.dropoffName ?? ""}
             address={content.trip.dropoffAddress ?? ""}
