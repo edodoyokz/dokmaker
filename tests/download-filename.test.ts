@@ -6,19 +6,19 @@ import {
 
 describe("buildDownloadFilename", () => {
   it("strips path and control characters from title", () => {
-    expect(buildDownloadFilename('evil\r\n"../x.pdf', null, "inv-1", 2)).toBe(
-      "evil..x.pdf-v2.pdf"
+    expect(buildDownloadFilename('evil\r\n"../x.pdf', null, "inv-1")).toBe(
+      "evil..x.pdf.pdf"
     );
   });
 
   it("falls back to invoice id when title empty", () => {
-    expect(buildDownloadFilename("   ", null, "inv-99", 1)).toBe("inv-99-v1.pdf");
+    expect(buildDownloadFilename("   ", null, "inv-99")).toBe("inv-99.pdf");
   });
 
   it("prefers order id / invoice number over display title", () => {
     expect(
-      buildDownloadFilename("GoCar RB-1", null, "inv-1", 1, "RB-4153088-49607870")
-    ).toBe("RB-4153088-49607870-v1.pdf");
+      buildDownloadFilename("GoCar RB-1", null, "inv-1", "RB-4153088-49607870")
+    ).toBe("RB-4153088-49607870.pdf");
   });
 });
 

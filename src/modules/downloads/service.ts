@@ -33,14 +33,13 @@ export function buildDownloadFilename(
   title: string | null | undefined,
   invoiceNumber: string | null | undefined,
   invoiceId: string,
-  versionNumber: number,
   preferredName?: string | null
 ): string {
   const raw = (preferredName || title || invoiceNumber || invoiceId)
     .replace(/[\r\n"\\/<>:\|\?\*\x00-\x1f]/g, "")
     .trim();
   const base = (raw || invoiceId).slice(0, 80);
-  return `${base}-v${versionNumber}.pdf`;
+  return `${base}.pdf`;
 }
 
 /**
@@ -159,7 +158,6 @@ export async function processDownload(
         invoice.title,
         invoice.invoiceNumber,
         invoice.id,
-        activeVersion.versionNumber,
         preferredDownloadBaseName(invoice.documentType, content)
       ),
     };
@@ -259,7 +257,6 @@ export async function processDownload(
           invoice.title,
           invoice.invoiceNumber,
           invoice.id,
-          activeVersion.versionNumber,
           preferredDownloadBaseName(invoice.documentType, content)
         ),
       };

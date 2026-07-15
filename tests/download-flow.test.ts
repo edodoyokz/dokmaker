@@ -214,7 +214,7 @@ describe("processDownload", () => {
 
     expect(result).toEqual({
       pdf: pdfBuffer,
-      filename: "INV-001-v1.pdf",
+      filename: "INV-001.pdf",
     });
     expect(prismaMock.downloadLog.create).toHaveBeenCalledWith({
       data: {
@@ -273,7 +273,7 @@ describe("processDownload", () => {
 
     const result = await processDownload("user-1", "invoice-1");
 
-    expect(result.filename).toBe("INV-001-v1.pdf");
+    expect(result.filename).toBe("INV-001.pdf");
     // Reset call
     expect(prismaMock.invoiceVersion.updateMany).toHaveBeenCalledWith({
       where: { id: "version-1", status: "processing_payment" },
@@ -332,7 +332,7 @@ describe("processDownload", () => {
 
     const result = await processDownload("user-1", "invoice-1");
 
-    expect(result.filename).toBe("INV-001-v1.pdf");
+    expect(result.filename).toBe("INV-001.pdf");
     expect(generateInvoicePdfMock).toHaveBeenCalledTimes(1);
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
     expect(debitWalletMock).toHaveBeenCalledTimes(1);
@@ -531,7 +531,7 @@ describe("processDownload", () => {
 
     const result = await processDownload("user-1", "invoice-1");
 
-    expect(result.filename).toBe("GoCar RB-4153-v1.pdf");
+    expect(result.filename).toBe("GoCar RB-4153.pdf");
     expect(generateInvoicePdfMock).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -635,7 +635,7 @@ describe("processDownload", () => {
 
     const result = await processDownload("user-1", "invoice-1");
 
-    expect(result.filename).toBe("INV-001-v1.pdf");
+    expect(result.filename).toBe("INV-001.pdf");
     expect(debitWalletMock).toHaveBeenCalledTimes(1);
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: "version-1" },
