@@ -1,5 +1,15 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { mapAuthError } from "@/lib/auth-errors";
+
+const loginPage = readFileSync("src/app/login/page.tsx", "utf8");
+
+describe("LoginPage OAuth error", () => {
+  it("schedules query error state outside the effect body", () => {
+    expect(loginPage).toContain("queueMicrotask(() => setError(mapAuthError(raw)))");
+    expect(loginPage).not.toContain("if (raw) setError(mapAuthError(raw))");
+  });
+});
 
 describe("mapAuthError", () => {
   it("maps common supabase messages to Indonesian", () => {

@@ -44,19 +44,6 @@ function formatIdr(amount: number) {
   }).format(amount);
 }
 
-/** Deliver PDF blob on iOS when Share sheet is unavailable. */
-function openPdfBlob(blob: Blob, pendingWindow: Window | null) {
-  const url = window.URL.createObjectURL(blob);
-  if (pendingWindow && !pendingWindow.closed) {
-    pendingWindow.location.href = url;
-  } else {
-    const opened = window.open(url, "_blank");
-    if (!opened) window.location.assign(url);
-  }
-  // Keep blob alive long enough for Safari to load the viewer.
-  window.setTimeout(() => window.URL.revokeObjectURL(url), 120_000);
-}
-
 function documentLabel(documentType: string) {
   try {
     return getDocumentTypeDefinition(documentType).label;
@@ -93,17 +80,22 @@ export default function PreviewClient({
     setDownloading(true);
     setError(null);
 
-    // iOS blocks window.open after await — reserve a tab during the user gesture.
+    const downloadUrl = `/api/invoices/${invoiceId}/download`;
     const isIos =
       /iPad|iPhone|iPod/i.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const pendingWindow = isIos ? window.open("about:blank", "_blank") : null;
+
+    // Let Safari handle the authenticated PDF response natively. Fetching it
+    // into a Blob after the tap loses user activation and can leave a blank tab.
+    if (isIos) {
+      window.location.assign(downloadUrl);
+      return;
+    }
 
     try {
-      const response = await fetch(`/api/invoices/${invoiceId}/download`);
+      const response = await fetch(downloadUrl);
 
       if (!response.ok) {
-        pendingWindow?.close();
         if (response.status === 402) {
           throw new Error(
             `Saldo tidak mencukupi. Diperlukan ${priceLabel} untuk cetak final.`
@@ -124,63 +116,17 @@ export default function PreviewClient({
         displayTitle.replace(/[\/:*?"<>|\r\n]+/g, "").trim() || invoiceNumber;
       const filename =
         headerName?.trim() || `${fallbackBase.slice(0, 80)}.pdf`;
-      const file = new File([blob], filename, { type: "application/pdf" });
-
-      if (isIos) {
-        const canShareFile =
-          typeof navigator.share === "function" &&
-          typeof File !== "undefined" &&
-          (typeof navigator.canShare !== "function" ||
-            navigator.canShare({ files: [file] }));
-
-        if (canShareFile) {
-          pendingWindow?.close();
-          try {
-            await navigator.share({
-              files: [file],
-              title: filename,
-            });
-            toast.success(
-              isPaid
-                ? "PDF final siap — simpan lewat Share sheet"
-                : "Pembayaran berhasil — simpan PDF lewat Share sheet"
-            );
-          } catch (shareErr) {
-            // User dismissed sheet or share failed — still surface the PDF.
-            if (
-              shareErr instanceof Error &&
-              shareErr.name === "AbortError"
-            ) {
-              toast.message("Share dibatalkan — PDF tetap bisa diunduh ulang gratis");
-            } else {
-              openPdfBlob(blob, pendingWindow);
-              toast.success(
-                "PDF dibuka — tap Share → Simpan ke Files"
-              );
-            }
-          }
-        } else {
-          openPdfBlob(blob, pendingWindow);
-          toast.success(
-            isPaid
-              ? "PDF dibuka — tap Share → Simpan ke Files"
-              : "Pembayaran berhasil — tap Share → Simpan ke Files"
-          );
-        }
-      } else {
-        pendingWindow?.close();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
-        toast.success(
-          isPaid ? "PDF final diunduh" : "Pembayaran berhasil — PDF final diunduh"
-        );
-      }
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 60_000);
+      toast.success(
+        isPaid ? "PDF final diunduh" : "Pembayaran berhasil — PDF final diunduh"
+      );
 
       // Trust server as source of truth — no optimistic −Rp10.000 beyond first debit UI.
       if (status !== "paid") {
@@ -189,7 +135,6 @@ export default function PreviewClient({
       }
       router.refresh();
     } catch (err) {
-      pendingWindow?.close();
       setError(
         err instanceof Error ? err.message : "Terjadi kesalahan saat cetak PDF"
       );

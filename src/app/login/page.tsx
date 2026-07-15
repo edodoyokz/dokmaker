@@ -17,7 +17,7 @@ export default function LoginPage() {
   // OAuth callback lands here with ?error=... when exchange fails.
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("error");
-    if (raw) setError(mapAuthError(raw));
+    if (raw) queueMicrotask(() => setError(mapAuthError(raw)));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

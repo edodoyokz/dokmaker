@@ -50,11 +50,10 @@ describe("PreviewClient UX", () => {
     expect(previewClient).not.toContain("Workspace Invoice");
   });
 
-  it("delivers final PDF on iOS via pre-opened tab + share sheet", () => {
-    expect(previewClient).toContain('window.open("about:blank"');
-    expect(previewClient).toContain("navigator.share");
-    expect(previewClient).toContain("openPdfBlob");
-    expect(previewClient).toContain("Simpan ke Files");
+  it("lets iOS Safari download directly without an intermediate blank tab", () => {
+    expect(previewClient).toContain("window.location.assign(downloadUrl)");
+    expect(previewClient).not.toContain('window.open("about:blank"');
+    expect(previewClient).not.toContain("openPdfBlob");
   });
 
   it("scales HTML invoice preview to container width", () => {
